@@ -128,6 +128,67 @@ class ChatRoomJabberBot(JabberBot):
             self.message_queue.append('[%s]: %s %s' % (self.users[user], cmd, args))
             self.log.info("%s sent: %s %s" %(user, cmd, args))
         return ''
+
+
+    def callback_message( self, conn, mess):
+        """Messages sent to the bot will arrive here. Command handling + routing is done in this function."""
+        self._JabberBot__lastping = time.time()
+
+        # Prepare to handle either private chats or group chats
+        type     = mess.getType()
+        jid      = mess.getFrom()
+        props    = mess.getProperties()
+        text     = mess.getBody()
+        username = self.get_sender_username(mess)
+
+        if type not in ("groupchat", "chat"):
+            self.log.debug("unhandled message type: %s" % type)
+            return
+
+        self.log.debug("*** props = %s" % props)
+        self.log.debug("*** jid = %s" % jid)
+        self.log.debug("*** username = %s" % username)
+        self.log.debug("*** type = %s" % type)
+        self.log.debug("*** text = %s" % text)
+
+        # Ignore messages from before we joined
+        if xmpp.NS_DELAY in props: return
+
+        # Ignore messages from myself
+        if username == self._JabberBot__username: return
+
+        # If a message format is not supported (eg. encrypted), txt will be None
+        if not text: return
+
+        # Remember the last-talked-in thread for replies
+        self._JabberBot__threads[jid] = mess.getThread()
+
+        if ' ' in text:
+            command, args = text.split(' ', 1)
+        else:
+            command, args = text, ''
+        cmd = command.lower()
+        self.log.debug("*** cmd = %s" % cmd)
+
+        if self.commands.has_key(cmd):
+            try:
+                reply = self.commands[cmd](mess, args)
+            except Exception, e:
+                reply = traceback.format_exc(e)
+                self.log.exception('An error happened while processing a message ("%s") from %s: %s"' % (text, jid, reply))
+        else:
+            # In private chat, it's okay for the bot to always respond.
+            # In group chat, the bot should silently ignore commands it
+            # doesn't understand or aren't handled by unknown_command().
+            default_reply = 'Unknown command: "%s". Type "help" for available commands.<b>blubb!</b>' % cmd
+            if type == "groupchat": default_reply = None
+            reply = self.unknown_command( mess, cmd, args)
+            if reply is None:
+                reply = default_reply
+        if reply:
+            self.send_simple_reply(mess,reply)
+
+
     
     @botcmd(name=',subscribe')
     def subscribe( self, mess, args):
