@@ -267,7 +267,7 @@ class ChatRoomJabberBot(JabberBot):
         """Invite a person to join the room. Works only if the person has added the bot as a friend, as of now."""
         user = self.get_sender_username(mess)
         if user in self.users:
-            self.send(args, '%s invited you to join %s' % (user, CHANNEL))
+            self.send(args, '%s invited you to join %s. Say "help" to see how to join.' % (user, CHANNEL))
             self.invited[xmpp.JID(args).getNode()] = ''
             self.log.info( '%s invited %s.' % (user, args))
             return 'You invited %s' % args
