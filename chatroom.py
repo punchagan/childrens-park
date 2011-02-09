@@ -122,11 +122,8 @@ class ChatRoomJabberBot(JabberBot):
         except:
             self.log.info("Couldn't save user data")
 
-    def get_user(self, mess):
-        return xmpp.JID(str(mess.getFrom())).getNode()
-
     def unknown_command(self, mess, cmd, args):
-        user = self.get_user(mess)
+        user = self.get_sender_username(mess)
         if user in self.users:
             self.message_queue.append('[%s]: %s %s' % (self.users[user], cmd, args))
             self.log.info("%s sent: %s %s" %(user, cmd, args))
@@ -187,7 +184,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',subscribe')
     def subscribe( self, mess, args):
         """Subscribe to the broadcast list"""
-        user = self.get_user(mess)
+        user = self.get_sender_username(mess)
         if user in self.users:
             return 'You are already subscribed.'
         else:
@@ -200,7 +197,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',unsubscribe')
     def unsubscribe( self, mess, args):
         """Unsubscribe from the broadcast list"""
-        user = self.get_user(mess)
+        user = self.get_sender_username(mess)
         if not user in self.users:
             return 'You are not subscribed!'
         else:
@@ -213,7 +210,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',alias')
     def alias( self, mess, args):
         """Change your nick"""
-        user = self.get_user(mess)
+        user = self.get_sender_username(mess)
         args = args.strip().replace(' ', '_')
         if user in self.users:
             if 0 < len(args) < 24:
@@ -229,7 +226,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',topic')
     def topic( self, mess, args):
         """Change the topic/status"""
-        user = self.get_user(mess)
+        user = self.get_sender_username(mess)
         if user in self.users:
             self._JabberBot__set_status(args)
             self.message_queue.append('%s changed topic to %s' %(self.users[user], args))
@@ -239,7 +236,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',list')
     def list( self, mess, args):
         """List all the members of the list"""
-        user = self.get_user(mess)
+        user = self.get_sender_username(mess)
         args = args.replace(' ', '_')
         if user in self.users:
             user_list = 'All these users are subscribed - \n'
@@ -253,7 +250,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',me')
     def myself(self, mess, args):
         """Send message in third person"""
-        user = self.get_user(mess)
+        user = self.get_sender_username(mess)
         if user in self.users:
             self.message_queue.append('* %s %s' % (self.users[user], args))
             self.log.info( '%s says %s in third person.' % (user, args))
@@ -262,7 +259,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',invite')
     def invite(self, mess, args):
         """Invite a person to join the room. Works only if the person has added the bot as a friend, as of now."""
-        user = self.get_user(mess)
+        user = self.get_sender_username(mess)
         if user in self.users:
             self.send(args, '%s invited you to join %s' % (user, CHANNEL))
             self.invited[xmpp.JID(args).getNode()] = ''
@@ -272,7 +269,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',whois')
     def whois( self, mess, args):
         """Check who has a particular nick"""
-        user = self.get_user(mess)
+        user = self.get_sender_username(mess)
         args = args.strip().replace(' ', '_')
         if user in self.users:
             self.log.info('%s queried whois %s.' % (user, args))
