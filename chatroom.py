@@ -76,6 +76,8 @@ class ChatRoomJabberBot(JabberBot):
         except:
             self.users = {}
 
+        self.invited = {}
+        
         self.message_queue = []
         self.thread_killed = False
 
@@ -132,18 +134,13 @@ class ChatRoomJabberBot(JabberBot):
 
     def callback_message( self, conn, mess):
         """Messages sent to the bot will arrive here. Command handling + routing is done in this function."""
-        self._JabberBot__lastping = time.time()
 
-        # Prepare to handle either private chats or group chats
-        type     = mess.getType()
         jid      = mess.getFrom()
         props    = mess.getProperties()
         text     = mess.getBody()
         username = self.get_sender_username(mess)
 
-        if type not in ("groupchat", "chat"):
-            self.log.debug("unhandled message type: %s" % type)
-            return
+        if username not in self.users.keys() + self.invited.keys(): return
 
         self.log.debug("*** props = %s" % props)
         self.log.debug("*** jid = %s" % jid)
@@ -153,9 +150,6 @@ class ChatRoomJabberBot(JabberBot):
 
         # Ignore messages from before we joined
         if xmpp.NS_DELAY in props: return
-
-        # Ignore messages from myself
-        if username == self._JabberBot__username: return
 
         # If a message format is not supported (eg. encrypted), txt will be None
         if not text: return
@@ -188,7 +182,6 @@ class ChatRoomJabberBot(JabberBot):
         if reply:
             self.send_simple_reply(mess,reply)
 
-
     
     @botcmd(name=',subscribe')
     def subscribe( self, mess, args):
@@ -198,7 +191,8 @@ class ChatRoomJabberBot(JabberBot):
             return 'You are already subscribed.'
         else:
             self.users[user] = user
-            self.message_queue.append('%s has joined the channel' % user)     
+            self.invited.pop(user)
+            self.message_queue.append('%s has joined the channel' % user)
             self.log.info('%s subscribed to the broadcast.' % user)
             return 'You are now subscribed.'
 
@@ -247,8 +241,11 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_user(mess)
         args = args.replace(' ', '_')
         if user in self.users:
-            user_list = 'All these users are subscribed - \n\n'
+            user_list = 'All these users are subscribed - \n'
             user_list += '\n'.join(['%s :: %s' %(u, self.users[u]) for u in sorted(self.users)])
+            if self.invited.keys():
+                user_list += '\n The following users are invited - \n'
+                user_list += '\n'.join(self.invited.keys())
             self.log.info( '%s checks list of users.' % user)
             return user_list
 
@@ -267,6 +264,7 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_user(mess)
         if user in self.users:
             self.send(args, '%s invited you to join %s' % (user, CHANNEL))
+            self.invited[xmpp.JID(args).getNode()] = ''
             self.log.info( '%s invited %s.' % (user, args))
             return 'You invited %s' % args
 
