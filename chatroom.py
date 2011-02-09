@@ -193,7 +193,7 @@ class ChatRoomJabberBot(JabberBot):
         else:
             self.users[user] = user
             self.invited.pop(user)
-            self.message_queue.append('%s has joined the channel' % user)
+            self.message_queue.append('_%s has joined the channel_' % user)
             self.log.info('%s subscribed to the broadcast.' % user)
             self.save_users()
             return 'You are now subscribed.'
@@ -206,7 +206,7 @@ class ChatRoomJabberBot(JabberBot):
             return 'You are not subscribed!'
         else:
             user = self.users.pop(user)
-            self.message_queue.append('%s has left the channel' % user)
+            self.message_queue.append('_%s has left the channel_' % user)
             self.log.info( '%s unsubscribed from the broadcast.' % user)
             self.save_users()
             return 'You are now unsubscribed.'
@@ -219,7 +219,7 @@ class ChatRoomJabberBot(JabberBot):
         args = args.strip().replace(' ', '_')
         if user in self.users:
             if 0 < len(args) < 24:
-                self.message_queue.append('%s is now known as %s' %(self.users[user], args))
+                self.message_queue.append('_%s is now known as %s_' %(self.users[user], args))
                 self.users[user] = args
                 self.log.info( '%s changed alias.' % user)
                 self.log.info('%s' %self.users)
@@ -235,7 +235,7 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         if user in self.users:
             self._JabberBot__set_status(args)
-            self.message_queue.append('%s changed topic to %s' %(self.users[user], args))
+            self.message_queue.append('_%s changed topic to %s_' %(self.users[user], args))
             self.log.info( '%s changed topic.' % user)
 
 
@@ -258,7 +258,7 @@ class ChatRoomJabberBot(JabberBot):
         """Send message in third person"""
         user = self.get_sender_username(mess)
         if user in self.users:
-            self.message_queue.append('* %s %s' % (self.users[user], args))
+            self.message_queue.append('_%s %s_' % (self.users[user], args))
             self.log.info( '%s says %s in third person.' % (user, args))
 
 
