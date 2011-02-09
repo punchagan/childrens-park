@@ -113,7 +113,7 @@ class ChatRoomJabberBot(JabberBot):
 
         return self.conn
 
-    def shutdown(self):
+    def save_users(self):
         try:
             dbfile = open(DB, 'wb')
             pickle.dump(self.users, dbfile)
@@ -121,6 +121,9 @@ class ChatRoomJabberBot(JabberBot):
             self.log.info("Saved user data")
         except:
             self.log.info("Couldn't save user data")
+        
+    def shutdown(self):
+        self.save_users()
 
     def unknown_command(self, mess, cmd, args):
         user = self.get_sender_username(mess)
@@ -192,6 +195,7 @@ class ChatRoomJabberBot(JabberBot):
             self.invited.pop(user)
             self.message_queue.append('%s has joined the channel' % user)
             self.log.info('%s subscribed to the broadcast.' % user)
+            self.save_users()
             return 'You are now subscribed.'
 
     @botcmd(name=',unsubscribe')
@@ -204,6 +208,7 @@ class ChatRoomJabberBot(JabberBot):
             user = self.users.pop(user)
             self.message_queue.append('%s has left the channel' % user)
             self.log.info( '%s unsubscribed from the broadcast.' % user)
+            self.save_users()
             return 'You are now unsubscribed.'
 
 
@@ -218,6 +223,7 @@ class ChatRoomJabberBot(JabberBot):
                 self.users[user] = args
                 self.log.info( '%s changed alias.' % user)
                 self.log.info('%s' %self.users)
+                self.save_users()
                 return 'You are now known as %s' % args
             else:
                 return 'Your nick is too short or too long'
