@@ -112,7 +112,7 @@ class ChatRoomJabberBot(JabberBot):
         return self.conn
 
     
-    def save_users():
+    def save_users(self):
         try:
             f = open('users.py', 'w')
             f.write('USERS = {\n')
