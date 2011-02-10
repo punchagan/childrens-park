@@ -37,7 +37,7 @@
 # messages are sent to all the users subscribed to this bot.
 #
 # You are required to have a file settings.py with the variables,
-# JID, PASSWORD, DB, CHANNEL, RES
+# JID, PASSWORD, CHANNEL, RES
 #
 # Depends: python-jabberbot, xmpppy
 #
@@ -49,7 +49,6 @@ import xmpp
 import threading
 import time 
 import logging
-import pickle
 import traceback
 
 from settings import * 
@@ -71,9 +70,8 @@ class ChatRoomJabberBot(JabberBot):
         self.log.setLevel(logging.INFO)
 
         try:
-            dbfile = open(DB, 'rb')
-            self.users = pickle.load(dbfile)
-            dbfile.close()
+            from users import USERS
+            self.users = users
         except:
             self.users = {}
 
@@ -113,15 +111,19 @@ class ChatRoomJabberBot(JabberBot):
 
         return self.conn
 
-    def save_users(self):
+    
+    def save_users():
         try:
-            dbfile = open(DB, 'wb')
-            pickle.dump(self.users, dbfile)
-            dbfile.close()
+            f = open('users.py', 'w')
+            f.write('USERS = {\n')
+            for u in users:
+                f.write("'    %s': '%s', \n" %(u, users[u]))
+            f.write('}\n')
+            f.close()
             self.log.info("Saved user data")
         except:
             self.log.info("Couldn't save user data")
-        
+
     def shutdown(self):
         self.save_users()
 
