@@ -71,7 +71,7 @@ class ChatRoomJabberBot(JabberBot):
 
         try:
             from users import USERS
-            self.users = users
+            self.users = USERS
         except:
             self.users = {}
 
