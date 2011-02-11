@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Copyright (c) 2011 Puneeth Chaganti <punchagan@gmail.com> 
 #
@@ -50,6 +51,7 @@ import threading
 import time 
 import logging
 import traceback
+import codecs
 
 from settings import * 
 
@@ -69,12 +71,8 @@ class ChatRoomJabberBot(JabberBot):
         # set level to INFO
         self.log.setLevel(logging.INFO)
 
-        try:
-            from users import USERS
-            self.users = USERS
-        except:
-            self.users = {}
-
+        self.users = self.get_users()
+        
         self.invited = {}
         
         self.message_queue = []
@@ -111,14 +109,29 @@ class ChatRoomJabberBot(JabberBot):
 
         return self.conn
 
+    def get_users(self):
+        users = {}
+        try:
+            f = codecs.open('users.py', 'r', encoding='utf-8')
+            # We assume user data begins from thrid line.
+            # It is good to have encoding specified in this file
+            for line in f.readlines()[2:]: 
+                if line.strip():
+                    u, n = line.split()
+                    users[u] = n
+            f.close()
+            self.log.info("Obtained user data")
+        except:
+            self.log.info("No existing user data")
+
+        return users
     
     def save_users(self):
         try:
-            f = open('users.py', 'w')
-            f.write('USERS = {\n')
+            f = codecs.open('users.py', 'w', encoding='utf-8')
+            f.write('# -*- coding: utf-8 -*-\n\n')
             for u in self.users:
-                f.write("    '%s': '%s', \n" %(u, self.users[u]))
-            f.write('}\n')
+                f.write("%s %s\n" %(u, self.users[u]))
             f.close()
             self.log.info("Saved user data")
         except:
