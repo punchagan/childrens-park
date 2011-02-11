@@ -18,3 +18,4 @@ pip-log.txt
 .coverage
 .tox
 /users.py
+/settings.py
