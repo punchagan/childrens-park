@@ -319,9 +319,9 @@ class ChatRoomJabberBot(JabberBot):
             query.vq = args
 
             feed = yt_service.YouTubeQuery(query)
+            self.message_queue.append('%s searched for %s ...' %(self.users[user], args))
 
             for entry in feed.entry:
-                self.message_queue.append('%s searched for %s ...' %(self.users[user], args))
                 self.message_queue.append('... and here you go -- %s' % entry.GetHtmlLink().href)
 
     def idle_proc( self):
