@@ -301,7 +301,7 @@ class ChatRoomJabberBot(JabberBot):
             yt_service = gdata.youtube.service.YouTubeService()
             query = gdata.youtube.service.YouTubeVideoQuery()
             query.racy = 'include'
-            query.orderby = 'viewCount'
+            query.orderby = 'relevance'
             query.max_results = 1
             query.vq = args
 
