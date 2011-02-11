@@ -2,10 +2,15 @@ This is a Jabber/Gtalk bot written using the python-jabberbot library.
 This bot is written to behave like a chatroom, where all the messages
 are sent to all the subscribed users. 
 
-You are required to have a file settings.py with the variables, JID,
-PASSWORD, CHANNEL, RES
++ You are required to have a file settings.py with the variables, JID,
+  PASSWORD, CHANNEL, RES
 
-Depends: python-jabberbot, xmpppy
++ Depends: python-jabberbot, xmpppy
 
-To add new users, the admin can either add them manually to a USERS
-dict in a users.py file, or they can be invited and then added. 
++ To add new users, the admin can either add them manually to a USERS
+  dict in a users.py file, or they can be invited and then added.
+
++ *Known Issue*: Google doesn't allow sending and receiving more than
+  50 messages in a period of 12.5 seconds.  This is a big problem if
+  you have even three or four members in the channel.  Use jabber.org
+  for hosting the bot, instead. 
