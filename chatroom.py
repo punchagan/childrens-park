@@ -286,6 +286,31 @@ class ChatRoomJabberBot(JabberBot):
             else:
                 return 'Nobody!'
 
+    @botcmd(name=',yt')
+    def youtube_fetch(self, mess, args):
+        """Fetch the top-most result from YouTube"""
+        user = self.get_sender_username(mess)
+        try:
+            import gdata.youtube
+            import gdata.youtube.service
+        except:
+            self.log.info('You need to have python-gdata')
+            return 'python-gdata needs to be installed!'
+        if user in self.users:
+            self.log.info('%s queried %s from Youtube.' % (user, args))
+            yt_service = gdata.youtube.service.YouTubeService()
+            query = gdata.youtube.service.YouTubeVideoQuery()
+            query.racy = 'include'
+            query.orderby = 'viewCount'
+            query.max_results = 1
+            query.vq = args
+
+            feed = yt_service.YouTubeQuery(query)
+
+            for entry in feed.entry:
+                self.message_queue.append('%s searched for %s ...' %(self.users[user], args))
+                self.message_queue.append('... and here you go -- %s' % entry.GetHtmlLink().href)
+
     def idle_proc( self):
         if not len(self.message_queue):
             return
