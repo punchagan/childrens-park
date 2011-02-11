@@ -116,8 +116,8 @@ class ChatRoomJabberBot(JabberBot):
         try:
             f = open('users.py', 'w')
             f.write('USERS = {\n')
-            for u in users:
-                f.write("'    %s': '%s', \n" %(u, users[u]))
+            for u in self.users:
+                f.write("    '%s': '%s', \n" %(u, self.users[u]))
             f.write('}\n')
             f.close()
             self.log.info("Saved user data")
