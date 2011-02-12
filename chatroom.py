@@ -180,7 +180,7 @@ class ChatRoomJabberBot(JabberBot):
             command, args = text.split(' ', 1)
         else:
             command, args = text, ''
-        cmd = command.lower()
+        cmd = command
         self.log.debug("*** cmd = %s" % cmd)
 
         if self.commands.has_key(cmd):
