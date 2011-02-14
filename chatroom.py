@@ -52,6 +52,7 @@ import time
 import logging
 import traceback
 import codecs
+from datetime import timedelta, datetime
 
 from settings import * 
 
@@ -74,6 +75,8 @@ class ChatRoomJabberBot(JabberBot):
         self.users = self.get_users()
         
         self.invited = {}
+
+        self.started = time.time()
         
         self.message_queue = []
         self.thread_killed = False
@@ -301,6 +304,19 @@ class ChatRoomJabberBot(JabberBot):
                 return filter(lambda u: self.users[u] == args, self.users)[0]
             else:
                 return 'Nobody!'
+
+    @botcmd(name=',uptime')
+    def uptime(self, mess, args):
+        """Check the uptime of the bot."""
+        user = self.get_sender_username(mess)
+        if user in self.users:
+            t = datetime.fromtimestamp(time.time()) - \
+                   datetime.fromtimestamp(self.started)
+            hours = t.seconds/3600
+            mins = (t.seconds/60)%60
+            secs = t.seconds%60
+            self.log.info('%s queried uptime.' % (user))
+            self.message_queue.append("Harbouring conversations, and what's more, memories, relentlessly since %s day(s) %s hour(s) %s min(s) and %s sec(s) for %s & friends" % (t.days, hours, mins, secs, self.users[user]))
 
     @botcmd(name=',yt')
     def youtube_fetch(self, mess, args):
