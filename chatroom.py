@@ -239,7 +239,7 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         args = args.strip().replace(' ', '_')
         if user in self.users:
-            if 0 < len(args) < 24 and args not in self.user.values():
+            if 0 < len(args) < 24 and args not in self.users.values():
                 self.message_queue.append('_%s is now known as %s_' %(self.users[user], args))
                 self.users[user] = args
                 self.log.info( '%s changed alias.' % user)
