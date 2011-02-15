@@ -239,7 +239,7 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         args = args.strip().replace(' ', '_')
         if user in self.users:
-            if 0 < len(args) < 24:
+            if 0 < len(args) < 24 and args not in self.user.values():
                 self.message_queue.append('_%s is now known as %s_' %(self.users[user], args))
                 self.users[user] = args
                 self.log.info( '%s changed alias.' % user)
@@ -247,7 +247,7 @@ class ChatRoomJabberBot(JabberBot):
                 self.save_users()
                 return 'You are now known as %s' % args
             else:
-                return 'Your nick is too short or too long'
+                return 'Nick already taken, or too short/long. 1-24 chars allowed.'
 
 
     @botcmd(name=',topic')
