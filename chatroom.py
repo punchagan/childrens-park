@@ -54,7 +54,17 @@ import traceback
 import codecs
 from datetime import timedelta, datetime
 
-from settings import * 
+from settings import *
+
+import re
+import urllib2
+
+try:
+    from BeautifulSoup import BeautifulSoup
+except:
+    self.log.info('You need to have BeautifulSoup for cricinfo')
+
+
 
 class ChatRoomJabberBot(JabberBot):
     """A bot based on JabberBot and broadcast example given in there."""
@@ -77,6 +87,12 @@ class ChatRoomJabberBot(JabberBot):
         self.invited = {}
 
         self.started = time.time()
+
+        self.cric_matches = None
+        self.cric_match = None
+        self.cric_url = 'http://www.espncricinfo.com'
+        self.cric_on = False
+        self.cric_last_ball = '0'
         
         self.message_queue = []
         self.thread_killed = False
@@ -145,6 +161,7 @@ class ChatRoomJabberBot(JabberBot):
 
     def shutdown(self):
         self.save_users()
+        self.cric_on = False
 
     def unknown_command(self, mess, cmd, args):
         user = self.get_sender_username(mess)
@@ -342,6 +359,156 @@ class ChatRoomJabberBot(JabberBot):
 
             for entry in feed.entry:
                 self.message_queue.append('... and here you go -- %s' % entry.GetHtmlLink().href)
+
+    @botcmd(name=',cric')
+    def cric(self, mess, args):
+        """ A bunch of Cricinfo commands. Say ,cric help for more info. """
+        cric_th = threading.Thread(target=self.cric_parse, args=(mess,args))
+        cric_th.start()
+
+    def cric_get_matches(self):
+        """ Fetches currently relevant matches. """
+        opener = urllib2.build_opener()
+        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
+        data = opener.open('http://www.espncricinfo.com/')
+        soup = BeautifulSoup(data)
+        matches, = soup.findAll('table', id='international', limit=1)
+        return [(match.getText(' '), match.attrs[0][1]) for match in matches.findAll('a')]
+
+    def cric_get_summary(self, url):
+        """ Fetches the minimal scoreboard """
+        opener = urllib2.build_opener()
+        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
+        data = opener.open(self.cric_url+url)
+        soup = BeautifulSoup(data)
+        title, = soup.findAll('title')
+        score = title.text.split('|')[0]
+        return score
+
+    def cric_get_recent(self, url):
+        """ Fetches the recent overs"""
+        view = '?view=live'
+        opener = urllib2.build_opener()
+        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
+        data = opener.open(self.cric_url+url+view)
+        soup = BeautifulSoup(data)
+        recent, = soup.findAll('p', 'liveDetailsText', limit=1)
+        return recent.getText(' ')
+
+    def cric_get_commentary_url(self, url):
+        """ Fetches the url of the current innings """
+        view = '?view=live'
+        opener = urllib2.build_opener()
+        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
+        data = opener.open(self.cric_url+url+view)
+        soup = BeautifulSoup(data)
+        l, = filter(lambda t: 'Commentary' in t.text, soup.findAll('a', "cardMenu"))
+        url = l.attrs[0][1]
+        self.log.info("Obtained commentary url")
+        return url
+
+    def cric_get_commentary(self, url):
+        """ Fetches the Commentary of current innings"""
+        url = self.cric_get_commentary_url(url)
+        opener = urllib2.build_opener()
+        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
+        data = opener.open(self.cric_url+url)
+        soup = BeautifulSoup(data)
+        S = soup.find('table', attrs={'class':'commsTable'})
+        C = S.findAll('p', 'commsText')
+        all_C = []
+        for i, comm in enumerate(C):
+            for hit in ['FOUR,', 'SIX,', 'OUT,']:
+                if hit in comm.text:
+                    ball = C[i-1].text
+                    if float(ball) > float(self.cric_last_ball):
+                        all_C.append((ball, comm.text.replace('\n', ' ')))
+        self.log.info("Obtained new undisplayed commentary")
+        return all_C
+
+    def cric_poll(self, url):
+        while self.cric_on:
+            self.log.info('Will Poll Cricinfo, if not unset when I sleep')
+            for i in range(30):
+                time.sleep(1)
+                if not self.cric_on:
+                    return
+            self.log.info('Polling Cricinfo')
+            comm = self.cric_get_commentary(url)
+            if comm:
+                self.cric_last_ball = comm[-1][0]
+                comm = [' - '.join(c) for c in comm]
+                comm = '\n\n'.join(comm)
+                self.message_queue.append(comm)
+                self.log.info('Sent new commentary')
+                    
+    def cric_parse(self, mess, args):
+        """ A function that is used in a new thread."""
+        user = self.get_sender_username(mess)
+
+        if not args:
+            if self.cric_match is None or not self.cric_matches:
+                self.send_simple_reply(mess, 'Use the matches sub-command')
+                return
+            summary = self.cric_get_summary(self.cric_matches[self.cric_match][1])
+            self.log.info('%s' %(summary))
+            self.message_queue.append(summary)
+
+        elif args.startswith('recent'):
+            if self.cric_match is None or not self.cric_matches:
+                self.send_simple_reply(mess, 'Use the matches sub-command')
+                return
+            recent = self.cric_get_recent(self.cric_matches[self.cric_match][1])
+            self.log.info('%s' %(recent))
+            self.message_queue.append(recent)
+
+        elif args.startswith('matches'):
+            self.cric_matches = self.cric_get_matches()
+            self.send_simple_reply(mess,'Select a match: ')
+            for i, match in enumerate(self.cric_matches):
+                self.send_simple_reply(mess,'[%s] - %s' %(i, match[0]))
+            self.send_simple_reply(mess,'Use the set sub-command.')
+
+        elif args.startswith('set'):
+            args = args.split()
+            if len(args)!=2:
+                self.send_simple_reply(mess, 'Behave yourelf, %s' %user)
+                return
+            try:
+                n = int(args[1])
+                self.cric_match = n
+                self.message_queue.append('Match set to %s by %s'
+                                          %(self.cric_matches[n][0], user))
+                return 
+            except:
+                self.send_simple_reply(mess, 'Behave yourelf, %s' %user)
+                return
+        elif args == 'on':
+            # Start a thread to keep polling cricinfo
+            self.cric_on = True
+            self.cric_last_ball = '0'
+            if self.cric_match is None or not self.cric_matches:
+                self.send_simple_reply(mess, 'Use the matches sub-command')
+                return
+            cric_poll_th = threading.Thread(target=self.cric_poll,
+                                args=(self.cric_matches[self.cric_match][1],))
+            cric_poll_th.start()
+            self.send_simple_reply(mess, 'Polling Turned on')
+        elif args == 'off':
+            # Unset variable to stop polling
+            self.cric_on = False
+            self.send_simple_reply(mess, 'Polling Turned off')
+        else:
+            help = """
+            ,cric matches -- Current matches
+            ,cric set n -- Set match number to n
+            ,cric -- Brief summary of the match
+            ,cric on -- Turn 'on' polling 
+            ,cric recent -- Recent Overs
+            ,cric full -- Full scorecard (MAY NOT IMPLEMENT)
+            ,cric live -- Prev 2 overs of commentary? (MAY NOT IMPLEMENT)
+            """
+            self.send_simple_reply(mess, help)
 
     def idle_proc( self):
         if not len(self.message_queue):
