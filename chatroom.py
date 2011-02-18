@@ -494,12 +494,12 @@ class ChatRoomJabberBot(JabberBot):
                                 args=(self.cric_matches[self.cric_match][1],))
             cric_poll_th.start()
             self.message_queue.append('Polling turned on by %s. Match -- %s'
-                                      %(user, self.cric_matches[n][0]))
+                                      %(user, self.cric_matches[self.cric_match][0]))
         elif args == 'off':
             # Unset variable to stop polling
             self.cric_on = False
             self.message_queue.append('Polling turned off by %s. Match -- %s'
-                                      %(user, self.cric_matches[n][0]))
+                                      %(user, self.cric_matches[self.cric_match][0]))
 
         else:
             help = """
