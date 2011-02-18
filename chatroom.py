@@ -372,7 +372,7 @@ class ChatRoomJabberBot(JabberBot):
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
         data = opener.open('http://www.espncricinfo.com/')
         soup = BeautifulSoup(data)
-        matches, = soup.findAll('table', id='international', limit=1)
+        matches, = soup.findAll('table', id='special', limit=1)
         return [(match.getText(' '), match.attrs[0][1]) for match in matches.findAll('a')]
 
     def cric_get_summary(self, url):
