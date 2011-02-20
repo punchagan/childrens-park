@@ -532,6 +532,17 @@ class ChatRoomJabberBot(JabberBot):
             """
             self.send_simple_reply(mess, help)
 
+    @botcmd(name=',see')
+    def bot_see(self, mess, args):
+        """ Look at bot's attributes.
+
+        May not be a good idea to allow use for all users, but for
+        now, I don't care."""
+        try:
+            return "%s is %s" % (args, bc.__getattribute__(args))
+        except AttributeError:
+            return "No such attribute"
+
     def idle_proc( self):
         if not len(self.message_queue):
             return
