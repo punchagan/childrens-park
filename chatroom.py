@@ -419,7 +419,7 @@ class ChatRoomJabberBot(JabberBot):
         url = self.cric_get_commentary_url(url)
         if not url:
             return
-        curr_inn = cric_get_innings(url)
+        curr_inn = self.cric_get_innings(url)
         if self.cric_matches[self.cric_match][3] == '1' and curr_inn == '2':
             self.cric_matches[self.cric_match][2] = '0' # reset last ball
             self.cric_matches[self.cric_match][3] = '2' # change innings
@@ -476,11 +476,18 @@ class ChatRoomJabberBot(JabberBot):
             self.message_queue.append(recent)
 
         elif args.startswith('matches'):
-            self.cric_matches = self.cric_get_matches()
-            self.send_simple_reply(mess,'Select a match: ')
-            for i, match in enumerate(self.cric_matches):
+            matches = self.cric_get_matches()
+            self.send_simple_reply(mess,'Now obtained, matches - ')
+            for i, match in enumerate(matches):
                 self.send_simple_reply(mess,'[%s] - %s' %(i, match[0]))
-            self.send_simple_reply(mess,'Use the set sub-command.')
+            if '-f' in args or not self.cric_matches:
+                self.cric_matches = matches
+            else:
+                self.send_simple_reply(mess,'Matches *previously* set to - ')
+                for i, match in enumerate(self.cric_matches):
+                    self.send_simple_reply(mess,'[%s] - %s' %(i, match[0]))
+                self.send_simple_reply(mess,'*matches -f* will force change.')
+            self.send_simple_reply(mess,'Set the match using ,cric set.')
 
         elif args.startswith('set'):
             args = args.split()
