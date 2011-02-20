@@ -365,42 +365,38 @@ class ChatRoomJabberBot(JabberBot):
         cric_th = threading.Thread(target=self.cric_parse, args=(mess,args))
         cric_th.start()
 
-    def cric_get_matches(self):
-        """ Fetches currently relevant matches. """
+    def cric_soupify_url(self, url):
+        """ Open a url and return it's soup."""
         opener = urllib2.build_opener()
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-        data = opener.open('http://www.espncricinfo.com/')
+        data = opener.open(self.cric_url+url)
         soup = BeautifulSoup(data)
+        return soup
+
+    def cric_get_matches(self):
+        """ Fetches currently relevant matches. """
+        soup = self.cric_soupify_url('/')
         matches, = soup.findAll('table', id='special', limit=1)
         return [[match.getText(' '), match.attrs[0][1], '0', '1'] for match in matches.findAll('a')]
 
     def cric_get_summary(self, url):
         """ Fetches the minimal scoreboard """
-        opener = urllib2.build_opener()
-        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-        data = opener.open(self.cric_url+url)
-        soup = BeautifulSoup(data)
+        soup = self.cric_soupify_url(url)
         title, = soup.findAll('title')
         score = title.text.split('|')[0]
         return score
-
+    
     def cric_get_recent(self, url):
         """ Fetches the recent overs"""
         view = '?view=live'
-        opener = urllib2.build_opener()
-        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-        data = opener.open(self.cric_url+url+view)
-        soup = BeautifulSoup(data)
+        soup = self.cric_soupify_url(url+view)
         recent, = soup.findAll('p', 'liveDetailsText', limit=1)
         return recent.getText(' ')
 
     def cric_get_commentary_url(self, url):
         """ Fetches the url of the current innings """
         view = '?view=live'
-        opener = urllib2.build_opener()
-        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-        data = opener.open(self.cric_url+url+view)
-        soup = BeautifulSoup(data)
+        soup = self.cric_soupify_url(url+view)
         try: 
             l, = filter(lambda t: 'Commentary' in t.text, soup.findAll('a', "cardMenu"))
             url = l.attrs[0][1]
@@ -423,10 +419,7 @@ class ChatRoomJabberBot(JabberBot):
         if self.cric_matches[self.cric_match][3] == '1' and curr_inn == '2':
             self.cric_matches[self.cric_match][2] = '0' # reset last ball
             self.cric_matches[self.cric_match][3] = '2' # change innings
-        opener = urllib2.build_opener()
-        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-        data = opener.open(self.cric_url+url)
-        soup = BeautifulSoup(data)
+        soup = self.cric_soupify_url(url)
         S = soup.find('table', attrs={'class':'commsTable'})
         C = S.findAll('p', 'commsText')
         all_C = []
