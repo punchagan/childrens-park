@@ -101,7 +101,7 @@ class ChatRoomJabberBot(JabberBot):
             conn = xmpp.Client(self.jid.getDomain(), debug = [])
 
             if self.jid.getDomain() == 'gmail.com':
-                conres = conn.connect(server=('talk.google.com', 5223))
+                conres = conn.connect(server=('talk.google.com', 5222))
             else:
                 conres = conn.connect()
             
