@@ -401,14 +401,20 @@ class ChatRoomJabberBot(JabberBot):
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
         data = opener.open(self.cric_url+url+view)
         soup = BeautifulSoup(data)
-        l, = filter(lambda t: 'Commentary' in t.text, soup.findAll('a', "cardMenu"))
-        url = l.attrs[0][1]
-        self.log.info("Obtained commentary url")
-        return url
+        try: 
+            l, = filter(lambda t: 'Commentary' in t.text, soup.findAll('a', "cardMenu"))
+            url = l.attrs[0][1]
+            self.log.info("Obtained commentary url")
+            return url
+        except:
+            self.log.info("Commentary url not found")
+            return 
 
     def cric_get_commentary(self, url):
         """ Fetches the Commentary of current innings"""
         url = self.cric_get_commentary_url(url)
+        if not url:
+            return
         opener = urllib2.build_opener()
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
         data = opener.open(self.cric_url+url)
