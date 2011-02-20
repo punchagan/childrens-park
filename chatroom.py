@@ -372,7 +372,7 @@ class ChatRoomJabberBot(JabberBot):
         data = opener.open('http://www.espncricinfo.com/')
         soup = BeautifulSoup(data)
         matches, = soup.findAll('table', id='special', limit=1)
-        return [[match.getText(' '), match.attrs[0][1], '0'] for match in matches.findAll('a')]
+        return [[match.getText(' '), match.attrs[0][1], '0', '1'] for match in matches.findAll('a')]
 
     def cric_get_summary(self, url):
         """ Fetches the minimal scoreboard """
@@ -408,13 +408,21 @@ class ChatRoomJabberBot(JabberBot):
             return url
         except:
             self.log.info("Commentary url not found")
-            return 
+            return
+
+    def cric_get_innings(self, url):
+        """ Find out the innings from commentary url"""
+        return re.findall(r'innings=(.)', url)[0]
 
     def cric_get_commentary(self, url):
         """ Fetches the Commentary of current innings"""
         url = self.cric_get_commentary_url(url)
         if not url:
             return
+        curr_inn = cric_get_innings(url)
+        if self.cric_matches[self.cric_match][3] == '1' and curr_inn == '2':
+            self.cric_matches[self.cric_match][2] = '0' # reset last ball
+            self.cric_matches[self.cric_match][3] = '2' # change innings
         opener = urllib2.build_opener()
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
         data = opener.open(self.cric_url+url)
