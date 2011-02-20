@@ -443,6 +443,7 @@ class ChatRoomJabberBot(JabberBot):
             comm = self.cric_get_commentary(url)
             if comm:
                 self.cric_matches[self.cric_match][2] = comm[-1][0]
+                comm.append(('Score', self.cric_get_summary(self.cric_matches[self.cric_match][1])))
                 comm = [' - '.join(c) for c in comm]
                 comm = '\n\n'.join(comm)
                 self.message_queue.append(comm)
