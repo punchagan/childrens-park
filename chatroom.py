@@ -92,7 +92,6 @@ class ChatRoomJabberBot(JabberBot):
         self.cric_match = None
         self.cric_url = 'http://www.espncricinfo.com'
         self.cric_on = False
-        self.cric_last_ball = '0'
         
         self.message_queue = []
         self.thread_killed = False
@@ -373,7 +372,7 @@ class ChatRoomJabberBot(JabberBot):
         data = opener.open('http://www.espncricinfo.com/')
         soup = BeautifulSoup(data)
         matches, = soup.findAll('table', id='special', limit=1)
-        return [(match.getText(' '), match.attrs[0][1]) for match in matches.findAll('a')]
+        return [[match.getText(' '), match.attrs[0][1], '0'] for match in matches.findAll('a')]
 
     def cric_get_summary(self, url):
         """ Fetches the minimal scoreboard """
@@ -421,7 +420,7 @@ class ChatRoomJabberBot(JabberBot):
             for hit in ['FOUR,', 'SIX,', 'OUT,']:
                 if hit in comm.text:
                     ball = C[i-1].text
-                    if float(ball) > float(self.cric_last_ball):
+                    if float(ball) > float(self.cric_matches[self.cric_match][2]):
                         all_C.append((ball, comm.text.replace('\n', ' ')))
         self.log.info("Obtained new undisplayed commentary")
         return all_C
@@ -436,7 +435,7 @@ class ChatRoomJabberBot(JabberBot):
             self.log.info('Polling Cricinfo')
             comm = self.cric_get_commentary(url)
             if comm:
-                self.cric_last_ball = comm[-1][0]
+                self.cric_matches[self.cric_match][2] = comm[-1][0]
                 comm = [' - '.join(c) for c in comm]
                 comm = '\n\n'.join(comm)
                 self.message_queue.append(comm)
@@ -486,7 +485,6 @@ class ChatRoomJabberBot(JabberBot):
         elif args == 'on':
             # Start a thread to keep polling cricinfo
             self.cric_on = True
-            self.cric_last_ball = '0'
             if self.cric_match is None or not self.cric_matches:
                 self.send_simple_reply(mess, 'Use the matches sub-command')
                 return
