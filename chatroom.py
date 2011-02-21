@@ -419,6 +419,8 @@ class ChatRoomJabberBot(JabberBot):
         if self.cric_matches[self.cric_match][3] == '1' and curr_inn == '2':
             self.cric_matches[self.cric_match][2] = '0' # reset last ball
             self.cric_matches[self.cric_match][3] = '2' # change innings
+            self.log.info("cricinfo: Changed innings")
+            return  # Just adding some time delay
         soup = self.cric_soupify_url(url)
         S = soup.find('table', attrs={'class':'commsTable'})
         C = S.findAll('p', 'commsText')
