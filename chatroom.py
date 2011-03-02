@@ -539,6 +539,11 @@ class ChatRoomJabberBot(JabberBot):
         except AttributeError:
             return "No such attribute"
 
+    @botcmd(name=',help')
+    def help_alias(self, mess, args):
+        """An alias to help command."""
+        return self.help(mess,args)
+
     def idle_proc( self):
         if not len(self.message_queue):
             return
