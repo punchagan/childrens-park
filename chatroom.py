@@ -127,39 +127,55 @@ class ChatRoomJabberBot(JabberBot):
             self.log.info('*** roster ***')
             self.conn.RegisterHandler('message', self.callback_message)
             self.conn.RegisterHandler('presence', self.callback_presence)
+            self._JabberBot__set_status(self.get_topic())
 
         return self.conn
 
+    def save_state(self):
+        f = open('state.py', 'w')
+        f.write('# -*- coding: utf-8 -*-\n\n')
+        self.save_users(f)
+        self.save_topic(f)
+        f.close()
+
     def get_users(self):
-        users = {}
         try:
-            f = codecs.open('users.py', 'r', encoding='utf-8')
-            # We assume user data begins from thrid line.
-            # It is good to have encoding specified in this file
-            for line in f.readlines()[2:]: 
-                if line.strip():
-                    u, n = line.split()
-                    users[u] = n
-            f.close()
+            from state import USERS
+            users = USERS
+            for user in users:
+                users[user] = users[user].decode('utf-8')
             self.log.info("Obtained user data")
         except:
+            users = {}
             self.log.info("No existing user data")
-
         return users
     
-    def save_users(self):
+    def save_users(self, file):
         try:
-            f = codecs.open('users.py', 'w', encoding='utf-8')
-            f.write('# -*- coding: utf-8 -*-\n\n')
+            file.write('USERS = {\n')
             for u in self.users:
-                f.write("%s %s\n" %(u, self.users[u]))
-            f.close()
+                file.write("'%s': '%s',\n" %(u, self.users[u].encode('utf-8')))
+            file.write('}\n\n')
             self.log.info("Saved user data")
         except:
             self.log.info("Couldn't save user data")
 
+    def get_topic(self):
+        try:
+            from state import TOPIC
+            TOPIC = TOPIC.decode('utf-8')
+            return TOPIC
+        except:
+            return ''
+
+    def save_topic(self, file):
+        try:
+            file.write("TOPIC = '%s'\n" %(self._JabberBot__status.encode('utf-8')))
+        except:
+            return ''
+
     def shutdown(self):
-        self.save_users()
+        self.save_state()
         self.cric_on = False
 
     def unknown_command(self, mess, cmd, args):
@@ -234,7 +250,7 @@ class ChatRoomJabberBot(JabberBot):
             self.invited.pop(user)
             self.message_queue.append('_%s has joined the channel_' % user)
             self.log.info('%s subscribed to the broadcast.' % user)
-            self.save_users()
+            self.save_state()
             return 'You are now subscribed.'
 
     @botcmd(name=',unsubscribe')
@@ -247,7 +263,7 @@ class ChatRoomJabberBot(JabberBot):
             user = self.users.pop(user)
             self.message_queue.append('_%s has left the channel_' % user)
             self.log.info( '%s unsubscribed from the broadcast.' % user)
-            self.save_users()
+            self.save_state()
             return 'You are now unsubscribed.'
 
 
@@ -262,7 +278,7 @@ class ChatRoomJabberBot(JabberBot):
                 self.users[user] = args
                 self.log.info( '%s changed alias.' % user)
                 self.log.info('%s' %self.users)
-                self.save_users()
+                self.save_state()
                 return 'You are now known as %s' % args
             else:
                 return 'Nick already taken, or too short/long. 1-24 chars allowed.'
@@ -276,6 +292,7 @@ class ChatRoomJabberBot(JabberBot):
             self._JabberBot__set_status(args)
             self.message_queue.append('_%s changed topic to %s_' %(self.users[user], args))
             self.log.info( '%s changed topic.' % user)
+            self.save_state()
 
 
     @botcmd(name=',list')

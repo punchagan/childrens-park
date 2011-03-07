@@ -8,7 +8,7 @@ are sent to all the subscribed users.
 + Depends: python-jabberbot, xmpppy
 
 + To add new users, the admin can either add them manually to a USERS
-  dict in a users.py file, or they can be invited and then added.
+  dict in a state.py file, or they can be invited and then added.
 
 + *Known Issue*: Google doesn't allow sending and receiving more than
   50 messages in a period of 12.5 seconds.  This is a big problem if
