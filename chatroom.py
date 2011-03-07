@@ -84,7 +84,7 @@ class ChatRoomJabberBot(JabberBot):
 
         self.users = self.get_users()
         
-        self.invited = {}
+        self.invited = self.get_invited()
 
         self.started = time.time()
 
@@ -135,6 +135,7 @@ class ChatRoomJabberBot(JabberBot):
         f = open('state.py', 'w')
         f.write('# -*- coding: utf-8 -*-\n\n')
         self.save_users(f)
+        self.save_invited(f)
         self.save_topic(f)
         f.close()
 
@@ -159,6 +160,29 @@ class ChatRoomJabberBot(JabberBot):
             self.log.info("Saved user data")
         except:
             self.log.info("Couldn't save user data")
+
+    def get_invited(self):
+        try:
+            from state import INVITED
+            invited = INVITED
+            for user in invited:
+                invited[user] = invited[user].decode('utf-8')
+            self.log.info("Obtained invited user data")
+        except:
+            invited = {}
+            self.log.info("No existing invited users")
+        return invited
+    
+    def save_invited(self, file):
+        try:
+            file.write('INVITED = {\n')
+            for u in self.invited:
+                file.write("'%s': '%s',\n" %(u, self.invited[u].encode('utf-8')))
+            file.write('}\n\n')
+            self.log.info("Saved user data")
+        except:
+            self.log.info("Couldn't save user data")
+
 
     def get_topic(self):
         try:
@@ -326,7 +350,8 @@ class ChatRoomJabberBot(JabberBot):
             self.send(args, '%s invited you to join %s. Say "help" to see how to join.' % (user, CHANNEL))
             self.invited[xmpp.JID(args).getNode()] = ''
             self.log.info( '%s invited %s.' % (user, args))
-            return 'You invited %s' % args
+            self.save_state()
+            self.message_queue.append('_%s invited %s_' % (self.users[user], args))
 
     @botcmd(name=',whois')
     def whois( self, mess, args):
