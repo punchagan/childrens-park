@@ -19,3 +19,4 @@ pip-log.txt
 .tox
 /users.py
 /settings.py
+/state.py
