@@ -212,7 +212,7 @@ class ChatRoomJabberBot(JabberBot):
         try:
             file.write('IDEAS = [\n')
             for u in self.ideas:
-                file.write('"""%s"""' % (u.encode('utf-8')))
+                file.write('"""%s""",\n' % (u.encode('utf-8')))
             file.write(']\n\n')
         except:
             self.log.info("Couldn't save ideas")
