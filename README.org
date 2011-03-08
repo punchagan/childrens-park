@@ -30,21 +30,17 @@
      For instance, @ringo blah blah, should be shown only to ringo,
      nobody else. 
 
-  3. Ideas.txt
-     A list of items/ideas.  It should be possible to add and remove
-     items from the list.
-
-  4. Translation
+  3. Translation
      te2hi or te2en bot for translation help
 
-  5. Reminders 
+  4. Reminders 
      For instance -- ,setreminder 2011/04/15 20:00 Priya's
      Treat This should keep reminding at pre-set intervals before the
      event.
 
-  6. Score bot
+  5. Score bot
      We should be able to keep track of scores for various objects,
      using object-name++ and object-name--
 
-  7. Replace regex
+  6. Replace regex
      s/old_word/new_word should do the replacements

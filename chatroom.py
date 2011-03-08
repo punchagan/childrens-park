@@ -86,6 +86,8 @@ class ChatRoomJabberBot(JabberBot):
         
         self.invited = self.get_invited()
 
+        self.ideas = self.get_ideas()        
+
         self.started = time.time()
 
         self.cric_matches = None
@@ -137,6 +139,7 @@ class ChatRoomJabberBot(JabberBot):
         self.save_users(f)
         self.save_invited(f)
         self.save_topic(f)
+        self.save_ideas(f)
         f.close()
 
     def get_users(self):
@@ -196,6 +199,23 @@ class ChatRoomJabberBot(JabberBot):
             file.write("TOPIC = '%s'\n" %(self._JabberBot__status.encode('utf-8')))
         except:
             return ''
+
+    def get_ideas(self):
+        try:
+            from state import IDEAS
+            ideas = [idea.decode('utf-8') for idea in IDEAS]
+        except:
+            ideas = []
+        return ideas
+
+    def save_ideas(self, file):
+        try:
+            file.write('IDEAS = [\n')
+            for u in self.ideas:
+                file.write('"""%s"""' % (u.encode('utf-8')))
+            file.write(']\n\n')
+        except:
+            self.log.info("Couldn't save ideas")
 
     def shutdown(self):
         self.save_state()
@@ -351,6 +371,37 @@ class ChatRoomJabberBot(JabberBot):
             self.log.info( '%s invited %s.' % (user, args))
             self.save_state()
             self.message_queue.append('_%s invited %s_' % (self.users[user], args))
+
+    @botcmd(name=',ideas')
+    def ideas(self, mess, args):
+        """Maintain a list of ideas/items."""
+        user = self.get_sender_username(mess)
+        if user in self.users:
+            if args.startswith('show'):
+                self.message_queue.append('_%s is ideating_' % (self.users[user]))
+                for i, text in enumerate(self.ideas):
+                    self.message_queue.append('_%s - %s_' % (i, text))
+            elif args.startswith('add'):
+                text = ' '.join(args.split()[1:])
+                self.ideas.append(text)
+                self.save_state()
+                self.message_queue.append('_%s added "%s" as an idea_' % (self.users[user], text))
+            elif args.startswith('del'):
+                try:
+                    num = int(args.split()[1])
+                    if num in range(len(self.ideas)):
+                        self.message_queue.append('_%s deleted "%s" from ideas_' % (self.users[user], self.ideas[num]))
+                        del self.ideas[num]
+                        self.save_state()
+                except:
+                    return "Invalid option to delete."
+            elif not args:
+                return '\n'.join(['_%s - %s_' %(i,t) for i,t in enumerate(self.ideas)])
+            else:
+                return """add - Adds a new idea
+                del - Deletes an idea
+                show - Show ideas in chatroom
+                no arguments - Show ideas to you"""
 
     @botcmd(name=',whois')
     def whois( self, mess, args):
