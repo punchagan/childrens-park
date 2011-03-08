@@ -179,10 +179,9 @@ class ChatRoomJabberBot(JabberBot):
             for u in self.invited:
                 file.write("'%s': '%s',\n" %(u, self.invited[u].encode('utf-8')))
             file.write('}\n\n')
-            self.log.info("Saved user data")
+            self.log.info("Saved invited user data")
         except:
-            self.log.info("Couldn't save user data")
-
+            self.log.info("Couldn't save invited user data")
 
     def get_topic(self):
         try:
