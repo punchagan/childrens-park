@@ -378,9 +378,10 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         if user in self.users:
             if args.startswith('show'):
-                self.message_queue.append('_%s is ideating_' % (self.users[user]))
-                for i, text in enumerate(self.ideas):
-                    self.message_queue.append('_%s - %s_' % (i, text))
+                txt = '\n_%s is ideating_\n' % (self.users[user])
+                for i, idea in enumerate(self.ideas):
+                    txt += '_%s - %s_\n' % (i, idea)
+                    self.message_queue.append(txt)
             elif args.startswith('add'):
                 text = ' '.join(args.split()[1:])
                 self.ideas.append(text)
