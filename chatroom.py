@@ -198,7 +198,7 @@ class ChatRoomJabberBot(JabberBot):
 
     def save_topic(self, file):
         try:
-            file.write("TOPIC = '%s'\n" %(self._JabberBot__status.encode('utf-8')))
+            file.write("TOPIC = """%s"""\n\n" %(self._JabberBot__status.encode('utf-8')))
         except:
             return ''
 
