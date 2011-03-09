@@ -158,7 +158,9 @@ class ChatRoomJabberBot(JabberBot):
         try:
             file.write('USERS = {\n')
             for u in self.users:
-                file.write("'%s': '%s',\n" %(u, self.users[u].encode('utf-8')))
+                file.write("'%s': '%s',\n"
+                           %(u.encode('utf-8'),
+                             self.users[u].encode('utf-8')))
             file.write('}\n\n')
             self.log.info("Saved user data")
         except:
