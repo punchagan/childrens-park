@@ -398,11 +398,22 @@ class ChatRoomJabberBot(JabberBot):
                         self.save_state()
                 except:
                     return "Invalid option to delete."
+            elif args.startswith('edit'):
+                try:
+                    num = int(args.split()[1])
+                    if num in range(len(self.ideas)):
+                        txt = ' '.join(args.split()[2:])
+                        self.message_queue.append('_%s changed idea %s to %s_' % (self.users[user], num, txt))
+                        self.ideas[num] = txt
+                        self.save_state()
+                except:
+                    return "Invalid option to edit."
             elif not args:
                 return '\n'.join(['_%s - %s_' %(i,t) for i,t in enumerate(self.ideas)])
             else:
                 return """add - Adds a new idea
-                del - Deletes an idea
+                del n - Deletes n^{th} idea
+                edit n txt - Replace n^{th} idea with 'txt'
                 show - Show ideas in chatroom
                 no arguments - Show ideas to you"""
 
