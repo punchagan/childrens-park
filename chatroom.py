@@ -385,7 +385,9 @@ class ChatRoomJabberBot(JabberBot):
                     txt += '_%s - %s_\n' % (i, idea)
                 self.message_queue.append(txt)
             elif args.startswith('add'):
-                text = ' '.join(args.split()[1:])
+                text = ' '.join(args.split()[1:]).strip()
+                if text == '':
+                    return "Sorry. Cannot add empty idea."
                 self.ideas.append(text)
                 self.save_state()
                 self.message_queue.append('_%s added "%s" as an idea_' % (self.users[user], text))
