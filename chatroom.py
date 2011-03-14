@@ -404,7 +404,9 @@ class ChatRoomJabberBot(JabberBot):
                 try:
                     num = int(args.split()[1])
                     if num in range(len(self.ideas)):
-                        txt = ' '.join(args.split()[2:])
+                        txt = ' '.join(args.split()[2:]).strip()
+                        if txt == '':
+                            return "Sorry. Cannot add empty idea."
                         self.message_queue.append('_%s changed idea %s to %s_' % (self.users[user], num, txt))
                         self.ideas[num] = txt
                         self.save_state()
