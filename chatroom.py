@@ -656,6 +656,17 @@ class ChatRoomJabberBot(JabberBot):
         """An alias to help command."""
         return self.help(mess,args)
 
+    def chunk_message(self, user, msg):
+        LIM_LEN = 768
+        if len(msg) <= LIM_LEN:
+            self.send(user+"@gmail.com", msg)
+        else:
+            idx = msg.rfind('\n', 0, LIM_LEN)
+            if idx < 0:
+                idx = LIM_LEN
+            self.send(user+"@gmail.com", msg[:idx])
+            self.chunk_message(user, msg[idx:])
+
     def idle_proc( self):
         if not len(self.message_queue):
             return
@@ -669,7 +680,7 @@ class ChatRoomJabberBot(JabberBot):
                 self.log.info('sending "%s" to %d user(s).' % ( message, len(self.users), ))
             for user in self.users:
                 if not message.startswith("[%s]:" % self.users[user]):
-                    self.send(user+"@gmail.com", message)
+                    self.chunk_message(user, message)
 
     def thread_proc( self):
         while not self.thread_killed:
