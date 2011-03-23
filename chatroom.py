@@ -64,7 +64,10 @@ try:
 except:
     self.log.info('You need to have BeautifulSoup for cricinfo')
 
-
+try:
+    import gdata.youtube.service
+except:
+    self.log.info('You need to have python-gdata for youtube')
 
 class ChatRoomJabberBot(JabberBot):
     """A bot based on JabberBot and broadcast example given in there."""
@@ -450,12 +453,6 @@ class ChatRoomJabberBot(JabberBot):
     def youtube_fetch(self, mess, args):
         """Fetch the top-most result from YouTube"""
         user = self.get_sender_username(mess)
-        try:
-            import gdata.youtube
-            import gdata.youtube.service
-        except:
-            self.log.info('You need to have python-gdata')
-            return 'python-gdata needs to be installed!'
         if user in self.users:
             self.log.info('%s queried %s from Youtube.' % (user, args))
             yt_service = gdata.youtube.service.YouTubeService()
