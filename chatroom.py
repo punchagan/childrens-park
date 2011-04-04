@@ -654,14 +654,15 @@ class ChatRoomJabberBot(JabberBot):
         return self.help(mess,args)
 
     def chunk_message(self, user, msg):
-        LIM_LEN = 768
+        LIM_LEN = 512
         if len(msg) <= LIM_LEN:
             self.send(user+"@gmail.com", msg)
         else:
-            idx = msg.rfind('\n', 0, LIM_LEN)
-            if idx < 0:
+            idx = (msg.rfind('\n', 0, LIM_LEN) + 1) or (msg.rfind(' ', 0, LIM_LEN) + 1)
+            if not idx:
                 idx = LIM_LEN
             self.send(user+"@gmail.com", msg[:idx])
+            time.sleep(0.1)
             self.chunk_message(user, msg[idx:])
 
     def idle_proc( self):
