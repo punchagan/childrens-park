@@ -268,7 +268,7 @@ class ChatRoomJabberBot(JabberBot):
         cmd = command
         self.log.debug("*** cmd = %s" % cmd)
 
-        if self.commands.has_key(cmd):
+        if self.commands.has_key(cmd) and cmd != 'help':
             try:
                 reply = self.commands[cmd](mess, args)
             except Exception, e:
@@ -371,7 +371,7 @@ class ChatRoomJabberBot(JabberBot):
         """Invite a person to join the room. Works only if the person has added the bot as a friend, as of now."""
         user = self.get_sender_username(mess)
         if user in self.users:
-            self.send(args, '%s invited you to join %s. Say "help" to see how to join.' % (user, CHANNEL))
+            self.send(args, '%s invited you to join %s. Say ",help" to see how to join.' % (user, CHANNEL))
             self.invited[xmpp.JID(args).getNode()] = ''
             self.log.info( '%s invited %s.' % (user, args))
             self.save_state()
