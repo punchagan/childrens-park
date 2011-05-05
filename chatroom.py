@@ -653,6 +653,15 @@ class ChatRoomJabberBot(JabberBot):
         """An alias to help command."""
         return self.help(mess,args)
 
+    def highlight_name(self, msg, user):
+        """Emphasizes your name, when sent in a message.
+        """
+        nick = self.users[user]
+        msg = re.sub("((\s)%s(\s))|(\A%s(\s))|((\s)%s\Z)" %(nick, nick, nick),
+                     " *%s* " %nick, msg)
+
+        return msg
+
     def chunk_message(self, user, msg):
         LIM_LEN = 512
         if len(msg) <= LIM_LEN:
@@ -678,7 +687,9 @@ class ChatRoomJabberBot(JabberBot):
                 self.log.info('sending "%s" to %d user(s).' % ( message, len(self.users), ))
             for user in self.users:
                 if not message.startswith("[%s]:" % self.users[user]):
-                    self.chunk_message(user, message)
+                    self.chunk_message(user,
+                                       self.highlight_name(message, user))
+
 
     def thread_proc( self):
         while not self.thread_killed:
