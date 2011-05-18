@@ -57,7 +57,8 @@ from datetime import timedelta, datetime
 from settings import *
 
 import re
-import urllib2
+import urllib2, urllib
+import simplejson
 
 try:
     from BeautifulSoup import BeautifulSoup
@@ -467,6 +468,38 @@ class ChatRoomJabberBot(JabberBot):
 
             for entry in feed.entry:
                 self.message_queue.append('... and here you go -- %s' % entry.GetHtmlLink().href)
+
+    @botcmd(name=',g')
+    def google_fetch(self, mess, args):
+        """Fetch the top-most result from Google"""
+        user = self.get_sender_username(mess)
+        if user in self.users:
+            self.log.info('%s queried %s from Google.' % (user, args))
+            query = urllib.urlencode({'q' : args})
+            url = 'http://ajax.googleapis.com/ajax/' + \
+                  'services/search/web?v=1.0&%s' % (query)
+            results = urllib.urlopen(url)
+            json = simplejson.loads(results.read())
+            top = json['responseData']['results'][0]
+            self.message_queue.append('%s googled for %s ... and here you go'
+                                      %(self.users[user], args))
+            self.message_queue.append('%s -- %s' %(top['title'], top['url']))
+
+    @botcmd(name=',sc')
+    def soundcloud_fetch(self, mess, args):
+        """Fetch the top-most result from Google for site:soundcloud.com"""
+        user = self.get_sender_username(mess)
+        if user in self.users:
+            self.log.info('%s queried %s from Google.' % (user, args))
+            query = urllib.urlencode({'q' : "site:soundcloud.com" + args})
+            url = 'http://ajax.googleapis.com/ajax/' + \
+                  'services/search/web?v=1.0&%s' % (query)
+            results = urllib.urlopen(url)
+            json = simplejson.loads(results.read())
+            top = json['responseData']['results'][0]
+            self.message_queue.append('%s googled for %s ... and here you go'
+                                      %(self.users[user], args))
+            self.message_queue.append('%s -- %s' %(top['title'], top['url']))
 
     @botcmd(name=',cric')
     def cric(self, mess, args):
