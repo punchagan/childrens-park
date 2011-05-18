@@ -480,10 +480,13 @@ class ChatRoomJabberBot(JabberBot):
                   'services/search/web?v=1.0&%s' % (query)
             results = urllib.urlopen(url)
             json = simplejson.loads(results.read())
-            top = json['responseData']['results'][0]
             self.message_queue.append('%s googled for %s ... and here you go'
                                       %(self.users[user], args))
-            self.message_queue.append('%s -- %s' %(top['title'], top['url']))
+            try:
+                top = json['responseData']['results'][0]
+                self.message_queue.append('%s -- %s' %(top['title'], top['url']))
+            except:
+                self.message_queue.append('%s' % "Oops! Nothing found!")
 
     @botcmd(name=',sc')
     def soundcloud_fetch(self, mess, args):
