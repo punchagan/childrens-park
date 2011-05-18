@@ -491,7 +491,7 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         if user in self.users:
             self.log.info('%s queried %s from Google.' % (user, args))
-            query = urllib.urlencode({'q' : "site:soundcloud.com" + args})
+            query = urllib.urlencode({'q' : "site:soundcloud.com " + args})
             url = 'http://ajax.googleapis.com/ajax/' + \
                   'services/search/web?v=1.0&%s' % (query)
             results = urllib.urlopen(url)
