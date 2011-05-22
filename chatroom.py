@@ -227,6 +227,17 @@ class ChatRoomJabberBot(JabberBot):
         self.save_state()
         self.cric_on = False
 
+    def get_sender_username(self, mess):
+        """Extract the sender's user name (along with domain) from a message."""
+        jid = mess.getFrom()
+        typ = mess.getType()
+        username = jid.getNode()
+        domain = jid.getDomain()
+        if typ == "chat":
+            return "%s@%s" %(username, domain)
+        else:
+            return ""
+    
     def unknown_command(self, mess, cmd, args):
         user = self.get_sender_username(mess)
         if user in self.users:
@@ -373,7 +384,7 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         if user in self.users:
             self.send(args, '%s invited you to join %s. Say ",help" to see how to join.' % (user, CHANNEL))
-            self.invited[xmpp.JID(args).getNode()] = ''
+            self.invited['%s@%s' %(xmpp.JID(args).getNode(), xmpp.JID(args).getDomain)] = ''
             self.log.info( '%s invited %s.' % (user, args))
             self.save_state()
             self.message_queue.append('_%s invited %s_' % (self.users[user], args))
@@ -701,12 +712,12 @@ class ChatRoomJabberBot(JabberBot):
     def chunk_message(self, user, msg):
         LIM_LEN = 512
         if len(msg) <= LIM_LEN:
-            self.send(user+"@gmail.com", msg)
+            self.send(user, msg)
         else:
             idx = (msg.rfind('\n', 0, LIM_LEN) + 1) or (msg.rfind(' ', 0, LIM_LEN) + 1)
             if not idx:
                 idx = LIM_LEN
-            self.send(user+"@gmail.com", msg[:idx])
+            self.send(user, msg[:idx])
             time.sleep(0.1)
             self.chunk_message(user, msg[idx:])
 
