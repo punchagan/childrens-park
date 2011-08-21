@@ -23,24 +23,21 @@
   + Report other bugs/issues at [[https://github.com/punchagan/childrens-park/issues][GitHub]]
 
 * TO-DO/Ideas
-  1. More interesting command names.
-     subscribe, list, alias, topic, etc. are boring.
-
-  2. Private Messaging
+  1. Private Messaging
      For instance, @ringo blah blah, should be shown only to ringo,
      nobody else. 
 
-  3. Translation
+  2. Translation
      te2hi or te2en bot for translation help
 
-  4. Reminders 
+  3. Reminders 
      For instance -- ,setreminder 2011/04/15 20:00 Priya's
      Treat This should keep reminding at pre-set intervals before the
      event.
 
-  5. Score bot
+  4. Score bot
      We should be able to keep track of scores for various objects,
      using object-name++ and object-name--
 
-  6. Replace regex
+  5. Replace regex
      s/old_word/new_word should do the replacements
