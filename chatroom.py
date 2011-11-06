@@ -54,7 +54,7 @@ import traceback
 import codecs
 from datetime import timedelta, datetime
 
-import re, os, sys
+import re, os, sys, subprocess
 import urllib2, urllib
 import simplejson
 
@@ -311,6 +311,8 @@ class ChatRoomJabberBot(JabberBot):
             self.idle_proc()
             self.conn.sendPresence(typ='unavailable')
             self.log.info( 'Restarting...')
+            self.log.info('Pulling changes from GitHub...')
+            subprocess.call(["git", "pull"])
             os.execl('/usr/bin/nohup', sys.executable,
                      sys.executable, os.path.abspath(__file__))
 
