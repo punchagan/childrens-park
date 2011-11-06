@@ -532,7 +532,7 @@ class ChatRoomJabberBot(JabberBot):
     def cric_get_matches(self):
         """ Fetches currently relevant matches. """
         soup = self.cric_soupify_url('/')
-        matches, = soup.findAll('table', id='special', limit=1)
+        matches, = soup.findAll('table', id='international', limit=1)
         return [[match.getText(' '), match.attrs[0][1], '0', '1'] for match in matches.findAll('a')]
 
     def cric_get_summary(self, url):
