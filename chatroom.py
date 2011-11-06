@@ -54,9 +54,10 @@ import traceback
 import codecs
 from datetime import timedelta, datetime
 
-import re, os, sys, subprocess
+import re, os, sys
 import urllib2, urllib
 import simplejson
+from subprocess import Popen, PIPE
 
 try:
     from BeautifulSoup import BeautifulSoup
@@ -716,9 +717,10 @@ class ChatRoomJabberBot(JabberBot):
 
     def analyze_logs(self):
         self.log.info('Starting analysis...')
-        logs = subprocess.check_output(["grep", "sent:\s", "nohup.out"])
+        logs = Popen(["grep", "sent:\s", "nohup.out"], stdout=PIPE)
+        logs = logs.stdout
         people = {}
-        for line in logs.split('\n'):
+        for line in logs:
             log = line.strip().split()
             if not log or len(log) < 10:
                 continue
@@ -734,7 +736,7 @@ class ChatRoomJabberBot(JabberBot):
         stats = sorted(stats, key=lambda x: int(x.split()[2]), reverse=True)
         stats = ["%-15s -- %s" %("Name", "Message count")] + stats
 
-        stats = '...\n' + '\n'.join(stats) + '\n'
+        stats = 'the stats ...\n' + '\n'.join(stats) + '\n'
 
         self.log.info('Sending analyzed info')
         self.message_queue.append(stats)
