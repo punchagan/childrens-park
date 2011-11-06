@@ -717,7 +717,7 @@ class ChatRoomJabberBot(JabberBot):
 
     def analyze_logs(self):
         self.log.info('Starting analysis...')
-        logs = Popen(["grep", "sent:\s", "nohup.out"], stdout=PIPE)
+        logs = Popen(["grep", "sent:", "nohup.out"], stdout=PIPE)
         logs = logs.stdout
         people = {}
         for line in logs:
