@@ -57,7 +57,7 @@ from datetime import timedelta, datetime
 import re, os, sys
 import urllib2, urllib
 import simplejson
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, call
 
 try:
     from BeautifulSoup import BeautifulSoup
@@ -229,7 +229,7 @@ class ChatRoomJabberBot(JabberBot):
     def attempt_reconnect(self):
         self.log.info('Restarting...')
         self.log.info('Pulling changes from GitHub...')
-        subprocess.call(["git", "pull"])
+        call(["git", "pull"])
         os.execl('/usr/bin/nohup', sys.executable, sys.executable,
                  os.path.abspath(__file__))
 
