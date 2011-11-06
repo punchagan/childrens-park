@@ -705,6 +705,40 @@ class ChatRoomJabberBot(JabberBot):
             """
             self.send_simple_reply(mess, help)
 
+    @botcmd(name=",stats")
+    def stats(self, mess, args):
+        "Simple statistics with message count for each user."
+        user = self.get_sender_username(mess)
+        self.log.info('Starting analysis... %s requested' % user)
+        stats_th = threading.Thread(target=self.analyze_logs)
+        stats_th.start()
+        return 'Starting analysis... will take a while!'
+
+    def analyze_logs(self):
+        self.log.info('Starting analysis...')
+        logs = subprocess.check_output(["grep", "sent:\s", "nohup.out"])
+        people = {}
+        for line in logs.split('\n'):
+            log = line.strip().split()
+            if not log or len(log) < 10:
+                continue
+            person = log[7]
+            if '@' in person:
+                person = person.split('@')[0]
+            message = ' '.join(log[9:])
+            if person not in people:
+                people[person] = [message]
+            else:
+                people[person].append(message)
+        stats = ["%-15s -- %s" %(dude, len(people[dude])) for dude in people]
+        stats = sorted(stats, key=lambda x: int(x.split()[2]), reverse=True)
+        stats = ["%-15s -- %s" %("Name", "Message count")] + stats
+
+        stats = '...\n' + '\n'.join(stats) + '\n'
+
+        self.log.info('Sending analyzed info')
+        self.message_queue.append(stats)
+
     @botcmd(name=',see')
     def bot_see(self, mess, args):
         """ Look at bot's attributes.
