@@ -116,8 +116,8 @@ class ChatRoomJabberBot(JabberBot):
             authres = conn.auth(self.jid.getNode(), self._JabberBot__password, self.res)
             if not authres:
                 self.log.error('unable to authorize with server.')
-                os.execl('/usr/bin/nohup', sys.executable, sys.executable,
-                        os.path.abspath(__file__))
+                self.attempt_reconnect()
+
             if authres<>'sasl':
                 self.log.warning("unable to perform SASL auth os %s. Old authentication method used!" % self.jid.getDomain())
 
@@ -129,7 +129,8 @@ class ChatRoomJabberBot(JabberBot):
                 self.log.info('  %s' % contact)
             self.log.info('*** roster ***')
             self.conn.RegisterHandler('message', self.callback_message)
-            #self.conn.RegisterHandler('presence', self.callback_presence)
+            self.conn.RegisterDisconnectHandler(self.attempt_reconnect)
+            self.conn.UnregisterDisconnectHandler(conn.DisconnectHandler)
             self._JabberBot__set_status(self.get_topic())
 
         return self.conn
@@ -224,6 +225,13 @@ class ChatRoomJabberBot(JabberBot):
         self.save_state()
         self.cric_on = False
 
+    def attempt_reconnect(self):
+        self.log.info('Restarting...')
+        self.log.info('Pulling changes from GitHub...')
+        subprocess.call(["git", "pull"])
+        os.execl('/usr/bin/nohup', sys.executable, sys.executable,
+                 os.path.abspath(__file__))
+
     def get_sender_username(self, mess):
         """Extract the sender's user name (along with domain) from a message."""
         jid = mess.getFrom()
@@ -310,11 +318,7 @@ class ChatRoomJabberBot(JabberBot):
             self.shutdown()
             self.idle_proc()
             self.conn.sendPresence(typ='unavailable')
-            self.log.info( 'Restarting...')
-            self.log.info('Pulling changes from GitHub...')
-            subprocess.call(["git", "pull"])
-            os.execl('/usr/bin/nohup', sys.executable,
-                     sys.executable, os.path.abspath(__file__))
+            self.attempt_reconnect()
 
     @botcmd(name=',subscribe')
     def subscribe( self, mess, args):
