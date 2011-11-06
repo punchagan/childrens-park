@@ -48,27 +48,21 @@ from jabberbot import JabberBot, botcmd
 import xmpp
 
 import threading
-import time 
+import time
 import logging
 import traceback
 import codecs
 from datetime import timedelta, datetime
 
-from settings import *
-
-import re
+import re, os, sys
 import urllib2, urllib
 import simplejson
 
 try:
     from BeautifulSoup import BeautifulSoup
-except:
-    self.log.info('You need to have BeautifulSoup for cricinfo')
-
-try:
     import gdata.youtube.service
 except:
-    self.log.info('You need to have python-gdata for youtube')
+    print "Some features will not work, unless you have BeautifulSoup and gdata"
 
 class ChatRoomJabberBot(JabberBot):
     """A bot based on JabberBot and broadcast example given in there."""
@@ -110,17 +104,20 @@ class ChatRoomJabberBot(JabberBot):
                 conres = conn.connect(server=('talk.google.com', 5222))
             else:
                 conres = conn.connect()
-            
+
             if not conres:
                 self.log.error('unable to connect to server %s.' % self.jid.getDomain())
                 return None
             if conres<>'tls':
                 self.log.warning('unable to establish secure connection - TLS failed!')
+            else:
+                self.log.info('Connected to server')
 
             authres = conn.auth(self.jid.getNode(), self._JabberBot__password, self.res)
             if not authres:
                 self.log.error('unable to authorize with server.')
-                return None
+                os.execl('/usr/bin/nohup', sys.executable, sys.executable,
+                        os.path.abspath(__file__))
             if authres<>'sasl':
                 self.log.warning("unable to perform SASL auth os %s. Old authentication method used!" % self.jid.getDomain())
 
@@ -132,7 +129,7 @@ class ChatRoomJabberBot(JabberBot):
                 self.log.info('  %s' % contact)
             self.log.info('*** roster ***')
             self.conn.RegisterHandler('message', self.callback_message)
-            self.conn.RegisterHandler('presence', self.callback_presence)
+            #self.conn.RegisterHandler('presence', self.callback_presence)
             self._JabberBot__set_status(self.get_topic())
 
         return self.conn
@@ -298,7 +295,25 @@ class ChatRoomJabberBot(JabberBot):
         if reply:
             self.send_simple_reply(mess,reply)
 
-    
+    @botcmd(name=',restart')
+    def restart(self, mess, args):
+        """Restart the bot. Use resource name as PASSWORD.
+
+        To avoid accidental restarts, resource name is used as argument.
+        """
+        user = self.get_sender_username(mess)
+
+        if user in self.users and args.strip() == self.res:
+            self.message_queue.append('_%s restarted me! brb!_'
+                                       %(self.users[user]))
+            self.log.info( '%s is restarting me.' % user)
+            self.shutdown()
+            self.idle_proc()
+            self.conn.sendPresence(typ='unavailable')
+            self.log.info( 'Restarting...')
+            os.execl('/usr/bin/nohup', sys.executable,
+                     sys.executable, os.path.abspath(__file__))
+
     @botcmd(name=',subscribe')
     def subscribe( self, mess, args):
         """Subscribe to the broadcast list"""
@@ -746,10 +761,15 @@ class ChatRoomJabberBot(JabberBot):
                 if self.thread_killed:
                     return
 
+if __name__ == "__main__":
+    PATH = os.path.dirname(os.path.abspath(__file__))
+    sys.path = [PATH] + sys.path
 
-bc = ChatRoomJabberBot(JID, PASSWORD, RES)
+    from settings import *
 
-th = threading.Thread(target = bc.thread_proc)
-bc.serve_forever(connect_callback = lambda: th.start())
-bc.thread_killed = True
+    bc = ChatRoomJabberBot(JID, PASSWORD, RES)
+    
+    th = threading.Thread(target = bc.thread_proc)
+    bc.serve_forever(connect_callback = lambda: th.start())
+    bc.thread_killed = True
 
