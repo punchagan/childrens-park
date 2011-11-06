@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2011 Puneeth Chaganti <punchagan@gmail.com> 
+# Copyright (c) 2011 Puneeth Chaganti <punchagan@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # A portion of this code is from the code of JabberBot copyrighted by
-# Thomas Perl the copyright of which is included below. 
+# Thomas Perl the copyright of which is included below.
 # JabberBot: A simple jabber/xmpp bot framework
 #
 # Copyright (c) 2007-2011 Thomas Perl <thp.io/about>
@@ -81,10 +81,10 @@ class ChatRoomJabberBot(JabberBot):
         self.log.setLevel(logging.INFO)
 
         self.users = self.get_users()
-        
+
         self.invited = self.get_invited()
 
-        self.ideas = self.get_ideas()        
+        self.ideas = self.get_ideas()
 
         self.started = time.time()
 
@@ -92,7 +92,7 @@ class ChatRoomJabberBot(JabberBot):
         self.cric_match = None
         self.cric_url = 'http://www.espncricinfo.com'
         self.cric_on = False
-        
+
         self.message_queue = []
         self.thread_killed = False
 
@@ -154,7 +154,7 @@ class ChatRoomJabberBot(JabberBot):
             users = {}
             self.log.info("No existing user data")
         return users
-    
+
     def save_users(self, file):
         try:
             file.write('USERS = {\n')
@@ -178,7 +178,7 @@ class ChatRoomJabberBot(JabberBot):
             invited = {}
             self.log.info("No existing invited users")
         return invited
-    
+
     def save_invited(self, file):
         try:
             file.write('INVITED = {\n')
@@ -234,7 +234,7 @@ class ChatRoomJabberBot(JabberBot):
             return "%s@%s" %(username, domain)
         else:
             return ""
-    
+
     def unknown_command(self, mess, cmd, args):
         user = self.get_sender_username(mess)
         if user in self.users:
@@ -556,7 +556,7 @@ class ChatRoomJabberBot(JabberBot):
         title, = soup.findAll('title')
         score = title.text.split('|')[0]
         return score
-    
+
     def cric_get_recent(self, url):
         """ Fetches the recent overs"""
         view = '?view=live'
@@ -568,7 +568,7 @@ class ChatRoomJabberBot(JabberBot):
         """ Fetches the url of the current innings """
         view = '?view=live'
         soup = self.cric_soupify_url(url+view)
-        try: 
+        try:
             l, = filter(lambda t: 'Commentary' in t.text, soup.findAll('a', "cardMenu"))
             url = l.attrs[0][1]
             self.log.info("Obtained commentary url")
@@ -621,7 +621,7 @@ class ChatRoomJabberBot(JabberBot):
                 comm = '\n\n'.join(comm)
                 self.message_queue.append(comm)
                 self.log.info('Sent new commentary')
-                    
+
     def cric_parse(self, mess, args):
         """ A function that is used in a new thread."""
         user = self.get_sender_username(mess)
@@ -666,7 +666,7 @@ class ChatRoomJabberBot(JabberBot):
                 self.cric_match = n
                 self.message_queue.append('Match set to %s by %s'
                                           %(self.cric_matches[n][0], user))
-                return 
+                return
             except:
                 self.send_simple_reply(mess, 'Behave yourelf, %s' %user)
                 return
@@ -692,7 +692,7 @@ class ChatRoomJabberBot(JabberBot):
             ,cric matches -- Current matches
             ,cric set n -- Set match number to n
             ,cric -- Brief summary of the match
-            ,cric on -- Turn 'on' polling 
+            ,cric on -- Turn 'on' polling
             ,cric recent -- Recent Overs
             ,cric full -- Full scorecard (MAY NOT IMPLEMENT)
             ,cric live -- Prev 2 overs of commentary? (MAY NOT IMPLEMENT)
@@ -768,7 +768,7 @@ if __name__ == "__main__":
     from settings import *
 
     bc = ChatRoomJabberBot(JID, PASSWORD, RES)
-    
+
     th = threading.Thread(target = bc.thread_proc)
     bc.serve_forever(connect_callback = lambda: th.start())
     bc.thread_killed = True
