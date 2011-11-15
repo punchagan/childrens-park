@@ -685,6 +685,7 @@ class CricInfo(object):
         scorecard = soup.findAll("table", "inningsTable")
         scorecard = '\n'.join([str(tag) for tag in scorecard])
         f = open(SCORECARD, 'w')
+        f.write('Scorecard last updated -- %s<br><br>\n' % time.ctime())
         f.write(str(scorecard))
         f.close()
         self.parent.log.info("Obtained live scorecard url")
