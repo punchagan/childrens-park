@@ -678,6 +678,18 @@ class CricInfo(object):
         recent, = soup.findAll('p', 'liveDetailsText', limit=1)
         return recent.getText(' ')
 
+    def get_scorecard(self, url):
+        """ Fetch the url of the score-card"""
+        view = '?view=scorecard'
+        soup = self.soupify_url(url+view)
+        scorecard = soup.findAll("table", "inningsTable")
+        scorecard = '\n'.join([str(tag) for tag in scorecard])
+        f = open(SCORECARD, 'w')
+        f.write(str(scorecard))
+        f.close()
+        self.parent.log.info("Obtained live scorecard url")
+        self.parent.message_queue.append('Scores written to %s' % SCORECARD_URL)
+
     def get_commentary_url(self, url):
         """ Fetches the url of the current innings """
         view = '?view=live'
@@ -756,6 +768,12 @@ class CricInfo(object):
             self.parent.log.info('%s' %(recent))
             self.parent.message_queue.append(recent)
 
+        elif args.startswith('score'):
+            if self.match is None or not self.matches:
+                self.parent.send_simple_reply(mess, 'Use the matches sub-command')
+                return
+            self.get_scorecard(self.matches[self.match][1])
+
         elif args.startswith('matches'):
             matches = self.get_matches()
             self.parent.send_simple_reply(mess,'Now obtained, matches - ')
@@ -808,7 +826,7 @@ class CricInfo(object):
             ,cric -- Brief summary of the match
             ,cric on -- Turn 'on' polling
             ,cric recent -- Recent Overs
-            ,cric full -- Full scorecard (MAY NOT IMPLEMENT)
+            ,cric score -- Full scorecard
             ,cric live -- Prev 2 overs of commentary? (MAY NOT IMPLEMENT)
             """
             self.parent.send_simple_reply(mess, help)
