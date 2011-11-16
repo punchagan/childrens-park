@@ -53,6 +53,7 @@ import logging
 import traceback
 import codecs
 from datetime import timedelta, datetime
+from textwrap import dedent
 
 import re, os, sys
 import urllib2, urllib
@@ -221,7 +222,6 @@ class ChatRoomJabberBot(JabberBot):
 
     def shutdown(self):
         self.save_state()
-        self.cric_bot.on = False
 
     def attempt_reconnect(self):
         self.log.info('Restarting...')
@@ -537,7 +537,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',cric')
     def cric(self, mess, args):
         """ A bunch of Cricinfo commands. Say ,cric help for more info. """
-        cric_th = threading.Thread(target=self.cric_bot.parse, args=(mess,args))
+        cric_th = threading.Thread(target=self.cric_bot, args=(mess,args))
         cric_th.start()
 
 
@@ -648,9 +648,8 @@ class CricInfo(object):
         self.matches = None
         self.match = None
         self.url = url
-        self.on = False
 
-    def soupify_url(self, url):
+    def _soupify_url(self, url):
         """ Open a url and return it's soup."""
         opener = urllib2.build_opener()
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
@@ -658,179 +657,122 @@ class CricInfo(object):
         soup = BeautifulSoup(data)
         return soup
 
-    def get_matches(self):
-        """ Fetches currently relevant matches. """
-        soup = self.soupify_url('/')
-        matches, = soup.findAll('table', id='international', limit=1)
-        return [[match.getText(' '), match.attrs[0][1], '0', '1'] for match in matches.findAll('a')]
-
-    def get_summary(self, url):
+    def cric_summary(self):
         """ Fetches the minimal scoreboard """
-        soup = self.soupify_url(url)
+        url = self.matches[self.match][1]
+        soup = self._soupify_url(url)
         title, = soup.findAll('title')
         score = title.text.split('|')[0]
-        return score
 
-    def get_recent(self, url):
-        """ Fetches the recent overs"""
+        msg = score
+        log = 'Obtained minimal scoreboard'
+        return msg, log, True
+
+    def cric_recent(self):
+        """ Fetches the recent overs
+        """
+        url = self.matches[self.match][1]
         view = '?view=live'
-        soup = self.soupify_url(url+view)
+        soup = self._soupify_url(url+view)
         recent, = soup.findAll('p', 'liveDetailsText', limit=1)
-        return recent.getText(' ')
 
-    def get_scorecard(self, url):
-        """ Fetch the url of the score-card"""
+        msg = recent.getText(' ')
+        log = 'Obtained recent overs score'
+        return msg, log, True
+
+    def cric_score(self):
+        """ Fetch the score-card.
+        """
+        url = self.matches[self.match][1]
         view = '?view=scorecard'
-        soup = self.soupify_url(url+view)
+        soup = self._soupify_url(url+view)
         scorecard = soup.findAll("table", "inningsTable")
         scorecard = '\n'.join([str(tag) for tag in scorecard])
         f = open(SCORECARD, 'w')
         f.write('Scorecard last updated -- %s<br><br>\n' % time.ctime())
         f.write(str(scorecard))
         f.close()
-        self.parent.log.info("Obtained live scorecard url")
-        self.parent.message_queue.append('Scores written to %s' % SCORECARD_URL)
 
-    def get_commentary_url(self, url):
-        """ Fetches the url of the current innings """
-        view = '?view=live'
-        soup = self.soupify_url(url+view)
+        log = "Obtained live scorecard url"
+        msg = 'Scores written to %s' % SCORECARD_URL
+        return msg, log, True
+
+    def cric_matches(self, args):
+        """ Fetches currently relevant matches. """
+        if not self.matches or not args:
+            soup = self._soupify_url('/')
+            matches, = soup.findAll('table', id='international', limit=1)
+            self.matches = [[match.getText(' '), match.attrs[0][1], '0', '1'] \
+                            for match in matches.findAll('a')]
+            if len(self.matches)>1:
+                msg = 'Now obtained, matches - '
+                for i, match in enumerate(self.matches):
+                    msg += '\n[%s] - %s' %(i, match[0])
+                msg += '\nSelect a match'
+                log = "Obtained list of matches."
+                return msg, log, False
+            else:
+                args = '0'
         try:
-            l, = filter(lambda t: 'Commentary' in t.text, soup.findAll('a', "cardMenu"))
-            url = l.attrs[0][1]
-            self.parent.log.info("Obtained commentary url")
-            return url
+            n = int(args)
+            if n < len(self.matches):
+                self.match = n
+            else:
+                self.match = 0
+            msg = 'Match set to %s' % self.matches[self.match][0]
         except:
-            self.parent.log.info("Commentary url not found")
-            return
+            msg = 'Behave yourelf'
+        finally:
+            return msg
 
-    def get_innings(self, url):
-        """ Find out the innings from commentary url"""
-        return re.findall(r'innings=(.)', url)[0]
+    def _caller(self, func_name, args):
+        if func_name == 'matches':
+            return self.cric_matches(args)
+        elif self.match is None:
+            msg = 'Use matches command to obtain and set matches.'
+            log = 'Use matches'
+            return msg, log
+        command = getattr(self, 'cric_' + func_name, self._help)
+        return command()
 
-    def get_commentary(self, url):
-        """ Fetches the Commentary of current innings"""
-        url = self.get_commentary_url(url)
-        if not url:
-            return
-        curr_inn = self.get_innings(url)
-        if self.matches[self.match][3] == '1' and curr_inn == '2':
-            self.matches[self.match][2] = '0' # reset last ball
-            self.matches[self.match][3] = '2' # change innings
-            self.parent.log.info("cricinfo: Changed innings")
-            return  # Just adding some time delay
-        soup = self.soupify_url(url)
-        S = soup.find('table', attrs={'class':'commsTable'})
-        C = S.findAll('p', 'commsText')
-        all_C = []
-        for i, comm in enumerate(C):
-            for hit in ['FOUR,', 'SIX,', 'OUT,']:
-                if hit in comm.text:
-                    ball = C[i-1].text
-                    if float(ball) > float(self.matches[self.match][2]):
-                        all_C.append((ball, comm.text.replace('\n', ' ')))
-        self.parent.log.info("Obtained new undisplayed commentary")
-        return all_C
-
-    def poll(self, url):
-        while self.on:
-            self.parent.log.info('Will Poll Cricinfo, if not unset when I sleep')
-            for i in range(30):
-                time.sleep(1)
-                if not self.on:
-                    return
-            self.parent.log.info('Polling Cricinfo')
-            comm = self.get_commentary(url)
-            if comm:
-                self.matches[self.match][2] = comm[-1][0]
-                comm.append(('Score', self.get_summary(self.matches[self.match][1])))
-                comm = [' - '.join(c) for c in comm]
-                comm = '\n\n'.join(comm)
-                self.parent.message_queue.append(comm)
-                self.parent.log.info('Sent new commentary')
-
-    def parse(self, mess, args):
-        """ A function that is used in a new thread."""
+    def __call__(self, mess, args):
+        """An entry point to the cric info stuff.
+        """
         user = self.parent.get_sender_username(mess)
+        user = self.parent.users[user]
 
         if not args:
-            if self.match is None or not self.matches:
-                self.parent.send_simple_reply(mess, 'Use the matches sub-command')
-                return
-            summary = self.get_summary(self.matches[self.match][1])
-            self.parent.log.info('%s' %(summary))
-            self.parent.message_queue.append(summary)
+            args = 'summary'
 
-        elif args.startswith('recent'):
-            if self.match is None or not self.matches:
-                self.parent.send_simple_reply(mess, 'Use the matches sub-command')
-                return
-            recent = self.get_recent(self.matches[self.match][1])
-            self.parent.log.info('%s' %(recent))
-            self.parent.message_queue.append(recent)
+        args_list = args.split()
+        result = self._caller(args_list[0], ' '.join(args_list[1:]))
 
-        elif args.startswith('score'):
-            if self.match is None or not self.matches:
-                self.parent.send_simple_reply(mess, 'Use the matches sub-command')
-                return
-            self.get_scorecard(self.matches[self.match][1])
-
-        elif args.startswith('matches'):
-            matches = self.get_matches()
-            self.parent.send_simple_reply(mess,'Now obtained, matches - ')
-            for i, match in enumerate(matches):
-                self.parent.send_simple_reply(mess,'[%s] - %s' %(i, match[0]))
-            if '-f' in args or not self.matches:
-                self.matches = matches
-            else:
-                self.parent.send_simple_reply(mess,'Matches *previously* set to - ')
-                for i, match in enumerate(self.matches):
-                    self.parent.send_simple_reply(mess,'[%s] - %s' %(i, match[0]))
-                self.parent.send_simple_reply(mess,'*matches -f* will force change.')
-            self.parent.send_simple_reply(mess,'Set the match using ,cric set.')
-
-        elif args.startswith('set'):
-            args = args.split()
-            if len(args)!=2:
-                self.parent.send_simple_reply(mess, 'Behave yourelf, %s' %user)
-                return
-            try:
-                n = int(args[1])
-                self.match = n
-                self.parent.message_queue.append('Match set to %s by %s'
-                                          %(self.matches[n][0], user))
-                return
-            except:
-                self.parent.send_simple_reply(mess, 'Behave yourelf, %s' %user)
-                return
-        elif args == 'on':
-            # Start a thread to keep polling cricinfo
-            self.on = True
-            if self.match is None or not self.matches:
-                self.parent.send_simple_reply(mess, 'Use the matches sub-command')
-                return
-            poll_th = threading.Thread(target=self.poll,
-                                args=(self.matches[self.match][1],))
-            poll_th.start()
-            self.parent.message_queue.append('Polling turned on by %s. Match -- %s'
-                                      %(user, self.matches[self.match][0]))
-        elif args == 'off':
-            # Unset variable to stop polling
-            self.on = False
-            self.parent.message_queue.append('Polling turned off by %s. Match -- %s'
-                                      %(user, self.matches[self.match][0]))
-
+        if len(result) == 3:
+            msg, log, group = result
+        elif len(result) == 2:
+            msg, log = result
+            group = False
         else:
-            help = """
-            ,cric matches -- Current matches
-            ,cric set n -- Set match number to n
-            ,cric -- Brief summary of the match
-            ,cric on -- Turn 'on' polling
-            ,cric recent -- Recent Overs
-            ,cric score -- Full scorecard
-            ,cric live -- Prev 2 overs of commentary? (MAY NOT IMPLEMENT)
-            """
-            self.parent.send_simple_reply(mess, help)
+            msg = log = result
+            group = False
+
+        self.parent.log.info('%s -- %s' %(log, user))
+        if group:
+            self.parent.message_queue.append(msg)
+        else:
+            self.parent.send_simple_reply(mess, msg)
+
+
+    def _help(self):
+        help = dedent("""
+        ,cric matches -- Get list of matches
+        ,cric matches n -- Set match number to n
+        ,cric -- Brief summary of the match
+        ,cric recent -- Recent Overs
+        ,cric score -- Full scorecard
+        """)
+        log = 'Sending help'
+        return help, log
 
 
 
