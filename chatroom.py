@@ -720,9 +720,9 @@ class CricInfo(object):
             else:
                 self.match = 0
             msg = 'Match set to %s' % self.matches[self.match][0]
+            return msg, msg, True
         except:
             msg = 'Behave yourelf'
-        finally:
             return msg
 
     def _caller(self, func_name, args):
