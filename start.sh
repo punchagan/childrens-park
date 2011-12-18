@@ -9,5 +9,5 @@ elif [ `tail -1 nohup.out|grep -c -E "(WARNING - could not connect to server - a
     sleep 60
     /usr/bin/nohup ./vir-santa/bin/python chatroom.py &
 else
-    echo "Bot running..."
+    echo "Bot running..." > /dev/null
 fi
