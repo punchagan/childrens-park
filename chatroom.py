@@ -403,7 +403,9 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         if user in self.users:
             self.send(args, '%s invited you to join %s. Say ",help" to see how to join.' % (user, CHANNEL))
-            self.invited['%s@%s' %(xmpp.JID(args).getNode(), xmpp.JID(args).getDomain())] = ''
+            email = '%s@%s' %(xmpp.JID(args).getNode(), xmpp.JID(args).getDomain())
+            self.roster.Authorize(email)
+            self.invited[email] = ''
             self.log.info( '%s invited %s.' % (user, args))
             self.save_state()
             self.message_queue.append('_%s invited %s_' % (self.users[user], args))
