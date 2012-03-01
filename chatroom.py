@@ -589,6 +589,12 @@ class ChatRoomJabberBot(JabberBot):
         except AttributeError:
             return "No such attribute"
 
+    @botcmd(name=',see-friends')
+    def show_roster(self, mess, args):
+        """ Return the roster of friends.
+        """
+        return '\n'.join([contact for contact in self.roster.getItems()])
+
     @botcmd(name=',help')
     def help_alias(self, mess, args):
         """An alias to help command."""
