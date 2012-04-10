@@ -66,6 +66,8 @@ try:
 except:
     print "Some features will not work, unless you have BeautifulSoup and gdata"
 
+NICK_LEN = 24
+
 class ChatRoomJabberBot(JabberBot):
     """A bot based on JabberBot and broadcast example given in there."""
 
@@ -325,7 +327,7 @@ class ChatRoomJabberBot(JabberBot):
         if user in self.users:
             return 'You are already subscribed.'
         else:
-            self.users[user] = user
+            self.users[user] = user.split('@')[0][:NICK_LEN]
             self.invited.pop(user)
             self.message_queue.append('_%s has joined the channel_' % user)
             self.log.info('%s subscribed to the broadcast.' % user)
@@ -352,16 +354,19 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         args = args.strip().replace(' ', '_')
         if user in self.users:
-            if 0 < len(args) < 24 and args not in self.users.values():
+            if args in self.users.values():
+                return 'Nick already taken.'
+            elif len(args) == 0:
+                return 'Nick needs to be atleast one character long'
+            elif len(args) > NICK_LEN:
+                return 'Nick cannot be longer than %s characters' %(NICK_LEN,)
+            else:
                 self.message_queue.append('_%s is now known as %s_' %(self.users[user], args))
                 self.users[user] = args
                 self.log.info( '%s changed alias.' % user)
                 self.log.info('%s' %self.users)
                 self.save_state()
                 return 'You are now known as %s' % args
-            else:
-                return 'Nick already taken, or too short/long. 1-24 chars allowed.'
-
 
     @botcmd(name=',topic')
     def topic( self, mess, args):
