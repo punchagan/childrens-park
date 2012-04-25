@@ -347,6 +347,26 @@ class ChatRoomJabberBot(JabberBot):
             self.save_state()
             return 'You are now unsubscribed.'
 
+    @botcmd(name=',dnd')
+    def dnd( self, mess, args):
+        """Switch to do-not-disturb mode. Use ,dnd to switch back."""
+        user = self.get_sender_username(mess)
+        if user not in self.users and user not in self.invited:
+            return 'You are not subscribed!'
+        elif user in self.users:
+            name = self.users.pop(user)
+            self.invited[user] = name
+            self.message_queue.append('_%s turned on DND_' % name)
+            self.log.info( '%s turned on DND.' % name)
+            self.save_state()
+            return 'DND turned on.'
+        elif user in self.invited:
+            name = self.invited.pop(user)
+            self.users[user] = name
+            self.message_queue.append('_%s turned off DND_' % name)
+            self.log.info( '%s turned off DND.' % name)
+            self.save_state()
+            return 'DND turned off.'
 
     @botcmd(name=',alias')
     def alias( self, mess, args):
