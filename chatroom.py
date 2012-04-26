@@ -404,7 +404,7 @@ class ChatRoomJabberBot(JabberBot):
         """List all the members of the list"""
         user = self.get_sender_username(mess)
         args = args.replace(' ', '_')
-        if user in self.users:
+        if user in self.users or user in self.invited:
             user_list = 'All these users are subscribed - \n'
             user_list += '\n'.join(['%s :: %s' %(u, self.users[u]) for u in sorted(self.users)])
             if self.invited.keys():
