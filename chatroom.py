@@ -418,7 +418,7 @@ class ChatRoomJabberBot(JabberBot):
         """Send message in third person"""
         user = self.get_sender_username(mess)
         if user in self.users:
-            self.message_queue.append('_%s %s_' % (self.users[user], args))
+            self.message_queue.append('*%s %s*' % (self.users[user], args))
             self.log.info( '%s says %s in third person.' % (user, args))
 
 
@@ -823,4 +823,3 @@ if __name__ == "__main__":
     th = threading.Thread(target = bc.thread_proc)
     bc.serve_forever(connect_callback = lambda: th.start())
     bc.thread_killed = True
-
