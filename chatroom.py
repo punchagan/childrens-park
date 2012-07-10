@@ -356,17 +356,17 @@ class ChatRoomJabberBot(JabberBot):
         elif user in self.users:
             name = self.users.pop(user)
             self.invited[user] = name
-            self.message_queue.append('_%s turned on DND_' % name)
-            self.log.info( '%s turned on DND.' % name)
+            self.message_queue.append('_%s entered NO PARKING ZONE here_' % name)
+            self.log.info( '%s entered NO PARKING ZONE here.' % name)
             self.save_state()
-            return 'DND turned on.'
+            return 'NO PARKING ZONE entered.Happy riding!'
         elif user in self.invited:
             name = self.invited.pop(user)
             self.users[user] = name
-            self.message_queue.append('_%s turned off DND_' % name)
-            self.log.info( '%s turned off DND.' % name)
+            self.message_queue.append('_%s came out of NO PARKING ZONE_' % name)
+            self.log.info( '%s came out of NO PARKING ZONE. Hey %s!' % name)
             self.save_state()
-            return 'DND turned off.'
+            return 'PARKING ZONE entered.'
 
     @botcmd(name=',alias')
     def alias( self, mess, args):
@@ -634,6 +634,8 @@ class ChatRoomJabberBot(JabberBot):
         nick = self.users[user]
         msg = re.sub("((\s)%s(\s))|(\A%s(\s))|((\s)%s\Z)" %(nick, nick, nick),
                      " *%s* " %nick, msg)
+        msg = msg.replace('uc', 'uc howley, M.B.Com') 
+        #sorry uc :P
 
         return msg
 
