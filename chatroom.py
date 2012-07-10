@@ -364,9 +364,9 @@ class ChatRoomJabberBot(JabberBot):
             name = self.invited.pop(user)
             self.users[user] = name
             self.message_queue.append('_%s came out of NO PARKING ZONE_' % name)
-            self.log.info( '%s came out of NO PARKING ZONE. Hey %s!' % name)
+            self.log.info( '%s came out of NO PARKING ZONE.' % name)
             self.save_state()
-            return 'PARKING ZONE entered.'
+            return 'PARKING ZONE entered. Hey %s!' % name
 
     @botcmd(name=',alias')
     def alias( self, mess, args):
