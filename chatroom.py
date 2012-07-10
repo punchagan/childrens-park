@@ -634,9 +634,6 @@ class ChatRoomJabberBot(JabberBot):
         nick = self.users[user]
         msg = re.sub("((\s)%s(\s))|(\A%s(\s))|((\s)%s\Z)" %(nick, nick, nick),
                      " *%s* " %nick, msg)
-        msg = msg.replace('uc', 'uc howley, M.B.Com') 
-        #sorry uc :P
-
         return msg
 
     def chunk_message(self, user, msg):
