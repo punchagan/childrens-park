@@ -631,9 +631,8 @@ class ChatRoomJabberBot(JabberBot):
     def highlight_name(self, msg, user):
         """Emphasizes your name, when sent in a message.
         """
-        nick = self.users[user]
-        msg = re.sub("((\s)%s(\s))|(\A%s(\s))|((\s)%s\Z)" %(nick, nick, nick),
-                     " *%s* " %nick, msg)
+        nick = re.escape(self.users[user])
+        msg = re.sub("(\W|\A)(%s)(\W|\Z)" %nick, "\\1 *\\2* \\3", msg)
         return msg
 
     def chunk_message(self, user, msg):
