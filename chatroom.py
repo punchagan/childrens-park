@@ -134,7 +134,7 @@ class ChatRoomJabberBot(JabberBot):
             self.conn.UnregisterDisconnectHandler(conn.DisconnectHandler)
             self._JabberBot__set_status(self.get_topic())
             ### Send a -- we are online -- message
-            self.message_queue.append('We are up and running!')
+            self.message_queue.append('_We are up and running!_')
 
         return self.conn
 
