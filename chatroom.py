@@ -57,7 +57,7 @@ from textwrap import dedent
 
 import re, os, sys
 import urllib2, urllib
-import simplejson
+import json
 from subprocess import Popen, PIPE, call
 
 try:
@@ -541,11 +541,11 @@ class ChatRoomJabberBot(JabberBot):
             url = 'http://ajax.googleapis.com/ajax/' + \
                   'services/search/web?v=1.0&%s' % (query)
             results = urllib.urlopen(url)
-            json = simplejson.loads(results.read())
+            data = json.loads(results.read())
             self.message_queue.append('%s googled for %s ... and here you go'
                                       %(self.users[user], args))
             try:
-                top = json['responseData']['results'][0]
+                top = data['responseData']['results'][0]
                 self.message_queue.append('%s -- %s' %(top['title'], top['url']))
             except:
                 self.message_queue.append('%s' % "Oops! Nothing found!")
@@ -560,8 +560,8 @@ class ChatRoomJabberBot(JabberBot):
             url = 'http://ajax.googleapis.com/ajax/' + \
                   'services/search/web?v=1.0&%s' % (query)
             results = urllib.urlopen(url)
-            json = simplejson.loads(results.read())
-            top = json['responseData']['results'][0]
+            data = json.loads(results.read())
+            top = data['responseData']['results'][0]
             self.message_queue.append('%s googled for %s ... and here you go'
                                       %(self.users[user], args))
             self.message_queue.append('%s -- %s' %(top['title'], top['url']))
