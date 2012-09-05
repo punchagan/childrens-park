@@ -630,6 +630,43 @@ class ChatRoomJabberBot(JabberBot):
         """An alias to help command."""
         return self.help(mess,args)
 
+    @botcmd(name=',addbotcmd')
+    def add_botcmd(self, mess, args):
+        """ Define a bot command on the fly!
+
+        Lets you define bot commands on the fly.  The following things should
+        be kept in mind:
+
+            - Only new functions with 3 arguments (self, message, args) can be
+              defined.
+
+            - To return any messages to the sender only, just return from the
+              function, whatever it is, that you wish to send back to the
+              user.
+
+            - If you wish to send a message to all the users, append the
+              string to the message queue.  If the object appended to the
+              message queue is not a string, it is converted to a string
+              before being sent out.
+
+        """
+        from functools import partial
+        from inspect import isfunction
+        d = dict()
+        exec(args) in globals(), d
+        if len(d) != 1:
+            return 'You need to define one callable'
+        f = d.values()[0]
+        if not (isfunction(f) and f.__doc__ and f.func_code.co_argcount == 3):
+            return 'You can only add callables, with 3 arguments, and a docstring'
+        name = ',' + f.__name__
+        f_ = partial(f, self)
+        self.commands[name] = f_
+        user = self.users[self.get_sender_username(mess)]
+        self.log.info('%s registered command %s' %(user, name))
+        self.message_queue.append('%s registered command %s' %(user, name))
+        self.message_queue.append('Say ,help %s to see the help' %name)
+
     def highlight_name(self, msg, user):
         """Emphasizes your name, when sent in a message.
         """
