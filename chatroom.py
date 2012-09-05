@@ -303,7 +303,7 @@ class ChatRoomJabberBot(JabberBot):
             if reply is None:
                 reply = default_reply
         if reply:
-            self.send_simple_reply(mess,reply)
+            self.send_simple_reply(mess, str(reply))
 
     @botcmd(name=',restart')
     def restart(self, mess, args):
@@ -658,6 +658,9 @@ class ChatRoomJabberBot(JabberBot):
         self.message_queue = []
 
         for message in messages:
+            # If an object in the message queue is not a string, make it one.
+            if not isinstance(message, basestring):
+                message = str(message)
             if len(self.users):
                 self.log.info('sending "%s" to %d user(s).' % ( message, len(self.users), ))
             for user in self.users:
