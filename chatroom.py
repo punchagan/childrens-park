@@ -282,6 +282,8 @@ class ChatRoomJabberBot(JabberBot):
 
         if ' ' in text:
             command, args = text.split(' ', 1)
+        elif '\n' in text:
+            command, args = text.split('\n', 1)
         else:
             command, args = text, ''
         cmd = command
