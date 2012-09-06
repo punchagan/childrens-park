@@ -892,7 +892,7 @@ if __name__ == "__main__":
     PATH = os.path.dirname(os.path.abspath(__file__))
     sys.path = [PATH] + sys.path
 
-    from settings import *
+    from settings import JID, PASSWORD, RES, SCORECARD, SCORECARD_URL, CHANNEL
 
     bc = ChatRoomJabberBot(JID, PASSWORD, RES)
 
