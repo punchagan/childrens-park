@@ -77,17 +77,6 @@ class ChatRoomJabberBot(JabberBot):
 
     def __init__(self, jid, password, res=None):
         super(ChatRoomJabberBot, self).__init__(jid, password, res)
-        # create console handler
-        chandler = logging.StreamHandler()
-        # create formatter
-        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        formatter = logging.Formatter(format)
-        # add formatter to handler
-        chandler.setFormatter(formatter)
-        # add handler to logger
-        self.log.addHandler(chandler)
-        # set level to INFO
-        self.log.setLevel(logging.INFO)
 
         self.users = self.get_users()
 
@@ -98,9 +87,12 @@ class ChatRoomJabberBot(JabberBot):
         self.started = time.time()
 
         self.message_queue = []
+
         self.thread_killed = False
 
         self.cric_bot = CricInfo(self)
+
+        self._install_log_handler()
 
     def connect(self):
         if not self.conn:
@@ -902,6 +894,18 @@ class CricInfo(object):
         log = 'Sending help'
         return help, log
 
+    def _install_log_handler(self):
+        # create console handler
+        chandler = logging.StreamHandler()
+        # create formatter
+        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        formatter = logging.Formatter(format)
+        # add formatter to handler
+        chandler.setFormatter(formatter)
+        # add handler to logger
+        self.log.addHandler(chandler)
+        # set level to INFO
+        self.log.setLevel(logging.INFO)
 
 if __name__ == "__main__":
     PATH = os.path.dirname(os.path.abspath(__file__))
