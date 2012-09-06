@@ -59,7 +59,7 @@ import urllib2, urllib
 import json
 from subprocess import Popen, PIPE, call
 
-from util import get_code_from_gist
+from util import get_code_from_gist, is_gist_url
 
 try:
     from BeautifulSoup import BeautifulSoup
@@ -662,12 +662,13 @@ class ChatRoomJabberBot(JabberBot):
         from inspect import isfunction
 
         # Check if first word in args is a URL.
-        first_arg = args.split()[0]
-        if first_arg.startswith('https://'):
-            code = get_code_from_gist(first_arg)
+        gist_url = args.split()[0]
+        if is_gist_url(gist_url):
+            code = get_code_from_gist(gist_url)
             # FIXME: We can keep a track of all gist urls, for persistence.
         else:
             code = args
+            gist_url = False
 
         # Evaluate the code and get the function
         d = dict()
@@ -678,6 +679,10 @@ class ChatRoomJabberBot(JabberBot):
         if not (isfunction(f) and f.__doc__ and f.func_code.co_argcount == 3):
             return 'You can only add callables, with 3 arguments, and a docstring'
         name = ',' + f.__name__
+
+        if gist_url:
+            gist_url = 'The code is at %s' %gist_url
+            f.__doc__ += "\n%s" %gist_url
 
         # Prevent over-riding the ,addbotcmd alone
         if name == ',addbotcmd':
@@ -695,6 +700,8 @@ class ChatRoomJabberBot(JabberBot):
         self.log.info('%s registered command %s' %(user, name))
         self.message_queue.append('%s registered command %s' %(user, name))
         self.message_queue.append('Say ,help %s to see the help' %name)
+        if gist_url:
+            self.message_queue.append(gist_url)
 
     def highlight_name(self, msg, user):
         """Emphasizes your name, when sent in a message.
