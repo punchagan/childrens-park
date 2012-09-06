@@ -652,6 +652,9 @@ class ChatRoomJabberBot(JabberBot):
               message queue is not a string, it is converted to a string
               before being sent out.
 
+        The commands can be added to a gist and the url can be passed to this
+        command.
+
         """
         if not(args):
             return "Didn't get any arguments for the command!"
