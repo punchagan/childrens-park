@@ -654,8 +654,10 @@ class ChatRoomJabberBot(JabberBot):
         """
         if not(args):
             return "Didn't get any arguments for the command!"
-        from functools import partial
+        from functools import partial, update_wrapper
         from inspect import isfunction
+
+        # Evaluate the code and get the function
         d = dict()
         exec(args) in globals(), d
         if len(d) != 1:
@@ -664,9 +666,20 @@ class ChatRoomJabberBot(JabberBot):
         if not (isfunction(f) and f.__doc__ and f.func_code.co_argcount == 3):
             return 'You can only add callables, with 3 arguments, and a docstring'
         name = ',' + f.__name__
-        f_ = botcmd(partial(f, self), name=name)
+
+        # Prevent over-riding the ,addbotcmd alone
+        if name == ',addbotcmd':
+            return "Sorry, this function can't be over-written."
+
+        # Wrap the function, to give access to this instance of the bot
+        f_partial = partial(f, self)
+        f_ = botcmd(update_wrapper(f_partial, f))
+
+        # Register the new command
         self.commands[name] = f_
         user = self.users[self.get_sender_username(mess)]
+
+        # Log and celebrate!
         self.log.info('%s registered command %s' %(user, name))
         self.message_queue.append('%s registered command %s' %(user, name))
         self.message_queue.append('Say ,help %s to see the help' %name)
