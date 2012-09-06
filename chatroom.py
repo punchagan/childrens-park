@@ -652,6 +652,8 @@ class ChatRoomJabberBot(JabberBot):
               before being sent out.
 
         """
+        if not(args):
+            return "Didn't get any arguments for the command!"
         from functools import partial
         from inspect import isfunction
         d = dict()
@@ -662,7 +664,7 @@ class ChatRoomJabberBot(JabberBot):
         if not (isfunction(f) and f.__doc__ and f.func_code.co_argcount == 3):
             return 'You can only add callables, with 3 arguments, and a docstring'
         name = ',' + f.__name__
-        f_ = partial(f, self)
+        f_ = botcmd(partial(f, self), name=name)
         self.commands[name] = f_
         user = self.users[self.get_sender_username(mess)]
         self.log.info('%s registered command %s' %(user, name))
