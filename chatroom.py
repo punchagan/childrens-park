@@ -50,7 +50,8 @@ import gdata.youtube.service
 from jabberbot import JabberBot, botcmd
 import json
 import logging
-import os
+from os.path import abspath, dirname, join
+from os import execl
 import re
 from subprocess import Popen, PIPE, call
 import sys
@@ -65,20 +66,25 @@ import xmpp
 # local imports
 from util import get_code_from_gist, is_gist_url
 
-NICK_LEN = 24
-
 
 class ChatRoomJabberBot(JabberBot):
     """A bot based on JabberBot and broadcast example given in there."""
 
+    NICK_LEN = 24
+    ROOT = dirname(abspath(__file__))
+
     def __init__(self, jid, password, res=None):
         super(ChatRoomJabberBot, self).__init__(jid, password, res)
 
-        self.users = self.get_users()
+        self._state = state = self.read_state()
 
-        self.invited = self.get_invited()
+        self.users = state.get('users', dict())
 
-        self.ideas = self.get_ideas()
+        self.invited = state.get('invited', dict())
+
+        self.ideas = state.get('ideas', [])
+
+        self.topic = state.get('topic', '')
 
         self.started = time.time()
 
@@ -129,7 +135,7 @@ class ChatRoomJabberBot(JabberBot):
             self.conn.RegisterHandler('message', self.callback_message)
             self.conn.RegisterDisconnectHandler(self.attempt_reconnect)
             self.conn.UnregisterDisconnectHandler(conn.DisconnectHandler)
-            self._JabberBot__set_status(self.get_topic())
+            self._JabberBot__set_status(self.topic)
 
             ### Send a -- we are online -- message
             self.message_queue.append('_We are up and running!_')
@@ -137,92 +143,20 @@ class ChatRoomJabberBot(JabberBot):
         return self.conn
 
     def save_state(self):
-        f = open('state.py', 'w')
-        f.write('# -*- coding: utf-8 -*-\n\n')
-        self.save_users(f)
-        self.save_invited(f)
-        self.save_topic(f)
-        self.save_ideas(f)
-        f.close()
+        """ Persists the state of the bot.
+        """
+        with open(join(self.ROOT, 'state.json'), 'w') as f:
+            state = dict(users=self.users,
+                         invited=self.invited,
+                         topic=self.topic,
+                         ideas=self.ideas)
+            json.dump(state, f, indent=2)
+        self.log.info('Persisted state data')
 
-    def get_users(self):
-        try:
-            from state import USERS
-            users = USERS
-            for user in users:
-                users[user] = users[user].decode('utf-8')
-            self.log.info("Obtained user data")
-        except:
-            users = {}
-            self.log.info("No existing user data")
-        return users
-
-    def save_users(self, file):
-        try:
-            file.write('USERS = {\n')
-            for u in self.users:
-                file.write("'%s': '%s',\n"
-                           % (u.encode('utf-8'),
-                              self.users[u].encode('utf-8')))
-            file.write('}\n\n')
-            self.log.info("Saved user data")
-        except:
-            self.log.info("Couldn't save user data")
-
-    def get_invited(self):
-        try:
-            from state import INVITED
-            invited = INVITED
-            for user in invited:
-                invited[user] = invited[user].decode('utf-8')
-            self.log.info("Obtained invited user data")
-        except:
-            invited = {}
-            self.log.info("No existing invited users")
-        return invited
-
-    def save_invited(self, file):
-        try:
-            file.write('INVITED = {\n')
-            for u in self.invited:
-                file.write("'%s': '%s',\n" % (u,
-                                            self.invited[u].encode('utf-8')))
-            file.write('}\n\n')
-            self.log.info("Saved invited user data")
-        except:
-            self.log.info("Couldn't save invited user data")
-
-    def get_topic(self):
-        try:
-            from state import TOPIC
-            TOPIC = TOPIC.decode('utf-8')
-            return TOPIC
-        except:
-            return ''
-
-    def save_topic(self, file):
-        try:
-            topic = self._JabberBot__status.encode('utf-8')
-            file.write('TOPIC = """%s"""\n\n' % topic)
-        except:
-            return ''
-
-    def get_ideas(self):
-        try:
-            from state import IDEAS
-            ideas = [idea.decode('utf-8') for idea in IDEAS]
-        except:
-            ideas = []
-        return ideas
-
-    def save_ideas(self, file):
-        try:
-            file.write('IDEAS = [\n')
-            for u in self.ideas:
-                file.write('"""%s""",\n' % (u.encode('utf-8')))
-            file.write(']\n\n')
-        except:
-            self.log.info("Couldn't save ideas")
+    def read_state(self):
+        with open(join(self.ROOT, 'state.json')) as f:
+            self._state = json.load(f)
+        self.log.info('Obtained saved state from state.json')
 
     def shutdown(self):
         self.save_state()
@@ -231,8 +165,8 @@ class ChatRoomJabberBot(JabberBot):
         self.log.info('Restarting...')
         self.log.info('Pulling changes from GitHub...')
         call(["git", "pull"])
-        os.execl('/usr/bin/nohup', sys.executable, sys.executable,
-                 os.path.abspath(__file__))
+        execl('/usr/bin/nohup', sys.executable, sys.executable,
+                abspath(__file__))
 
     def get_sender_username(self, mess):
         """Extract the sender's user name (along with domain) from a message."""
@@ -339,7 +273,7 @@ class ChatRoomJabberBot(JabberBot):
         if user in self.users:
             return 'You are already subscribed.'
         else:
-            self.users[user] = user.split('@')[0][:NICK_LEN]
+            self.users[user] = user.split('@')[0][:self.NICK_LEN]
             self.invited.pop(user)
             self.message_queue.append('_%s has joined the channel_' % user)
             self.log.info('%s subscribed to the broadcast.' % user)
@@ -390,8 +324,8 @@ class ChatRoomJabberBot(JabberBot):
                 return 'Nick already taken.'
             elif len(args) == 0:
                 return 'Nick needs to be atleast one character long'
-            elif len(args) > NICK_LEN:
-                return 'Nick cannot be longer than %s characters' % (NICK_LEN,)
+            elif len(args) > self.NICK_LEN:
+                return 'Nick cannot be longer than %s characters' % (self.NICK_LEN,)
             else:
                 self.message_queue.append('_%s is now known as %s_' % (self.users[user], args))
                 self.users[user] = args
@@ -405,7 +339,8 @@ class ChatRoomJabberBot(JabberBot):
         """Change the topic/status"""
         user = self.get_sender_username(mess)
         if user in self.users:
-            self._JabberBot__set_status(args)
+            self.topic = args
+            self._JabberBot__set_status(self.topic)
             self.message_queue.append('_%s changed topic to %s_' % (self.users[user], args))
             self.log.info('%s changed topic.' % user)
             self.save_state()
@@ -905,7 +840,7 @@ class CricInfo(object):
 
 
 if __name__ == "__main__":
-    PATH = os.path.dirname(os.path.abspath(__file__))
+    PATH = dirname(abspath(__file__))
     sys.path = [PATH] + sys.path
 
     from settings import JID, PASSWORD, RES, SCORECARD, SCORECARD_URL, CHANNEL
