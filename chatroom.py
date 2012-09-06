@@ -754,6 +754,19 @@ class ChatRoomJabberBot(JabberBot):
                 if self.thread_killed:
                     return
 
+    def _install_log_handler(self):
+        # create console handler
+        chandler = logging.StreamHandler()
+        # create formatter
+        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        formatter = logging.Formatter(format)
+        # add formatter to handler
+        chandler.setFormatter(formatter)
+        # add handler to logger
+        self.log.addHandler(chandler)
+        # set level to INFO
+        self.log.setLevel(logging.INFO)
+
 
 class CricInfo(object):
     """ A class for all the cric info stuff.
@@ -890,18 +903,6 @@ class CricInfo(object):
         log = 'Sending help'
         return help, log
 
-    def _install_log_handler(self):
-        # create console handler
-        chandler = logging.StreamHandler()
-        # create formatter
-        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        formatter = logging.Formatter(format)
-        # add formatter to handler
-        chandler.setFormatter(formatter)
-        # add handler to logger
-        self.log.addHandler(chandler)
-        # set level to INFO
-        self.log.setLevel(logging.INFO)
 
 if __name__ == "__main__":
     PATH = os.path.dirname(os.path.abspath(__file__))
