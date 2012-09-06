@@ -43,41 +43,45 @@
 # Depends: python-jabberbot, xmpppy
 #
 
+# standard library imports
+from datetime import datetime
 from jabberbot import JabberBot, botcmd
-
-import xmpp
-
+import json
+import logging
+import os
+import re
+from subprocess import Popen, PIPE, call
+import sys
+from textwrap import dedent
 import threading
 import time
-import logging
 import traceback
-from datetime import datetime
-from textwrap import dedent
+import urllib
+import urllib2
+import xmpp
 
-import re, os, sys
-import urllib2, urllib
-import json
-from subprocess import Popen, PIPE, call
-
+# local imports
 from util import get_code_from_gist, is_gist_url
 
 try:
     from BeautifulSoup import BeautifulSoup
     import gdata.youtube.service
 except:
-    print "Some features will not work, unless you have BeautifulSoup and gdata"
+    print "Some features won't work, unless you have BeautifulSoup and gdata"
 
 NICK_LEN = 24
+
 
 class ChatRoomJabberBot(JabberBot):
     """A bot based on JabberBot and broadcast example given in there."""
 
-    def __init__( self, jid, password, res = None):
-        super( ChatRoomJabberBot, self).__init__( jid, password, res)
+    def __init__(self, jid, password, res=None):
+        super(ChatRoomJabberBot, self).__init__(jid, password, res)
         # create console handler
         chandler = logging.StreamHandler()
         # create formatter
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        formatter = logging.Formatter(format)
         # add formatter to handler
         chandler.setFormatter(formatter)
         # add handler to logger
@@ -100,7 +104,7 @@ class ChatRoomJabberBot(JabberBot):
 
     def connect(self):
         if not self.conn:
-            conn = xmpp.Client(self.jid.getDomain(), debug = [])
+            conn = xmpp.Client(self.jid.getDomain(), debug=[])
 
             if self.jid.getDomain() == 'gmail.com':
                 conres = conn.connect(server=('talk.google.com', 5222))
@@ -108,22 +112,26 @@ class ChatRoomJabberBot(JabberBot):
                 conres = conn.connect()
 
             if not conres:
-                self.log.error('unable to connect to server %s.' % self.jid.getDomain())
+                server = self.jid.getDomain()
+                self.log.error('unable to connect to %s.' % server)
                 return None
-            if conres<>'tls':
-                self.log.warning('unable to establish secure connection - TLS failed!')
+            if conres != 'tls':
+                self.log.warning('TLS failed! - using unsecure connection')
             else:
                 self.log.info('Connected to server')
 
-            authres = conn.auth(self.jid.getNode(), self._JabberBot__password, self.res)
+            authres = conn.auth(self.jid.getNode(), self._JabberBot__password,
+                                self.res)
             if not authres:
                 self.log.error('unable to authorize with server.')
                 self.attempt_reconnect()
 
-            if authres<>'sasl':
-                self.log.warning("unable to perform SASL auth os %s. Old authentication method used!" % self.jid.getDomain())
+            if authres != 'sasl':
+                self.log.warning("SASL failed on %s" % self.jid.getDomain())
+                self.log.warging("Old authentication method used!")
 
             conn.sendInitPresence()
+
             self.conn = conn
             self.roster = self.conn.Roster.getRoster()
             self.log.info('*** roster ***')
@@ -134,6 +142,7 @@ class ChatRoomJabberBot(JabberBot):
             self.conn.RegisterDisconnectHandler(self.attempt_reconnect)
             self.conn.UnregisterDisconnectHandler(conn.DisconnectHandler)
             self._JabberBot__set_status(self.get_topic())
+
             ### Send a -- we are online -- message
             self.message_queue.append('_We are up and running!_')
 
@@ -165,8 +174,8 @@ class ChatRoomJabberBot(JabberBot):
             file.write('USERS = {\n')
             for u in self.users:
                 file.write("'%s': '%s',\n"
-                           %(u.encode('utf-8'),
-                             self.users[u].encode('utf-8')))
+                           % (u.encode('utf-8'),
+                              self.users[u].encode('utf-8')))
             file.write('}\n\n')
             self.log.info("Saved user data")
         except:
@@ -188,7 +197,8 @@ class ChatRoomJabberBot(JabberBot):
         try:
             file.write('INVITED = {\n')
             for u in self.invited:
-                file.write("'%s': '%s',\n" %(u, self.invited[u].encode('utf-8')))
+                file.write("'%s': '%s',\n" % (u,
+                                            self.invited[u].encode('utf-8')))
             file.write('}\n\n')
             self.log.info("Saved invited user data")
         except:
@@ -204,7 +214,8 @@ class ChatRoomJabberBot(JabberBot):
 
     def save_topic(self, file):
         try:
-            file.write('TOPIC = """%s"""\n\n' %(self._JabberBot__status.encode('utf-8')))
+            topic = self._JabberBot__status.encode('utf-8')
+            file.write('TOPIC = """%s"""\n\n' % topic)
         except:
             return ''
 
@@ -242,24 +253,29 @@ class ChatRoomJabberBot(JabberBot):
         username = jid.getNode()
         domain = jid.getDomain()
         if typ == "chat":
-            return "%s@%s" %(username, domain)
+            return "%s@%s" % (username, domain)
         else:
             return ""
+
+    def get_sender_nick(self, mess):
+        username = self.get_sender_username(mess)
+        return self.users[username]
 
     def unknown_command(self, mess, cmd, args):
         user = self.get_sender_username(mess)
         if user in self.users:
             self.message_queue.append('[%s]: %s %s' % (self.users[user], cmd, args))
-            self.log.info("%s sent: %s %s" %(user, cmd, args))
+            self.log.info("%s sent: %s %s" % (user, cmd, args))
         return ''
 
+    def callback_message(self, conn, mess):
+        """Messages sent to the bot will arrive here. Command handling +
+        routing is done in this function.
+        """
 
-    def callback_message( self, conn, mess):
-        """Messages sent to the bot will arrive here. Command handling + routing is done in this function."""
-
-        jid      = mess.getFrom()
-        props    = mess.getProperties()
-        text     = mess.getBody()
+        jid = mess.getFrom()
+        props = mess.getProperties()
+        text = mess.getBody()
         username = self.get_sender_username(mess)
 
         if username not in self.users.keys() + self.invited.keys():
@@ -273,10 +289,12 @@ class ChatRoomJabberBot(JabberBot):
         self.log.debug("*** text = %s" % text)
 
         # Ignore messages from before we joined
-        if xmpp.NS_DELAY in props: return
+        if xmpp.NS_DELAY in props:
+            return
 
         # If a message format is not supported (eg. encrypted), txt will be None
-        if not text: return
+        if not text:
+            return
 
         # Remember the last-talked-in thread for replies
         self._JabberBot__threads[jid] = mess.getThread()
@@ -290,7 +308,7 @@ class ChatRoomJabberBot(JabberBot):
         cmd = command
         self.log.debug("*** cmd = %s" % cmd)
 
-        if self.commands.has_key(cmd) and cmd != 'help':
+        if cmd in self.commands and cmd != 'help':
             try:
                 reply = self.commands[cmd](mess, args)
             except Exception, e:
@@ -301,8 +319,9 @@ class ChatRoomJabberBot(JabberBot):
             # In group chat, the bot should silently ignore commands it
             # doesn't understand or aren't handled by unknown_command().
             default_reply = 'Unknown command: "%s". Type "help" for available commands.<b>blubb!</b>' % cmd
-            if type == "groupchat": default_reply = None
-            reply = self.unknown_command( mess, cmd, args)
+            if type == "groupchat":
+                default_reply = None
+            reply = self.unknown_command(mess, cmd, args)
             if reply is None:
                 reply = default_reply
         if reply:
@@ -318,15 +337,15 @@ class ChatRoomJabberBot(JabberBot):
 
         if user in self.users and args.strip() == self.res:
             self.message_queue.append('_%s restarted me! brb!_'
-                                       %(self.users[user]))
-            self.log.info( '%s is restarting me.' % user)
+                                       % (self.users[user]))
+            self.log.info('%s is restarting me.' % user)
             self.shutdown()
             self.idle_proc()
             self.conn.sendPresence(typ='unavailable')
             self.attempt_reconnect()
 
     @botcmd(name=',subscribe')
-    def subscribe( self, mess, args):
+    def subscribe(self, mess, args):
         """Subscribe to the broadcast list"""
         user = self.get_sender_username(mess)
         if user in self.users:
@@ -340,7 +359,7 @@ class ChatRoomJabberBot(JabberBot):
             return 'You are now subscribed.'
 
     @botcmd(name=',unsubscribe')
-    def unsubscribe( self, mess, args):
+    def unsubscribe(self, mess, args):
         """Unsubscribe from the broadcast list"""
         user = self.get_sender_username(mess)
         if not user in self.users:
@@ -348,12 +367,12 @@ class ChatRoomJabberBot(JabberBot):
         else:
             user = self.users.pop(user)
             self.message_queue.append('_%s has left the channel_' % user)
-            self.log.info( '%s unsubscribed from the broadcast.' % user)
+            self.log.info('%s unsubscribed from the broadcast.' % user)
             self.save_state()
             return 'You are now unsubscribed.'
 
     @botcmd(name=',dnd')
-    def dnd( self, mess, args):
+    def dnd(self, mess, args):
         """Switch to do-not-disturb mode. Use ,dnd to switch back."""
         user = self.get_sender_username(mess)
         if user not in self.users and user not in self.invited:
@@ -362,19 +381,19 @@ class ChatRoomJabberBot(JabberBot):
             name = self.users.pop(user)
             self.invited[user] = name
             self.message_queue.append('_%s entered NO PARKING ZONE here_' % name)
-            self.log.info( '%s entered NO PARKING ZONE here.' % name)
+            self.log.info('%s entered NO PARKING ZONE here.' % name)
             self.save_state()
             return 'NO PARKING ZONE entered.Happy riding!'
         elif user in self.invited:
             name = self.invited.pop(user)
             self.users[user] = name
             self.message_queue.append('_%s came out of NO PARKING ZONE_' % name)
-            self.log.info( '%s came out of NO PARKING ZONE.' % name)
+            self.log.info('%s came out of NO PARKING ZONE.' % name)
             self.save_state()
             return 'PARKING ZONE entered. Hey %s!' % name
 
     @botcmd(name=',alias')
-    def alias( self, mess, args):
+    def alias(self, mess, args):
         """Change your nick"""
         user = self.get_sender_username(mess)
         args = args.strip().replace(' ', '_')
@@ -384,38 +403,37 @@ class ChatRoomJabberBot(JabberBot):
             elif len(args) == 0:
                 return 'Nick needs to be atleast one character long'
             elif len(args) > NICK_LEN:
-                return 'Nick cannot be longer than %s characters' %(NICK_LEN,)
+                return 'Nick cannot be longer than %s characters' % (NICK_LEN,)
             else:
-                self.message_queue.append('_%s is now known as %s_' %(self.users[user], args))
+                self.message_queue.append('_%s is now known as %s_' % (self.users[user], args))
                 self.users[user] = args
-                self.log.info( '%s changed alias.' % user)
-                self.log.info('%s' %self.users)
+                self.log.info('%s changed alias.' % user)
+                self.log.info('%s' % self.users)
                 self.save_state()
                 return 'You are now known as %s' % args
 
     @botcmd(name=',topic')
-    def topic( self, mess, args):
+    def topic(self, mess, args):
         """Change the topic/status"""
         user = self.get_sender_username(mess)
         if user in self.users:
             self._JabberBot__set_status(args)
-            self.message_queue.append('_%s changed topic to %s_' %(self.users[user], args))
-            self.log.info( '%s changed topic.' % user)
+            self.message_queue.append('_%s changed topic to %s_' % (self.users[user], args))
+            self.log.info('%s changed topic.' % user)
             self.save_state()
 
-
     @botcmd(name=',list')
-    def list( self, mess, args):
+    def list(self, mess, args):
         """List all the members of the list"""
         user = self.get_sender_username(mess)
         args = args.replace(' ', '_')
         if user in self.users or user in self.invited:
             user_list = 'All these users are subscribed - \n'
-            user_list += '\n'.join(['%s :: %s' %(u, self.users[u]) for u in sorted(self.users)])
+            user_list += '\n'.join(['%s :: %s' % (u, self.users[u]) for u in sorted(self.users)])
             if self.invited.keys():
                 user_list += '\n The following users are invited - \n'
                 user_list += '\n'.join(self.invited.keys())
-            self.log.info( '%s checks list of users.' % user)
+            self.log.info('%s checks list of users.' % user)
             return user_list
 
     @botcmd(name=',me')
@@ -424,20 +442,19 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         if user in self.users:
             self.message_queue.append('*%s %s*' % (self.users[user], args))
-            self.log.info( '%s says %s in third person.' % (user, args))
-
+            self.log.info('%s says %s in third person.' % (user, args))
 
     @botcmd(name=',invite')
     def invite(self, mess, args):
         """Invite a person to join the room. Works only if the person has added the bot as a friend, as of now."""
         user = self.get_sender_username(mess)
         if user in self.users:
-            email = '%s@%s' %(xmpp.JID(args).getNode(), xmpp.JID(args).getDomain())
+            email = '%s@%s' % (xmpp.JID(args).getNode(), xmpp.JID(args).getDomain())
             if email in self.roster.getItems():
                 self.send(args, '%s invited you to join %s. Say ",help" to see how to join.' % (user, CHANNEL))
                 self.roster.Authorize(email)
                 self.invited[email] = ''
-                self.log.info( '%s invited %s.' % (user, args))
+                self.log.info('%s invited %s.' % (user, args))
                 self.save_state()
                 self.message_queue.append('_%s invited %s_' % (self.users[user], args))
             else:
@@ -482,7 +499,8 @@ class ChatRoomJabberBot(JabberBot):
                 except:
                     return "Invalid option to edit."
             elif not args:
-                return '\n'.join(['_%s - %s_' %(i,t) for i,t in enumerate(self.ideas)])
+                return '\n'.join(['_%s - %s_' % (i, t) \
+                                  for i, t in enumerate(self.ideas)])
             else:
                 return """add - Adds a new idea
                 del n - Deletes n^{th} idea
@@ -491,7 +509,7 @@ class ChatRoomJabberBot(JabberBot):
                 no arguments - Show ideas to you"""
 
     @botcmd(name=',whois')
-    def whois( self, mess, args):
+    def whois(self, mess, args):
         """Check who has a particular nick"""
         user = self.get_sender_username(mess)
         args = args.strip().replace(' ', '_')
@@ -509,10 +527,10 @@ class ChatRoomJabberBot(JabberBot):
         if user in self.users:
             t = datetime.fromtimestamp(time.time()) - \
                    datetime.fromtimestamp(self.started)
-            hours = t.seconds/3600
-            mins = (t.seconds/60)%60
-            secs = t.seconds%60
-            self.log.info('%s queried uptime.' % (user))
+            hours = t.seconds / 3600
+            mins = (t.seconds / 60) % 60
+            secs = t.seconds % 60
+            self.log.info('%s queried uptime.' % (user,))
             self.message_queue.append("Harbouring conversations, and what's more, memories, relentlessly since %s day(s) %s hour(s) %s min(s) and %s sec(s) for %s & friends" % (t.days, hours, mins, secs, self.users[user]))
 
     @botcmd(name=',yt')
@@ -529,7 +547,7 @@ class ChatRoomJabberBot(JabberBot):
             query.vq = args
 
             feed = yt_service.YouTubeQuery(query)
-            self.message_queue.append('%s searched for %s ...' %(self.users[user], args))
+            self.message_queue.append('%s searched for %s ...' % (self.users[user], args))
 
             for entry in feed.entry:
                 self.message_queue.append('... and here you go -- %s' % entry.GetHtmlLink().href)
@@ -540,16 +558,16 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         if user in self.users:
             self.log.info('%s queried %s from Google.' % (user, args))
-            query = urllib.urlencode({'q' : args})
+            query = urllib.urlencode({'q': args})
             url = 'http://ajax.googleapis.com/ajax/' + \
                   'services/search/web?v=1.0&%s' % (query)
             results = urllib.urlopen(url)
             data = json.loads(results.read())
             self.message_queue.append('%s googled for %s ... and here you go'
-                                      %(self.users[user], args))
+                                      % (self.users[user], args))
             try:
                 top = data['responseData']['results'][0]
-                self.message_queue.append('%s -- %s' %(top['title'], top['url']))
+                self.message_queue.append('%s -- %s' % (top['title'], top['url']))
             except:
                 self.message_queue.append('%s' % "Oops! Nothing found!")
 
@@ -559,22 +577,21 @@ class ChatRoomJabberBot(JabberBot):
         user = self.get_sender_username(mess)
         if user in self.users:
             self.log.info('%s queried %s from Google.' % (user, args))
-            query = urllib.urlencode({'q' : "site:soundcloud.com " + args})
+            query = urllib.urlencode({'q': "site:soundcloud.com " + args})
             url = 'http://ajax.googleapis.com/ajax/' + \
                   'services/search/web?v=1.0&%s' % (query)
             results = urllib.urlopen(url)
             data = json.loads(results.read())
             top = data['responseData']['results'][0]
             self.message_queue.append('%s googled for %s ... and here you go'
-                                      %(self.users[user], args))
-            self.message_queue.append('%s -- %s' %(top['title'], top['url']))
+                                      % (self.users[user], args))
+            self.message_queue.append('%s -- %s' % (top['title'], top['url']))
 
     @botcmd(name=',cric')
     def cric(self, mess, args):
         """ A bunch of Cricinfo commands. Say ,cric help for more info. """
-        cric_th = threading.Thread(target=self.cric_bot, args=(mess,args))
+        cric_th = threading.Thread(target=self.cric_bot, args=(mess, args))
         cric_th.start()
-
 
     @botcmd(name=",stats")
     def stats(self, mess, args):
@@ -602,9 +619,9 @@ class ChatRoomJabberBot(JabberBot):
                 people[person] = [message]
             else:
                 people[person].append(message)
-        stats = ["%-15s -- %s" %(dude, len(people[dude])) for dude in people]
+        stats = ["%-15s -- %s" % (dude, len(people[dude])) for dude in people]
         stats = sorted(stats, key=lambda x: int(x.split()[2]), reverse=True)
-        stats = ["%-15s -- %s" %("Name", "Message count")] + stats
+        stats = ["%-15s -- %s" % ("Name", "Message count")] + stats
 
         stats = 'the stats ...\n' + '\n'.join(stats) + '\n'
 
@@ -631,7 +648,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',help')
     def help_alias(self, mess, args):
         """An alias to help command."""
-        return self.help(mess,args)
+        return self.help(mess, args)
 
     @botcmd(name=',addbotcmd')
     def add_botcmd(self, mess, args):
@@ -681,8 +698,8 @@ class ChatRoomJabberBot(JabberBot):
         name = ',' + f.__name__
 
         if gist_url:
-            gist_url = 'The code is at %s' %gist_url
-            f.__doc__ += "\n%s" %gist_url
+            gist_url = 'The code is at %s' % gist_url
+            f.__doc__ += "\n%s" % gist_url
 
         # Prevent over-riding the ,addbotcmd alone
         if name == ',addbotcmd':
@@ -697,9 +714,9 @@ class ChatRoomJabberBot(JabberBot):
         user = self.users[self.get_sender_username(mess)]
 
         # Log and celebrate!
-        self.log.info('%s registered command %s' %(user, name))
-        self.message_queue.append('%s registered command %s' %(user, name))
-        self.message_queue.append('Say ,help %s to see the help' %name)
+        self.log.info('%s registered command %s' % (user, name))
+        self.message_queue.append('%s registered command %s' % (user, name))
+        self.message_queue.append('Say ,help %s to see the help' % name)
         if gist_url:
             self.message_queue.append(gist_url)
 
@@ -707,7 +724,7 @@ class ChatRoomJabberBot(JabberBot):
         """Emphasizes your name, when sent in a message.
         """
         nick = re.escape(self.users[user])
-        msg = re.sub("(\W|\A)(%s)(\W|\Z)" %nick, "\\1 *\\2* \\3", msg)
+        msg = re.sub("(\W|\A)(%s)(\W|\Z)" % nick, "\\1 *\\2* \\3", msg)
         return msg
 
     def chunk_message(self, user, msg):
@@ -722,7 +739,7 @@ class ChatRoomJabberBot(JabberBot):
             time.sleep(0.1)
             self.chunk_message(user, msg[idx:])
 
-    def idle_proc( self):
+    def idle_proc(self):
         if not len(self.message_queue):
             return
 
@@ -735,20 +752,20 @@ class ChatRoomJabberBot(JabberBot):
             if not isinstance(message, basestring):
                 message = str(message)
             if len(self.users):
-                self.log.info('sending "%s" to %d user(s).' % ( message, len(self.users), ))
+                self.log.info('sending "%s" to %d user(s).' % (message, len(self.users), ))
             for user in self.users:
                 if not message.startswith("[%s]:" % self.users[user]):
                     self.chunk_message(user,
                                        self.highlight_name(message, user))
 
-
-    def thread_proc( self):
+    def thread_proc(self):
         while not self.thread_killed:
             self.message_queue.append('')
             for i in range(300):
                 time.sleep(1)
                 if self.thread_killed:
                     return
+
 
 class CricInfo(object):
     """ A class for all the cric info stuff.
@@ -765,7 +782,7 @@ class CricInfo(object):
         """ Open a url and return it's soup."""
         opener = urllib2.build_opener()
         opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-        data = opener.open(self.url+url)
+        data = opener.open(self.url + url)
         soup = BeautifulSoup(data)
         return soup
 
@@ -785,7 +802,7 @@ class CricInfo(object):
         """
         url = self.matches[self.match][1]
         view = '?view=live'
-        soup = self._soupify_url(url+view)
+        soup = self._soupify_url(url + view)
         recent, = soup.findAll('p', 'liveDetailsText', limit=1)
 
         msg = recent.getText(' ')
@@ -797,7 +814,7 @@ class CricInfo(object):
         """
         url = self.matches[self.match][1]
         view = '?view=scorecard'
-        soup = self._soupify_url(url+view)
+        soup = self._soupify_url(url + view)
         scorecard = soup.findAll("table", "inningsTable")
         scorecard = '\n'.join([str(tag) for tag in scorecard])
         f = open(SCORECARD, 'w')
@@ -816,10 +833,10 @@ class CricInfo(object):
             matches, = soup.findAll('table', id='international', limit=1)
             self.matches = [[match.getText(' '), match.attrs[0][1], '0', '1'] \
                             for match in matches.findAll('a')]
-            if len(self.matches)>1:
+            if len(self.matches) > 1:
                 msg = 'Now obtained, matches - '
                 for i, match in enumerate(self.matches):
-                    msg += '\n[%s] - %s' %(i, match[0])
+                    msg += '\n[%s] - %s' % (i, match[0])
                 msg += '\nSelect a match'
                 log = "Obtained list of matches."
                 return msg, log, False
@@ -868,12 +885,11 @@ class CricInfo(object):
             msg = log = result
             group = False
 
-        self.parent.log.info('%s -- %s' %(log, user))
+        self.parent.log.info('%s -- %s' % (log, user))
         if group:
             self.parent.message_queue.append(msg)
         else:
             self.parent.send_simple_reply(mess, msg)
-
 
     def _help(self):
         help = dedent("""
@@ -887,7 +903,6 @@ class CricInfo(object):
         return help, log
 
 
-
 if __name__ == "__main__":
     PATH = os.path.dirname(os.path.abspath(__file__))
     sys.path = [PATH] + sys.path
@@ -896,6 +911,6 @@ if __name__ == "__main__":
 
     bc = ChatRoomJabberBot(JID, PASSWORD, RES)
 
-    th = threading.Thread(target = bc.thread_proc)
-    bc.serve_forever(connect_callback = lambda: th.start())
+    th = threading.Thread(target=bc.thread_proc)
+    bc.serve_forever(connect_callback=lambda: th.start())
     bc.thread_killed = True
