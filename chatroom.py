@@ -50,7 +50,7 @@ import gdata.youtube.service
 from jabberbot import JabberBot, botcmd
 import json
 import logging
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, exists
 from os import execl
 import re
 from subprocess import Popen, PIPE, call
@@ -154,7 +154,10 @@ class ChatRoomJabberBot(JabberBot):
         self.log.info('Persisted state data')
 
     def read_state(self):
-        with open(join(self.ROOT, 'state.json')) as f:
+        state_file = join(self.ROOT, 'state.json')
+        if not exists(state_file):
+            return dict()
+        with open(state_file) as f:
             self._state = json.load(f)
         self.log.info('Obtained saved state from state.json')
 
