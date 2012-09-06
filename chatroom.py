@@ -76,24 +76,16 @@ class ChatRoomJabberBot(JabberBot):
     def __init__(self, jid, password, res=None):
         super(ChatRoomJabberBot, self).__init__(jid, password, res)
 
-        self._state = state = self.read_state()
-
+        self.read_state()
+        state = self._state
         self.users = state.get('users', dict())
-
         self.invited = state.get('invited', dict())
-
         self.ideas = state.get('ideas', [])
-
         self.topic = state.get('topic', '')
-
         self.started = time.time()
-
         self.message_queue = []
-
         self.thread_killed = False
-
         self.cric_bot = CricInfo(self)
-
         self._install_log_handler()
 
     def connect(self):
@@ -156,7 +148,7 @@ class ChatRoomJabberBot(JabberBot):
     def read_state(self):
         state_file = join(self.ROOT, 'state.json')
         if not exists(state_file):
-            return dict()
+            self._state = dict()
         with open(state_file) as f:
             self._state = json.load(f)
         self.log.info('Obtained saved state from state.json')
