@@ -44,7 +44,9 @@
 #
 
 # standard library imports
+from BeautifulSoup import BeautifulSoup
 from datetime import datetime
+import gdata.youtube.service
 from jabberbot import JabberBot, botcmd
 import json
 import logging
@@ -62,12 +64,6 @@ import xmpp
 
 # local imports
 from util import get_code_from_gist, is_gist_url
-
-try:
-    from BeautifulSoup import BeautifulSoup
-    import gdata.youtube.service
-except:
-    print "Some features won't work, unless you have BeautifulSoup and gdata"
 
 NICK_LEN = 24
 
