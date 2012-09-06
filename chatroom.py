@@ -51,14 +51,15 @@ import threading
 import time
 import logging
 import traceback
-import codecs
-from datetime import timedelta, datetime
+from datetime import datetime
 from textwrap import dedent
 
 import re, os, sys
 import urllib2, urllib
 import json
 from subprocess import Popen, PIPE, call
+
+from util import get_code_from_gist
 
 try:
     from BeautifulSoup import BeautifulSoup
@@ -657,9 +658,17 @@ class ChatRoomJabberBot(JabberBot):
         from functools import partial, update_wrapper
         from inspect import isfunction
 
+        # Check if first word in args is a URL.
+        first_arg = args.split()[0]
+        if first_arg.startswith('https://'):
+            code = get_code_from_gist(first_arg)
+            # FIXME: We can keep a track of all gist urls, for persistence.
+        else:
+            code = args
+
         # Evaluate the code and get the function
         d = dict()
-        exec(args) in globals(), d
+        exec(code) in globals(), d
         if len(d) != 1:
             return 'You need to define one callable'
         f = d.values()[0]
