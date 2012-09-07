@@ -82,6 +82,8 @@ class ChatRoomJabberBot(JabberBot):
         self.invited = state.get('invited', dict())
         self.ideas = state.get('ideas', [])
         self.topic = state.get('topic', '')
+        self.gist_urls = state.get('gist_urls', [])
+        self._protected = [',addbotcmd', ',restart']
         self.started = time.time()
         self.message_queue = []
         self.thread_killed = False
@@ -129,6 +131,8 @@ class ChatRoomJabberBot(JabberBot):
             self.conn.UnregisterDisconnectHandler(conn.DisconnectHandler)
             self._JabberBot__set_status(self.topic)
 
+            # Fetch all code from the gist urls and make commands
+            self._add_gist_commands()
             ### Send a -- we are online -- message
             self.message_queue.append('_We are up and running!_')
 
@@ -141,7 +145,8 @@ class ChatRoomJabberBot(JabberBot):
             state = dict(users=self.users,
                          invited=self.invited,
                          topic=self.topic,
-                         ideas=self.ideas)
+                         ideas=self.ideas,
+                         gist_urls=self.gist_urls)
             json.dump(state, f, indent=2)
         self.log.info('Persisted state data')
 
@@ -572,8 +577,27 @@ class ChatRoomJabberBot(JabberBot):
     def add_botcmd(self, mess, args):
         """ Define a bot command on the fly!
 
-        Lets you define bot commands on the fly.  The following things should
-        be kept in mind:
+        This command lets you add bot commands, during runtime. New
+        commands can be added as shown below ::
+
+            ,addbotcmd<space>
+            def clear(self, message, args):
+                ''' Clears the screen!
+
+                This command is intended to be used when you want to
+                divert attention of the users from the previous
+                discussion.
+                '''
+                self.message_queue.append('\n' * 80)
+
+        The commands can be added to a gist and the url can be passed
+        to this command, like so ::
+
+            ,addbotcmd http://gist.github.com/1ab91bafce13/
+
+        Commands added using gists are persisted between restarts.
+
+        The following things should be kept in mind:
 
             - Only new functions with 3 arguments (self, message, args) can be
               defined.
@@ -587,23 +611,57 @@ class ChatRoomJabberBot(JabberBot):
               message queue is not a string, it is converted to a string
               before being sent out.
 
-        The commands can be added to a gist and the url can be passed to this
-        command.
-
         """
         if not(args):
             return "Didn't get any arguments for the command!"
-        from functools import partial, update_wrapper
-        from inspect import isfunction
 
         # Check if first word in args is a URL.
         gist_url = args.split()[0]
         if is_gist_url(gist_url):
             code = get_code_from_gist(gist_url)
-            # FIXME: We can keep a track of all gist urls, for persistence.
+            extra_doc = 'The code is at %s' % gist_url
         else:
             code = args
             gist_url = False
+            extra_doc = ''
+
+        is_name, name = self._create_cmd_from_code(code, extra_doc)
+
+        if not is_name:
+            # Return the error message
+            return name
+
+        # Persist the url, if it's not already persisted
+        if gist_url not in self.gist_urls:
+            self.gist_urls.append(gist_url)
+
+        # Log and celebrate!
+        user = self.users[self.get_sender_username(mess)]
+        self.log.info('%s registered command %s' % (user, name))
+        self.message_queue.append('%s registered command %s' % (user, name))
+        self.message_queue.append('Say ,help %s to see the help' % name)
+        if extra_doc:
+            self.message_queue.append(extra_doc)
+
+    def _add_gist_commands(self):
+        for url in self.gist_urls[:]:
+            code = get_code_from_gist(url)
+            if not code:
+                self.gist_urls.remove(url)
+                self.log.info('Untracking command at %s' %url)
+                continue
+            is_name, name = self._create_cmd_from_code(code)
+            if not is_name:
+                self.gist_urls.remove(url)
+                self.log.info('Untracking command at %s' %url)
+                continue
+            self.log.info('Added new command from %s' %url)
+
+    def _create_cmd_from_code(self, code, extra_doc=None):
+        """ exec code, and make it a new bot cmd, if possible
+        """
+        from functools import partial, update_wrapper
+        from inspect import isfunction
 
         # Evaluate the code and get the function
         d = dict()
@@ -612,16 +670,15 @@ class ChatRoomJabberBot(JabberBot):
             return 'You need to define one callable'
         f = d.values()[0]
         if not (isfunction(f) and f.__doc__ and f.func_code.co_argcount == 3):
-            return 'You can only add callables, with 3 arguments, and a docstring'
+            return (False,
+                'You can only add functions, with 3 arguments, and a docstring')
+
         name = ',' + f.__name__
+        f.__doc__ += "\n%s" % extra_doc or ''
 
-        if gist_url:
-            gist_url = 'The code is at %s' % gist_url
-            f.__doc__ += "\n%s" % gist_url
-
-        # Prevent over-riding the ,addbotcmd alone
-        if name == ',addbotcmd':
-            return "Sorry, this function can't be over-written."
+        # Prevent over-riding protected commands
+        if name in self._protected:
+            return False, "Sorry, this function can't be over-written."
 
         # Wrap the function, to give access to this instance of the bot
         f_partial = partial(f, self)
@@ -629,14 +686,8 @@ class ChatRoomJabberBot(JabberBot):
 
         # Register the new command
         self.commands[name] = f_
-        user = self.users[self.get_sender_username(mess)]
 
-        # Log and celebrate!
-        self.log.info('%s registered command %s' % (user, name))
-        self.message_queue.append('%s registered command %s' % (user, name))
-        self.message_queue.append('Say ,help %s to see the help' % name)
-        if gist_url:
-            self.message_queue.append(gist_url)
+        return True, name
 
     def highlight_name(self, msg, user):
         """Emphasizes your name, when sent in a message.
