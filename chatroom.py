@@ -593,7 +593,7 @@ class ChatRoomJabberBot(JabberBot):
         The commands can be added to a gist and the url can be passed
         to this command, like so ::
 
-            ,addbotcmd http://gist.github.com/1ab91bafce13/
+            ,addbotcmd https://gist.github.com/37d4875e41056b58a8f5
 
         Commands added using gists are persisted between restarts.
 
@@ -632,7 +632,7 @@ class ChatRoomJabberBot(JabberBot):
             return name
 
         # Persist the url, if it's not already persisted
-        if gist_url not in self.gist_urls:
+        if gist_url and gist_url not in self.gist_urls:
             self.gist_urls.append(gist_url)
 
         # Log and celebrate!
