@@ -277,7 +277,6 @@ class ChatRoomJabberBot(JabberBot):
             self.invited.pop(user)
             self.message_queue.append('_%s has joined the channel_' % user)
             self.log.info('%s subscribed to the broadcast.' % user)
-            self.save_state()
             return 'You are now subscribed.'
 
     @botcmd(name=',unsubscribe')
@@ -290,7 +289,6 @@ class ChatRoomJabberBot(JabberBot):
             user = self.users.pop(user)
             self.message_queue.append('_%s has left the channel_' % user)
             self.log.info('%s unsubscribed from the broadcast.' % user)
-            self.save_state()
             return 'You are now unsubscribed.'
 
     @botcmd(name=',dnd')
@@ -304,14 +302,12 @@ class ChatRoomJabberBot(JabberBot):
             self.invited[user] = name
             self.message_queue.append('_%s entered NO PARKING ZONE here_' % name)
             self.log.info('%s entered NO PARKING ZONE here.' % name)
-            self.save_state()
             return 'NO PARKING ZONE entered.Happy riding!'
         elif user in self.invited:
             name = self.invited.pop(user)
             self.users[user] = name
             self.message_queue.append('_%s came out of NO PARKING ZONE_' % name)
             self.log.info('%s came out of NO PARKING ZONE.' % name)
-            self.save_state()
             return 'PARKING ZONE entered. Hey %s!' % name
 
     @botcmd(name=',alias')
@@ -331,7 +327,6 @@ class ChatRoomJabberBot(JabberBot):
                 self.users[user] = args
                 self.log.info('%s changed alias.' % user)
                 self.log.info('%s' % self.users)
-                self.save_state()
                 return 'You are now known as %s' % args
 
     @botcmd(name=',topic')
@@ -343,7 +338,6 @@ class ChatRoomJabberBot(JabberBot):
             self._JabberBot__set_status(self.topic)
             self.message_queue.append('_%s changed topic to %s_' % (self.users[user], args))
             self.log.info('%s changed topic.' % user)
-            self.save_state()
 
     @botcmd(name=',list')
     def list(self, mess, args):
@@ -378,7 +372,6 @@ class ChatRoomJabberBot(JabberBot):
                 self.roster.Authorize(email)
                 self.invited[email] = ''
                 self.log.info('%s invited %s.' % (user, args))
-                self.save_state()
                 self.message_queue.append('_%s invited %s_' % (self.users[user], args))
             else:
                 return 'User needs to add me to friend list before they can be invited.'
@@ -398,7 +391,6 @@ class ChatRoomJabberBot(JabberBot):
                 if text == '':
                     return "Sorry. Cannot add empty idea."
                 self.ideas.append(text)
-                self.save_state()
                 self.message_queue.append('_%s added "%s" as an idea_' % (self.users[user], text))
             elif args.startswith('del'):
                 try:
@@ -406,7 +398,6 @@ class ChatRoomJabberBot(JabberBot):
                     if num in range(len(self.ideas)):
                         self.message_queue.append('_%s deleted "%s" from ideas_' % (self.users[user], self.ideas[num]))
                         del self.ideas[num]
-                        self.save_state()
                 except:
                     return "Invalid option to delete."
             elif args.startswith('edit'):
@@ -418,7 +409,6 @@ class ChatRoomJabberBot(JabberBot):
                             return "Sorry. Cannot add empty idea."
                         self.message_queue.append('_%s changed idea %s to %s_' % (self.users[user], num, txt))
                         self.ideas[num] = txt
-                        self.save_state()
                 except:
                     return "Invalid option to edit."
             elif not args:
@@ -730,6 +720,7 @@ class ChatRoomJabberBot(JabberBot):
     def thread_proc(self):
         while not self.thread_killed:
             self.message_queue.append('')
+            self.save_state()
             for i in range(300):
                 time.sleep(1)
                 if self.thread_killed:
