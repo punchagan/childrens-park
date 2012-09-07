@@ -636,11 +636,12 @@ class ChatRoomJabberBot(JabberBot):
     def _add_gist_commands(self):
         for url in self.gist_urls[:]:
             code = get_code_from_gist(url)
+            extra_doc = "\nThe code is at %s" % url
             if not code:
                 self.gist_urls.remove(url)
                 self.log.info('Untracking command at %s' %url)
                 continue
-            is_name, name = self._create_cmd_from_code(code)
+            is_name, name = self._create_cmd_from_code(code, extra_doc)
             if not is_name:
                 self.gist_urls.remove(url)
                 self.log.info('Untracking command at %s' %url)
