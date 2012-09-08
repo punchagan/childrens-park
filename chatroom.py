@@ -460,14 +460,14 @@ class ChatRoomJabberBot(JabberBot):
 
     @botcmd(name=',see')
     def bot_see(self, mess, args):
-        """ Look at bot's attributes.
+        """ Look at bot's public attributes.
 
         You can past a list of attributes separated by spaces.
         """
         output = ''
         for arg in args.split():
             value = getattr(self, arg, None)
-            if value is not None:
+            if value is not None and not arg.startswith('_'):
                 output += '%s is %s\n' %(arg, value)
             else:
                 output += "%s - No such attribute\n" % arg
