@@ -459,12 +459,16 @@ class ChatRoomJabberBot(JabberBot):
     def bot_see(self, mess, args):
         """ Look at bot's attributes.
 
-        May not be a good idea to allow use for all users, but for
-        now, I don't care."""
-        try:
-            return "%s is %s" % (args, bc.__getattribute__(args))
-        except AttributeError:
-            return "No such attribute"
+        You can past a list of attributes separated by spaces.
+        """
+        output = ''
+        for arg in args.split():
+            value = getattr(self, arg, None)
+            if value is not None:
+                output += '%s is %s\n' %(arg, value)
+            else:
+                output += "%s - No such attribute\n" % arg
+        return output
 
     @botcmd(name=',see-friends')
     def show_roster(self, mess, args):
