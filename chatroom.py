@@ -493,14 +493,14 @@ class ChatRoomJabberBot(JabberBot):
         commands can be added as shown below ::
 
             ,addbotcmd<space>
-            def clear(self, message, args):
+            def clear():
                 ''' Clears the screen!
 
                 This command is intended to be used when you want to
                 divert attention of the users from the previous
                 discussion.
                 '''
-                self.message_queue.append('\\n' * 80)
+                print '\\n' * 80
 
         The commands can be added to a gist and the url can be passed
         to this command, like so ::
@@ -637,13 +637,13 @@ class ChatRoomJabberBot(JabberBot):
         d = dict()
         exec(code) in globals(), d
 
-        # FIXME: We should let people define arbit global functions.
+        # XXX: Should let people define arbit global functions?
         if len(d) != 1:
             return 'You need to define one callable'
         f = d.values()[0]
 
         if not (isfunction(f) and f.__doc__):
-            return (False, 'You can only add functions, with 3 arguments')
+            return (False, 'You can only add functions, with doc-strings')
         elif not is_wrappable(f):
             possible = possible_signatures()
             return (False, '%s are the only supported signatures' % possible)

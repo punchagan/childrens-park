@@ -25,7 +25,8 @@ def get_code_from_gist(url):
     return code
 
 def possible_signatures():
-    possible = list(combinations(['self', 'mess', 'args'], 1)) + \
+    possible = list(combinations(['self', 'mess', 'args'], 0)) + \
+               list(combinations(['self', 'mess', 'args'], 1)) + \
                list(combinations(['self', 'mess', 'args'], 2)) + \
                list(combinations(['self', 'mess', 'args'], 3))
     return possible
