@@ -525,10 +525,6 @@ class ChatRoomJabberBot(JabberBot):
             gist_url = False
             extra_doc = ''
 
-        # Replace print statements with 'self.message_queue.extend([args])
-        code = re.sub("(\n\s*)print (.*)",
-                      "\\1self.message_queue.extend([\\2])", code)
-
         is_name, name = self._create_cmd_from_code(code, extra_doc)
 
         if not is_name:
@@ -636,10 +632,9 @@ class ChatRoomJabberBot(JabberBot):
         # Evaluate the code and get the function
         d = dict()
         exec(code) in globals(), d
-
         # XXX: Should let people define arbit global functions?
         if len(d) != 1:
-            return 'You need to define one callable'
+            return False, 'You need to define one callable'
         f = d.values()[0]
 
         if not (isfunction(f) and f.__doc__):
@@ -656,20 +651,34 @@ class ChatRoomJabberBot(JabberBot):
             return False, "Sorry, this function can't be over-written."
 
         # Wrap the function, as required and register it.
-        self.commands[name] = self._wrap_function(f)
+        self.commands[name] = self._wrap_function(f, code)
 
         return True, name
 
-    def _wrap_function(self, f):
+    def _wrap_function(self, f, code):
         from functools import partial, update_wrapper
         from inspect import getargs
         expected_args = getargs(f.func_code).args
 
-        if 'self' in expected_args:
-            f_ = partial(f, self)
-        else:
-            f_ = f
+        if 'self' not in expected_args:
+            # Redefine the function to add a self argument!
+            # XXX this is one heck of a hack!
+            # This is done to support print statements
+            code = re.sub("(\ndef\s+\w+\(\s*)(\w+)", "\\1self, \\2", code)
 
+        # Replace print statements with 'self.message_queue.extend([args])
+        code = re.sub("(\n\s*)print (.*)",
+                      "\\1self.message_queue.extend([\\2])", code)
+
+        # Re-evaluate code to get new function
+        d = dict()
+        exec(code) in globals(), d
+        f_new = d.values()[0]
+
+        # Wrap with first argument as self, to fake as a method
+        f_ = partial(f_new, self)
+
+        # Wrap to handle, missing mess or args arguments
         def wrapper(mess, args):
             f_args = dict()
             if 'mess' in expected_args:
@@ -678,6 +687,7 @@ class ChatRoomJabberBot(JabberBot):
                 f_args.setdefault('args', args)
             return f_(**f_args)
 
+        # Return a botcmd with the proper doc-string, etc.
         return botcmd(update_wrapper(wrapper, f))
 
     def _chunk_message(self, user, msg):
