@@ -128,7 +128,7 @@
         <span class="nb">super</span><span class="p">(</span><span class="n">ChatRoomJabberBot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">jid</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">res</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_read_state</span><span class="p">()</span>
-
+        <span class="c">#: Users, for god&#39;s sake!</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">users</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;users&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">invited</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;invited&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ideas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;ideas&#39;</span><span class="p">,</span> <span class="p">[])</span>

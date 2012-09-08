@@ -149,6 +149,28 @@ More examples are available on github --
 :py:class:`ChatRoomJabberBot`
 =============================
 
+Useful Attributes
+^^^^^^^^^^^^^^^^^
+.. attribute:: users
+
+    List of all users subscribed to the bot
+
+.. attribute:: invited
+
+    List of all users invited to the bot
+
+.. attribute:: topic
+
+    Topic for the bot
+
+.. attribute:: gist_urls
+
+    List of all gist urls added as bot commands
+
+
+Methods docs
+^^^^^^^^^^^^
+
 .. currentmodule:: chatroom
 
 .. autoclass:: ChatRoomJabberBot

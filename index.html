@@ -221,6 +221,35 @@ change the global <cite>prev_time</cite> to be an attribute of the
 </div>
 <div class="section" id="chatroomjabberbot">
 <span id="auto-doc"></span><h2><tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt><a class="headerlink" href="#chatroomjabberbot" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="useful-attributes">
+<h3>Useful Attributes<a class="headerlink" href="#useful-attributes" title="Permalink to this headline">¶</a></h3>
+<dl class="attribute">
+<dt id="users">
+<tt class="descname">users</tt><a class="headerlink" href="#users" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of all users subscribed to the bot</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="invited">
+<tt class="descname">invited</tt><a class="headerlink" href="#invited" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of all users invited to the bot</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="topic">
+<tt class="descname">topic</tt><a class="headerlink" href="#topic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Topic for the bot</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="gist_urls">
+<tt class="descname">gist_urls</tt><a class="headerlink" href="#gist_urls" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of all gist urls added as bot commands</p>
+</dd></dl>
+
+</div>
+<div class="section" id="methods-docs">
+<h3>Methods docs<a class="headerlink" href="#methods-docs" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="chatroom.ChatRoomJabberBot">
 <em class="property">class </em><tt class="descclassname">chatroom.</tt><tt class="descname">ChatRoomJabberBot</tt><big>(</big><em>jid</em>, <em>password</em>, <em>res=None</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot" title="Permalink to this definition">¶</a></dt>
@@ -378,6 +407,12 @@ to this command, like so</p>
 <dd><p>Check the uptime of the bot.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="chatroom.ChatRoomJabberBot.users">
+<tt class="descname">users</tt><em class="property"> = None</em><a class="headerlink" href="#chatroom.ChatRoomJabberBot.users" title="Permalink to this definition">¶</a></dt>
+<dd><p>Users, for god&#8217;s sake!</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="chatroom.ChatRoomJabberBot.whois">
 <tt class="descname">whois</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.whois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.whois" title="Permalink to this definition">¶</a></dt>
@@ -392,6 +427,7 @@ to this command, like so</p>
 
 </dd></dl>
 
+</div>
 </div>
 </div>
 
