@@ -44,7 +44,6 @@
 #
 
 # standard library imports
-from BeautifulSoup import BeautifulSoup
 from datetime import datetime
 import gdata.youtube.service
 from jabberbot import JabberBot, botcmd
@@ -55,17 +54,15 @@ from os import execl
 import re
 from subprocess import Popen, PIPE, call
 import sys
-from textwrap import dedent
 import threading
 import time
 import traceback
 import urllib
-import urllib2
 import xmpp
 
 # local imports
 from util import get_code_from_gist, is_gist_url
-
+from cric_info import CricInfo
 
 class ChatRoomJabberBot(JabberBot):
     """A bot based on JabberBot and broadcast example given in there."""
@@ -87,8 +84,10 @@ class ChatRoomJabberBot(JabberBot):
         self.started = time.time()
         self.message_queue = []
         self.thread_killed = False
-        self.cric_bot = CricInfo(self)
+        self.cric_bot = CricInfo(self, SCORECARD, SCORECARD_URL)
         self._install_log_handler()
+
+    #### JabberBot interface ##################################################
 
     def connect(self):
         if not self.conn:
@@ -112,7 +111,7 @@ class ChatRoomJabberBot(JabberBot):
                                 self.res)
             if not authres:
                 self.log.error('unable to authorize with server.')
-                self.attempt_reconnect()
+                self._attempt_reconnect()
 
             if authres != 'sasl':
                 self.log.warning("SASL failed on %s" % self.jid.getDomain())
@@ -126,8 +125,8 @@ class ChatRoomJabberBot(JabberBot):
             for contact in self.roster.getItems():
                 self.log.info('  %s' % contact)
             self.log.info('*** roster ***')
-            self.conn.RegisterHandler('message', self.callback_message)
-            self.conn.RegisterDisconnectHandler(self.attempt_reconnect)
+            self.conn.RegisterHandler('message', self._callback_message)
+            self.conn.RegisterDisconnectHandler(self._attempt_reconnect)
             self.conn.UnregisterDisconnectHandler(conn.DisconnectHandler)
             self._JabberBot__set_status(self.topic)
 
@@ -138,38 +137,12 @@ class ChatRoomJabberBot(JabberBot):
 
         return self.conn
 
-    def save_state(self):
-        """ Persists the state of the bot.
-        """
-        with open(join(self.ROOT, 'state.json'), 'w') as f:
-            state = dict(users=self.users,
-                         invited=self.invited,
-                         topic=self.topic,
-                         ideas=self.ideas,
-                         gist_urls=self.gist_urls)
-            json.dump(state, f, indent=2)
-        self.log.info('Persisted state data')
-
-    def read_state(self):
-        state_file = join(self.ROOT, 'state.json')
-        if not exists(state_file):
-            self._state = dict()
-        with open(state_file) as f:
-            self._state = json.load(f)
-        self.log.info('Obtained saved state from state.json')
-
     def shutdown(self):
-        self.save_state()
-
-    def attempt_reconnect(self):
-        self.log.info('Restarting...')
-        self.log.info('Pulling changes from GitHub...')
-        call(["git", "pull"])
-        execl('/usr/bin/nohup', sys.executable, sys.executable,
-                abspath(__file__))
+        self._save_state()
 
     def get_sender_username(self, mess):
-        """Extract the sender's user name (along with domain) from a message."""
+        """ Extract the sender's user name (along with domain) from a message.
+        """
         jid = mess.getFrom()
         typ = mess.getType()
         username = jid.getNode()
@@ -180,74 +153,41 @@ class ChatRoomJabberBot(JabberBot):
             return ""
 
     def get_sender_nick(self, mess):
+        """ Get the nick of the user from a message.
+        """
         username = self.get_sender_username(mess)
         return self.users[username]
 
-    def unknown_command(self, mess, cmd, args):
-        user = self.get_sender_username(mess)
-        if user in self.users:
-            self.message_queue.append('[%s]: %s %s' % (self.users[user], cmd, args))
-            self.log.info("%s sent: %s %s" % (user, cmd, args))
-        return ''
+    def thread_proc(self):
+        while not self.thread_killed:
+            self.message_queue.append('')
+            self._save_state()
+            for i in range(300):
+                time.sleep(1)
+                if self.thread_killed:
+                    return
 
-    def callback_message(self, conn, mess):
-        """Messages sent to the bot will arrive here. Command handling +
-        routing is done in this function.
-        """
-
-        jid = mess.getFrom()
-        props = mess.getProperties()
-        text = mess.getBody()
-        username = self.get_sender_username(mess)
-
-        if username not in self.users.keys() + self.invited.keys():
-            self.log.info("Ignored message from %s." % username)
+    def idle_proc(self):
+        if not len(self.message_queue):
             return
 
-        self.log.debug("*** props = %s" % props)
-        self.log.debug("*** jid = %s" % jid)
-        self.log.debug("*** username = %s" % username)
-        self.log.debug("*** type = %s" % type)
-        self.log.debug("*** text = %s" % text)
+        # copy the message queue, then empty it
+        messages = self.message_queue
+        self.message_queue = []
 
-        # Ignore messages from before we joined
-        if xmpp.NS_DELAY in props:
-            return
+        for message in messages:
+            # If an object in the message queue is not a string, make it one.
+            if not isinstance(message, basestring):
+                message = unicode(message)
+            if len(self.users):
+                self.log.info('sending "%s" to %d user(s).',
+                              message, len(self.users))
+            for user in self.users:
+                if not message.startswith("[%s]:" % self.users[user]):
+                    self._chunk_message(user,
+                                       self._highlight_name(message, user))
 
-        # If a message format is not supported (eg. encrypted), txt will be None
-        if not text:
-            return
-
-        # Remember the last-talked-in thread for replies
-        self._JabberBot__threads[jid] = mess.getThread()
-
-        if ' ' in text:
-            command, args = text.split(' ', 1)
-        elif '\n' in text:
-            command, args = text.split('\n', 1)
-        else:
-            command, args = text, ''
-        cmd = command
-        self.log.debug("*** cmd = %s" % cmd)
-
-        if cmd in self.commands and cmd != 'help':
-            try:
-                reply = self.commands[cmd](mess, args)
-            except Exception, e:
-                reply = traceback.format_exc(e)
-                self.log.exception('An error happened while processing a message ("%s") from %s: %s"' % (text, jid, reply))
-        else:
-            # In private chat, it's okay for the bot to always respond.
-            # In group chat, the bot should silently ignore commands it
-            # doesn't understand or aren't handled by unknown_command().
-            default_reply = 'Unknown command: "%s". Type "help" for available commands.<b>blubb!</b>' % cmd
-            if type == "groupchat":
-                default_reply = None
-            reply = self.unknown_command(mess, cmd, args)
-            if reply is None:
-                reply = default_reply
-        if reply:
-            self.send_simple_reply(mess, unicode(reply))
+    #### Bot Commands #########################################################
 
     @botcmd(name=',restart')
     def restart(self, mess, args):
@@ -262,9 +202,9 @@ class ChatRoomJabberBot(JabberBot):
                                        % (self.users[user]))
             self.log.info('%s is restarting me.' % user)
             self.shutdown()
-            self.idle_proc()
+            self._idle_proc()
             self.conn.sendPresence(typ='unavailable')
-            self.attempt_reconnect()
+            self._attempt_reconnect()
 
     @botcmd(name=',subscribe')
     def subscribe(self, mess, args):
@@ -511,35 +451,9 @@ class ChatRoomJabberBot(JabberBot):
         "Simple statistics with message count for each user."
         user = self.get_sender_username(mess)
         self.log.info('Starting analysis... %s requested' % user)
-        stats_th = threading.Thread(target=self.analyze_logs)
+        stats_th = threading.Thread(target=self._analyze_logs)
         stats_th.start()
         return 'Starting analysis... will take a while!'
-
-    def analyze_logs(self):
-        self.log.info('Starting analysis...')
-        logs = Popen(["grep", "sent:", "nohup.out"], stdout=PIPE)
-        logs = logs.stdout
-        people = {}
-        for line in logs:
-            log = line.strip().split()
-            if not log or len(log) < 10:
-                continue
-            person = log[7]
-            if '@' in person:
-                person = person.split('@')[0]
-            message = ' '.join(log[9:])
-            if person not in people:
-                people[person] = [message]
-            else:
-                people[person].append(message)
-        stats = ["%-15s -- %s" % (dude, len(people[dude])) for dude in people]
-        stats = sorted(stats, key=lambda x: int(x.split()[2]), reverse=True)
-        stats = ["%-15s -- %s" % ("Name", "Message count")] + stats
-
-        stats = 'the stats ...\n' + '\n'.join(stats) + '\n'
-
-        self.log.info('Sending analyzed info')
-        self.message_queue.append(stats)
 
     @botcmd(name=',see')
     def bot_see(self, mess, args):
@@ -578,7 +492,7 @@ class ChatRoomJabberBot(JabberBot):
                 divert attention of the users from the previous
                 discussion.
                 '''
-                self.message_queue.append('\n' * 80)
+                self.message_queue.append('\\n' * 80)
 
         The commands can be added to a gist and the url can be passed
         to this command, like so ::
@@ -633,7 +547,73 @@ class ChatRoomJabberBot(JabberBot):
         if extra_doc:
             self.message_queue.append(extra_doc)
 
+    #### Private interface ####################################################
+
+    def _attempt_reconnect(self):
+        self.log.info('Restarting...')
+        self.log.info('Pulling changes from GitHub...')
+        call(["git", "pull"])
+        execl('/usr/bin/nohup', sys.executable, sys.executable,
+                abspath(__file__))
+
+    def _save_state(self):
+        """ Persists the state of the bot.
+        """
+        with open(join(self.ROOT, 'state.json'), 'w') as f:
+            state = dict(users=self.users,
+                         invited=self.invited,
+                         topic=self.topic,
+                         ideas=self.ideas,
+                         gist_urls=self.gist_urls)
+            json.dump(state, f, indent=2)
+        self.log.info('Persisted state data')
+
+    def _read_state(self):
+        """ Reads persisted state from state.json
+        """
+        state_file = join(self.ROOT, 'state.json')
+        if not exists(state_file):
+            self._state = dict()
+        with open(state_file) as f:
+            self._state = json.load(f)
+        self.log.info('Obtained saved state from state.json')
+
+    def _analyze_logs(self):
+        self.log.info('Starting analysis...')
+        logs = Popen(["grep", "sent:", "nohup.out"], stdout=PIPE)
+        logs = logs.stdout
+        people = {}
+        for line in logs:
+            log = line.strip().split()
+            if not log or len(log) < 10:
+                continue
+            person = log[7]
+            if '@' in person:
+                person = person.split('@')[0]
+            message = ' '.join(log[9:])
+            if person not in people:
+                people[person] = [message]
+            else:
+                people[person].append(message)
+        stats = ["%-15s -- %s" % (dude, len(people[dude])) for dude in people]
+        stats = sorted(stats, key=lambda x: int(x.split()[2]), reverse=True)
+        stats = ["%-15s -- %s" % ("Name", "Message count")] + stats
+
+        stats = 'the stats ...\n' + '\n'.join(stats) + '\n'
+
+        self.log.info('Sending analyzed info')
+        self.message_queue.append(stats)
+
+    def _highlight_name(self, msg, user):
+        """Emphasizes your name, when sent in a message.
+        """
+        nick = re.escape(self.users[user])
+        msg = re.sub("(\W|\A)(%s)(\W|\Z)" % nick, "\\1 *\\2* \\3", msg)
+        return msg
+
     def _add_gist_commands(self):
+        """ Adds persisted gists as commands (on startup)
+        """
         for url in self.gist_urls[:]:
             code = get_code_from_gist(url)
             extra_doc = "\nThe code is at %s" % url
@@ -680,14 +660,7 @@ class ChatRoomJabberBot(JabberBot):
 
         return True, name
 
-    def highlight_name(self, msg, user):
-        """Emphasizes your name, when sent in a message.
-        """
-        nick = re.escape(self.users[user])
-        msg = re.sub("(\W|\A)(%s)(\W|\Z)" % nick, "\\1 *\\2* \\3", msg)
-        return msg
-
-    def chunk_message(self, user, msg):
+    def _chunk_message(self, user, msg):
         LIM_LEN = 512
         if len(msg) <= LIM_LEN:
             self.send(user, msg)
@@ -697,35 +670,7 @@ class ChatRoomJabberBot(JabberBot):
                 idx = LIM_LEN
             self.send(user, msg[:idx])
             time.sleep(0.1)
-            self.chunk_message(user, msg[idx:])
-
-    def idle_proc(self):
-        if not len(self.message_queue):
-            return
-
-        # copy the message queue, then empty it
-        messages = self.message_queue
-        self.message_queue = []
-
-        for message in messages:
-            # If an object in the message queue is not a string, make it one.
-            if not isinstance(message, basestring):
-                message = unicode(message)
-            if len(self.users):
-                self.log.info('sending "%s" to %d user(s).' % (message, len(self.users), ))
-            for user in self.users:
-                if not message.startswith("[%s]:" % self.users[user]):
-                    self.chunk_message(user,
-                                       self.highlight_name(message, user))
-
-    def thread_proc(self):
-        while not self.thread_killed:
-            self.message_queue.append('')
-            self.save_state()
-            for i in range(300):
-                time.sleep(1)
-                if self.thread_killed:
-                    return
+            self._chunk_message(user, msg[idx:])
 
     def _install_log_handler(self):
         # create console handler
@@ -740,141 +685,54 @@ class ChatRoomJabberBot(JabberBot):
         # set level to INFO
         self.log.setLevel(logging.INFO)
 
-
-class CricInfo(object):
-    """ A class for all the cric info stuff.
-    """
-
-    def __init__(self, parent, url='http://www.espncricinfo.com'):
-
-        self.parent = parent
-        self.matches = None
-        self.match = None
-        self.url = url
-
-    def _soupify_url(self, url):
-        """ Open a url and return it's soup."""
-        opener = urllib2.build_opener()
-        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-        data = opener.open(self.url + url)
-        soup = BeautifulSoup(data)
-        return soup
-
-    def cric_summary(self):
-        """ Fetches the minimal scoreboard """
-        url = self.matches[self.match][1]
-        soup = self._soupify_url(url)
-        title, = soup.findAll('title')
-        score = title.text.split('|')[0]
-
-        msg = score
-        log = 'Obtained minimal scoreboard'
-        return msg, log, True
-
-    def cric_recent(self):
-        """ Fetches the recent overs
+    def _callback_message(self, conn, mess):
+        """Messages sent to the bot will arrive here. Command handling +
+        routing is done in this function.
         """
-        url = self.matches[self.match][1]
-        view = '?view=live'
-        soup = self._soupify_url(url + view)
-        recent, = soup.findAll('p', 'liveDetailsText', limit=1)
 
-        msg = recent.getText(' ')
-        log = 'Obtained recent overs score'
-        return msg, log, True
+        jid = mess.getFrom()
+        props = mess.getProperties()
+        text = mess.getBody()
+        username = self.get_sender_username(mess)
 
-    def cric_score(self):
-        """ Fetch the score-card.
-        """
-        url = self.matches[self.match][1]
-        view = '?view=scorecard'
-        soup = self._soupify_url(url + view)
-        scorecard = soup.findAll("table", "inningsTable")
-        scorecard = '\n'.join([str(tag) for tag in scorecard])
-        f = open(SCORECARD, 'w')
-        f.write('Scorecard last updated -- %s<br><br>\n' % time.ctime())
-        f.write(str(scorecard))
-        f.close()
+        if username not in self.users.keys() + self.invited.keys():
+            self.log.info("Ignored message from %s." % username)
+            return
 
-        log = "Obtained live scorecard url"
-        msg = 'Scores written to %s' % SCORECARD_URL
-        return msg, log, True
+        self.log.debug("*** props = %s" % props)
+        self.log.debug("*** jid = %s" % jid)
+        self.log.debug("*** username = %s" % username)
+        self.log.debug("*** type = %s" % type)
+        self.log.debug("*** text = %s" % text)
 
-    def cric_matches(self, args):
-        """ Fetches currently relevant matches. """
-        if not self.matches or not args:
-            soup = self._soupify_url('/')
-            matches, = soup.findAll('table', id='international', limit=1)
-            self.matches = [[match.getText(' '), match.attrs[0][1], '0', '1'] \
-                            for match in matches.findAll('a')]
-            if len(self.matches) > 1:
-                msg = 'Now obtained, matches - '
-                for i, match in enumerate(self.matches):
-                    msg += '\n[%s] - %s' % (i, match[0])
-                msg += '\nSelect a match'
-                log = "Obtained list of matches."
-                return msg, log, False
-            else:
-                args = '0'
-        try:
-            n = int(args)
-            if n < len(self.matches):
-                self.match = n
-            else:
-                self.match = 0
-            msg = 'Match set to %s' % self.matches[self.match][0]
-            return msg, msg, True
-        except:
-            msg = 'Behave yourelf'
-            return msg
+        # Ignore messages from before we joined
+        if xmpp.NS_DELAY in props:
+            return
 
-    def _caller(self, func_name, args):
-        if func_name == 'matches':
-            return self.cric_matches(args)
-        elif self.match is None:
-            msg = 'Use matches command to obtain and set matches.'
-            log = 'Use matches'
-            return msg, log
-        command = getattr(self, 'cric_' + func_name, self._help)
-        return command()
+        # If a message format is not supported (eg. encrypted), txt will be None
+        if not text:
+            return
 
-    def __call__(self, mess, args):
-        """An entry point to the cric info stuff.
-        """
-        user = self.parent.get_sender_username(mess)
-        user = self.parent.users[user]
+        # Remember the last-talked-in thread for replies
+        self._JabberBot__threads[jid] = mess.getThread()
 
-        if not args:
-            args = 'summary'
-
-        args_list = args.split()
-        result = self._caller(args_list[0], ' '.join(args_list[1:]))
-
-        if len(result) == 3:
-            msg, log, group = result
-        elif len(result) == 2:
-            msg, log = result
-            group = False
+        if ' ' in text:
+            command, args = text.split(' ', 1)
+        elif '\n' in text:
+            command, args = text.split('\n', 1)
         else:
-            msg = log = result
-            group = False
+            command, args = text, ''
+        cmd = command
+        self.log.debug("*** cmd = %s" % cmd )
 
-        self.parent.log.info('%s -- %s' % (log, user))
-        if group:
-            self.parent.message_queue.append(msg)
-        else:
-            self.parent.send_simple_reply(mess, msg)
-
-    def _help(self):
-        help = dedent("""
-        ,cric matches -- Get list of matches
-        ,cric matches n -- Set match number to n
-        ,cric -- Brief summary of the match
-        ,cric recent -- Recent Overs
-        ,cric score -- Full scorecard
-        """)
-        log = 'Sending help'
-        return help, log
+        if cmd in self.commands and cmd != 'help':
+            try:
+                reply = self.commands[cmd](mess, args)
+            except Exception, e:
+                reply = traceback.format_exc(e)
+                self.log.exception('An error happened while processing a message ("%s") from %s: %s"' % (text, jid, reply))
+        if reply:
+            self.send_simple_reply(mess, unicode(reply))
 
 
 if __name__ == "__main__":
