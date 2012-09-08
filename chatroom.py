@@ -664,7 +664,7 @@ class ChatRoomJabberBot(JabberBot):
             # Redefine the function to add a self argument!
             # XXX this is one heck of a hack!
             # This is done to support print statements
-            code = re.sub("(\ndef\s+\w+\(\s*)(\w+)", "\\1self, \\2", code)
+            code = re.sub("(\ndef\s+\w+\(\s*)", "\\1self, ", code)
 
         # Replace print statements with 'self.message_queue.extend([args])
         code = re.sub("(\n\s*)print (.*)",
