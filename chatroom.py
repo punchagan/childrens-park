@@ -61,7 +61,8 @@ import urllib
 import xmpp
 
 # local imports
-from util import get_code_from_gist, is_gist_url
+from util import (get_code_from_gist, is_gist_url, is_wrappable,
+                  possible_signatures)
 from cric_info import CricInfo
 
 class ChatRoomJabberBot(JabberBot):
@@ -508,19 +509,7 @@ class ChatRoomJabberBot(JabberBot):
 
         Commands added using gists are persisted between restarts.
 
-        The following things should be kept in mind:
-
-            - Only new functions with 3 arguments (self, message, args) can be
-              defined.
-
-            - To return any messages to the sender only, just return from the
-              function, whatever it is, that you wish to send back to the
-              user.
-
-            - If you wish to send a message to all the users, append the
-              string to the message queue.  If the object appended to the
-              message queue is not a string, it is converted to a string
-              before being sent out.
+        For more information, look at the documentation online.
 
         """
         if not(args):
@@ -638,18 +627,22 @@ class ChatRoomJabberBot(JabberBot):
     def _create_cmd_from_code(self, code, extra_doc=None):
         """ exec code, and make it a new bot cmd, if possible
         """
-        from functools import partial, update_wrapper
         from inspect import isfunction
 
         # Evaluate the code and get the function
         d = dict()
         exec(code) in globals(), d
+
+        # FIXME: We should let people define arbit global functions.
         if len(d) != 1:
             return 'You need to define one callable'
         f = d.values()[0]
-        if not (isfunction(f) and f.__doc__ and f.func_code.co_argcount == 3):
-            return (False,
-                'You can only add functions, with 3 arguments, and a docstring')
+
+        if not (isfunction(f) and f.__doc__):
+            return (False, 'You can only add functions, with 3 arguments')
+        elif not is_wrappable(f):
+            possible = possible_signatures()
+            return (False, '%s are the only supported signatures' % possible)
 
         name = ',' + f.__name__
         f.__doc__ += "\n%s" % extra_doc or ''
@@ -658,14 +651,35 @@ class ChatRoomJabberBot(JabberBot):
         if name in self._protected:
             return False, "Sorry, this function can't be over-written."
 
-        # Wrap the function, to give access to this instance of the bot
-        f_partial = partial(f, self)
-        f_ = botcmd(update_wrapper(f_partial, f))
+        # Wrap the function, as required.
+        f_ = self._wrap_function(f)
 
         # Register the new command
         self.commands[name] = f_
 
         return True, name
+
+    def _wrap_function(self, f):
+        from functools import partial, update_wrapper
+        from inspect import getargs
+        expected_args = getargs(f.func_code).args
+
+        if 'self' in expected_args:
+            f_ = partial(f, self)
+        else:
+            f_ = f
+
+        def wrapper(mess, args):
+            f_args = dict()
+            if 'mess' in expected_args:
+                f_args.setdefault('mess', mess)
+            if 'args' in expected_args:
+                f_args.setdefault('args', args)
+            return f_(**f_args)
+
+        f_ = botcmd(update_wrapper(wrapper, f))
+
+        return f_
 
     def _chunk_message(self, user, msg):
         LIM_LEN = 512
