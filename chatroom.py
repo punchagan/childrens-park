@@ -525,6 +525,10 @@ class ChatRoomJabberBot(JabberBot):
             gist_url = False
             extra_doc = ''
 
+        # Replace print statements with 'self.message_queue.extend([args])
+        code = re.sub("(\n\s*)print (.*)",
+                      "\\1self.message_queue.extend([\\2])", code)
+
         is_name, name = self._create_cmd_from_code(code, extra_doc)
 
         if not is_name:
