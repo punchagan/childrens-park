@@ -33,7 +33,5 @@ def possible_signatures():
 
 def is_wrappable(f):
     args = tuple(getargs(f.func_code).args)
-    if len(args) not in (1, 2, 3):
-        return False
     possible = possible_signatures()
     return args in possible
