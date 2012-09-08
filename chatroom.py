@@ -77,11 +77,11 @@ class ChatRoomJabberBot(JabberBot):
 
         self._read_state()
 
-        self.users = self.state.get('users', dict())
-        self.invited = self.state.get('invited', dict())
-        self.ideas = self.state.get('ideas', [])
-        self.topic = self.state.get('topic', '')
-        self.gist_urls = self.state.get('gist_urls', [])
+        self.users = self._state.get('users', dict())
+        self.invited = self._state.get('invited', dict())
+        self.ideas = self._state.get('ideas', [])
+        self.topic = self._state.get('topic', '')
+        self.gist_urls = self._state.get('gist_urls', [])
         self._protected = [',addbotcmd', ',restart']
         self.started = time.time()
         self.message_queue = []
