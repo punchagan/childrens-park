@@ -205,7 +205,7 @@ class ChatRoomJabberBot(JabberBot):
                                        % (self.users[user]))
             self.log.info('%s is restarting me.' % user)
             self.shutdown()
-            self._idle_proc()
+            self.idle_proc()
             self.conn.sendPresence(typ='unavailable')
             self._attempt_reconnect()
 
