@@ -509,7 +509,9 @@ class ChatRoomJabberBot(JabberBot):
 
         Commands added using gists are persisted between restarts.
 
-        For more information, look at the documentation online.
+        For more information, look at the `documentation
+        online<http://punchagan.github.com/childrens-park/#how-to-add-new-bot-
+        commands>`_.
 
         """
         if not(args):
