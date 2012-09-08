@@ -160,7 +160,58 @@ private variable like <cite>_rps_score</cite>.</p>
 </li>
 </ul>
 </div></blockquote>
-<p>Look at some of the example commands available &#8211;</p>
+<p>We have tried to make it as easy as possible for developers to develop their
+code, without having to test on a running instance of the bot.  Feel free to
+comment upon/suggest any more ideas to make this easier on developers.</p>
+<p>With all this in mind, let&#8217;s write a simple command called <cite>time_it</cite> that
+gives you the time between the current invocation and the previous invocation
+of the command.  We start writing a simple module <cite>time_it.py</cite> that can run
+independently.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">prev_time</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="k">def</span> <span class="nf">time_it</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot; Send time delta since the last run, to all users.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">time</span>
+    <span class="k">global</span> <span class="n">prev_time</span>
+    <span class="n">cur_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">prev_time</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;This is the first run.&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span> <span class="n">cur_time</span> <span class="o">-</span> <span class="n">prev_time</span><span class="p">,</span> <span class="s">&quot;seconds, since last run.&quot;</span>
+    <span class="n">prev_time</span> <span class="o">=</span> <span class="n">cur_time</span>
+    <span class="k">return</span> <span class="s">&#39;The current time is&#39;</span><span class="p">,</span> <span class="n">cur_time</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">time_it</span><span class="p">()</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="n">time_it</span><span class="p">()</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">time_it</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>All the variables, that we intend to set as attributes of the
+<tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt> are initialized as globals, and set to None.  All
+the messages that should be sent to all users, are just printed out.  Once we
+have a working function, we can modify it, to have it working with the bot.
+In the above function, we change the function to take one argument <cite>self</cite>, and
+change the global <cite>prev_time</cite> to be an attribute of the
+<tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt>.  The code finally, would look as follows</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">time_it</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Send time delta since the last run, to all users.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">time</span>
+    <span class="n">cur_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prev_time</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">print</span> <span class="s">&quot;This is the first run.&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">print</span> <span class="n">cur_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">prev_time</span><span class="p">,</span> <span class="s">&quot;seconds, since last run.&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">prev_time</span> <span class="o">=</span> <span class="n">cur_time</span>
+    <span class="k">return</span> <span class="s">&#39;The current time is&#39;</span><span class="p">,</span> <span class="n">cur_time</span>
+</pre></div>
+</div>
+<p>Now, we can go ahead and add this code as a new bot command!</p>
+<p>More examples are available on github &#8211;</p>
 <blockquote>
 <div><ul class="simple">
 <li><a class="reference external" href="https://gist.github.com/37d4875e41056b58a8f5">Clear command</a></li>
@@ -201,7 +252,8 @@ to this command, like so</p>
 <div class="highlight-python"><pre>,addbotcmd https://gist.github.com/37d4875e41056b58a8f5</pre>
 </div>
 <p>Commands added using gists are persisted between restarts.</p>
-<p>For more information, look at the documentation online.</p>
+<p>For more information, look at
+<a class="reference external" href="http://punchagan.github.com/childrens-park/#how-to-add-new-bot-commands">http://punchagan.github.com/childrens-park/#how-to-add-new-bot-commands</a>.</p>
 </dd></dl>
 
 <dl class="method">
