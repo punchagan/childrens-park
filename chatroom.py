@@ -651,11 +651,8 @@ class ChatRoomJabberBot(JabberBot):
         if name in self._protected:
             return False, "Sorry, this function can't be over-written."
 
-        # Wrap the function, as required.
-        f_ = self._wrap_function(f)
-
-        # Register the new command
-        self.commands[name] = f_
+        # Wrap the function, as required and register it.
+        self.commands[name] = self._wrap_function(f)
 
         return True, name
 
@@ -677,9 +674,7 @@ class ChatRoomJabberBot(JabberBot):
                 f_args.setdefault('args', args)
             return f_(**f_args)
 
-        f_ = botcmd(update_wrapper(wrapper, f))
-
-        return f_
+        return botcmd(update_wrapper(wrapper, f))
 
     def _chunk_message(self, user, msg):
         LIM_LEN = 512
