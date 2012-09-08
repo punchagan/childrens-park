@@ -738,8 +738,17 @@ class ChatRoomJabberBot(JabberBot):
             except Exception, e:
                 reply = traceback.format_exc(e)
                 self.log.exception('An error happened while processing a message ("%s") from %s: %s"' % (text, jid, reply))
+        else:
+            reply = self._unknown_command(mess, cmd, args)
         if reply:
             self.send_simple_reply(mess, unicode(reply))
+
+    def _unknown_command(self, mess, cmd, args):
+        user = self.get_sender_username(mess)
+        if user in self.users:
+            self.message_queue.append('[%s]: %s %s' % (self.users[user], cmd, args))
+            self.log.info("%s sent: %s %s" % (user, cmd, args))
+        return ''
 
     def __getattr__(self, name):
         "Overridden to allow easier writing of user commands"
