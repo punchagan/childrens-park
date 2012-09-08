@@ -67,24 +67,27 @@ from cric_info import CricInfo
 class ChatRoomJabberBot(JabberBot):
     """A bot based on JabberBot and broadcast example given in there."""
 
+    #: Maximum allowed length of nick
     NICK_LEN = 24
+
     ROOT = dirname(abspath(__file__))
 
     def __init__(self, jid, password, res=None):
         super(ChatRoomJabberBot, self).__init__(jid, password, res)
 
-        self.read_state()
-        state = self._state
-        self.users = state.get('users', dict())
-        self.invited = state.get('invited', dict())
-        self.ideas = state.get('ideas', [])
-        self.topic = state.get('topic', '')
-        self.gist_urls = state.get('gist_urls', [])
+        self._read_state()
+
+        self.users = self.state.get('users', dict())
+        self.invited = self.state.get('invited', dict())
+        self.ideas = self.state.get('ideas', [])
+        self.topic = self.state.get('topic', '')
+        self.gist_urls = self.state.get('gist_urls', [])
         self._protected = [',addbotcmd', ',restart']
         self.started = time.time()
         self.message_queue = []
         self.thread_killed = False
         self.cric_bot = CricInfo(self, SCORECARD, SCORECARD_URL)
+
         self._install_log_handler()
 
     #### JabberBot interface ##################################################
