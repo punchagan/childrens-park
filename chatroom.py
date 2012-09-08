@@ -741,6 +741,10 @@ class ChatRoomJabberBot(JabberBot):
         if reply:
             self.send_simple_reply(mess, unicode(reply))
 
+    def __getattr__(self, name):
+        "Overridden to allow easier writing of user commands"
+        return None
+
 
 if __name__ == "__main__":
     PATH = dirname(abspath(__file__))
