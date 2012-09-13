@@ -390,25 +390,6 @@ class ChatRoomJabberBot(JabberBot):
             self.log.info('%s queried uptime.' % (user,))
             self.message_queue.append("Harbouring conversations, and what's more, memories, relentlessly since %s day(s) %s hour(s) %s min(s) and %s sec(s) for %s & friends" % (t.days, hours, mins, secs, self.users[user]))
 
-    @botcmd(name=',yt')
-    def youtube_fetch(self, mess, args):
-        """Fetch the top-most result from YouTube"""
-        user = self.get_sender_username(mess)
-        if user in self.users:
-            self.log.info('%s queried %s from Youtube.' % (user, args))
-            yt_service = gdata.youtube.service.YouTubeService()
-            query = gdata.youtube.service.YouTubeVideoQuery()
-            query.racy = 'include'
-            query.orderby = 'relevance'
-            query.max_results = 1
-            query.vq = args
-
-            feed = yt_service.YouTubeQuery(query)
-            self.message_queue.append('%s searched for %s ...' % (self.users[user], args))
-
-            for entry in feed.entry:
-                self.message_queue.append('... and here you go -- %s' % entry.GetHtmlLink().href)
-
     @botcmd(name=',g')
     def google_fetch(self, mess, args):
         """Fetch the top-most result from Google"""
