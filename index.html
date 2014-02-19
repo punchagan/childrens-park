@@ -99,14 +99,14 @@ bot, instead.</li>
 <div class="section" id="how-to-add-new-bot-commands">
 <span id="howto-add-cmd"></span><h2>How-to add new bot commands<a class="headerlink" href="#how-to-add-new-bot-commands" title="Permalink to this headline">¶</a></h2>
 <p>New commands can be added to the bot using the ,addbotcmd.  The command can
-take either a <a class="reference external" href="https://gist.github.com">gist url</a> url or a string, with the
-required function definition, as an argument. For example</p>
-<div class="highlight-python"><pre>,addbotcmd https://gist.github.com/37d4875e41056b58a8f5
+take either a <a class="reference external" href="https://gist.github.com">raw gist url</a> url or a string, with
+the required function definition, as an argument. For example</p>
+<div class="highlight-python"><pre>,addbotcmd https://gist.github.com/punchagan/7cb723285b00c4900ce5/raw/468f0c72ad0e01eb11754816bcf3d9f789b558ff/youtube_cmd.py
 
 ,addbotcmd&lt;space&gt;
 &lt;Your function goes here&gt;</pre>
 </div>
-<p>Only the commands added throught a gist-url will be persisted across restarts.</p>
+<p>Only the commands added through a gist-url will be persisted across restarts.</p>
 <p>Here are a few things, you need to keep in mind, when writing your code:</p>
 <blockquote>
 <div><ul>
@@ -250,183 +250,6 @@ change the global <cite>prev_time</cite> to be an attribute of the
 </div>
 <div class="section" id="methods-docs">
 <h3>Methods docs<a class="headerlink" href="#methods-docs" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="chatroom.ChatRoomJabberBot">
-<em class="property">class </em><tt class="descclassname">chatroom.</tt><tt class="descname">ChatRoomJabberBot</tt><big>(</big><em>jid</em>, <em>password</em>, <em>res=None</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot" title="Permalink to this definition">¶</a></dt>
-<dd><p>A bot based on JabberBot and broadcast example given in there.</p>
-<dl class="attribute">
-<dt id="chatroom.ChatRoomJabberBot.NICK_LEN">
-<tt class="descname">NICK_LEN</tt><em class="property"> = 24</em><a class="headerlink" href="#chatroom.ChatRoomJabberBot.NICK_LEN" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maximum allowed length of nick</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.add_botcmd">
-<tt class="descname">add_botcmd</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.add_botcmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.add_botcmd" title="Permalink to this definition">¶</a></dt>
-<dd><p>Define a bot command on the fly!</p>
-<p>This command lets you add bot commands, during runtime. New
-commands can be added as shown below</p>
-<div class="highlight-python"><pre>,addbotcmd&lt;space&gt;
-def clear():
-    ''' Clears the screen!
-
-    This command is intended to be used when you want to
-    divert attention of the users from the previous
-    discussion.
-    '''
-    print '\n' * 80</pre>
-</div>
-<p>The commands can be added to a gist and the url can be passed
-to this command, like so</p>
-<div class="highlight-python"><pre>,addbotcmd https://gist.github.com/37d4875e41056b58a8f5</pre>
-</div>
-<p>Commands added using gists are persisted between restarts.</p>
-<p>For more information, look at
-<a class="reference external" href="http://punchagan.github.com/childrens-park/#how-to-add-new-bot-commands">http://punchagan.github.com/childrens-park/#how-to-add-new-bot-commands</a>.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.alias">
-<tt class="descname">alias</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.alias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.alias" title="Permalink to this definition">¶</a></dt>
-<dd><p>Change your nick</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.bot_see">
-<tt class="descname">bot_see</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.bot_see"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.bot_see" title="Permalink to this definition">¶</a></dt>
-<dd><p>Look at bot&#8217;s public attributes.</p>
-<p>You can past a list of attributes separated by spaces.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.cric">
-<tt class="descname">cric</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.cric"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.cric" title="Permalink to this definition">¶</a></dt>
-<dd><p>A bunch of Cricinfo commands. Say ,cric help for more info.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.dnd">
-<tt class="descname">dnd</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.dnd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.dnd" title="Permalink to this definition">¶</a></dt>
-<dd><p>Switch to do-not-disturb mode. Use ,dnd to switch back.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.get_sender_nick">
-<tt class="descname">get_sender_nick</tt><big>(</big><em>mess</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.get_sender_nick"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.get_sender_nick" title="Permalink to this definition">¶</a></dt>
-<dd><p>Get the nick of the user from a message.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.get_sender_username">
-<tt class="descname">get_sender_username</tt><big>(</big><em>mess</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.get_sender_username"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.get_sender_username" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extract the sender&#8217;s user name (along with domain) from a message.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.google_fetch">
-<tt class="descname">google_fetch</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.google_fetch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.google_fetch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the top-most result from Google</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.help_alias">
-<tt class="descname">help_alias</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.help_alias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.help_alias" title="Permalink to this definition">¶</a></dt>
-<dd><p>An alias to help command.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.ideas">
-<tt class="descname">ideas</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.ideas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.ideas" title="Permalink to this definition">¶</a></dt>
-<dd><p>Maintain a list of ideas/items. Use ,ideas help.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.invite">
-<tt class="descname">invite</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.invite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.invite" title="Permalink to this definition">¶</a></dt>
-<dd><p>Invite a person to join the room. Works only if the person has added the bot as a friend, as of now.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.list">
-<tt class="descname">list</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.list" title="Permalink to this definition">¶</a></dt>
-<dd><p>List all the members of the list</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.myself">
-<tt class="descname">myself</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.myself"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.myself" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send message in third person</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.restart">
-<tt class="descname">restart</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.restart"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.restart" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restart the bot. Use resource name as PASSWORD.</p>
-<p>To avoid accidental restarts, resource name is used as argument.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.show_roster">
-<tt class="descname">show_roster</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.show_roster"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.show_roster" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the roster of friends.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.soundcloud_fetch">
-<tt class="descname">soundcloud_fetch</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.soundcloud_fetch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.soundcloud_fetch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the top-most result from Google for site:soundcloud.com</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.stats">
-<tt class="descname">stats</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.stats" title="Permalink to this definition">¶</a></dt>
-<dd><p>Simple statistics with message count for each user.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.subscribe">
-<tt class="descname">subscribe</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.subscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.subscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Subscribe to the broadcast list</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.topic">
-<tt class="descname">topic</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.topic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.topic" title="Permalink to this definition">¶</a></dt>
-<dd><p>Change the topic/status</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.unsubscribe">
-<tt class="descname">unsubscribe</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.unsubscribe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.unsubscribe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unsubscribe from the broadcast list</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.uptime">
-<tt class="descname">uptime</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.uptime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.uptime" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check the uptime of the bot.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="chatroom.ChatRoomJabberBot.users">
-<tt class="descname">users</tt><em class="property"> = None</em><a class="headerlink" href="#chatroom.ChatRoomJabberBot.users" title="Permalink to this definition">¶</a></dt>
-<dd><p>Users, for god&#8217;s sake!</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.whois">
-<tt class="descname">whois</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.whois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.whois" title="Permalink to this definition">¶</a></dt>
-<dd><p>Check who has a particular nick</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="chatroom.ChatRoomJabberBot.youtube_fetch">
-<tt class="descname">youtube_fetch</tt><big>(</big><em>mess</em>, <em>args</em><big>)</big><a class="reference internal" href="_modules/chatroom.html#ChatRoomJabberBot.youtube_fetch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chatroom.ChatRoomJabberBot.youtube_fetch" title="Permalink to this definition">¶</a></dt>
-<dd><p>Fetch the top-most result from YouTube</p>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 </div>
 </div>
@@ -468,7 +291,7 @@ to this command, like so</p>
           
     <div class="footer">
         &copy; Copyright 2012, Puneeth Chaganti.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.2.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
         </div>
         <div class="clearer"></div>
