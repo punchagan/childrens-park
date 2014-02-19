@@ -61,9 +61,9 @@ import urllib
 import xmpp
 
 # local imports
-from util import (get_code_from_gist, is_gist_url, is_wrappable,
-                  possible_signatures)
+from util import get_code_from_url, is_url, is_wrappable, possible_signatures
 from cric_info import CricInfo
+
 
 class ChatRoomJabberBot(JabberBot):
     """A bot based on JabberBot and broadcast example given in there."""
@@ -483,15 +483,15 @@ class ChatRoomJabberBot(JabberBot):
                 '''
                 print '\\n' * 80
 
-        The commands can be added to a gist and the url can be passed
+        The commands can be added to a gist and the *raw* url can be passed
         to this command, like so ::
 
-            ,addbotcmd https://gist.github.com/37d4875e41056b58a8f5
+            ,addbotcmd <raw-gist-url>
 
         Commands added using gists are persisted between restarts.
 
         For more information, look at
-        http://punchagan.github.com/childrens-park/#how-to-add-new-bot-commands.
+        http://punchagan.github.com/childrens-park/#how-to-add-new-bot-commands
 
         """
         if not(args):
@@ -499,8 +499,8 @@ class ChatRoomJabberBot(JabberBot):
 
         # Check if first word in args is a URL.
         gist_url = args.split()[0]
-        if is_gist_url(gist_url):
-            code = get_code_from_gist(gist_url)
+        if is_url(gist_url):
+            code = get_code_from_url(gist_url)
             extra_doc = 'The code is at %s' % gist_url
         else:
             code = args
@@ -593,7 +593,7 @@ class ChatRoomJabberBot(JabberBot):
         """ Adds persisted gists as commands (on startup)
         """
         for url in self.gist_urls[:]:
-            code = get_code_from_gist(url)
+            code = get_code_from_url(url)
             extra_doc = "\nThe code is at %s" % url
             if not code:
                 self.gist_urls.remove(url)
@@ -740,7 +740,7 @@ class ChatRoomJabberBot(JabberBot):
         if cmd in self.commands and cmd != 'help':
             try:
                 reply = self.commands[cmd](mess, args)
-            except Exception, e:
+            except Exception as e:
                 reply = traceback.format_exc(e)
                 self.log.exception('An error happened while processing a message ("%s") from %s: %s"' % (text, jid, reply))
         else:

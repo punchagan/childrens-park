@@ -23,15 +23,15 @@ How-to add new bot commands
 ===========================
 
 New commands can be added to the bot using the ,addbotcmd.  The command can
-take either a `gist url <https://gist.github.com>`_ url or a string, with the
-required function definition, as an argument. For example ::
+take either a `raw gist url <https://gist.github.com>`_ url or a string, with
+the required function definition, as an argument. For example ::
 
-    ,addbotcmd https://gist.github.com/37d4875e41056b58a8f5
+    ,addbotcmd https://gist.github.com/punchagan/7cb723285b00c4900ce5/raw/468f0c72ad0e01eb11754816bcf3d9f789b558ff/youtube_cmd.py
 
     ,addbotcmd<space>
     <Your function goes here>
 
-Only the commands added throught a gist-url will be persisted across restarts.
+Only the commands added through a gist-url will be persisted across restarts.
 
 Here are a few things, you need to keep in mind, when writing your code:
 
