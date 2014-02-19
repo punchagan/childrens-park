@@ -45,8 +45,6 @@
 
 # standard library imports
 from datetime import datetime
-import gdata.youtube.service
-from jabberbot import JabberBot, botcmd
 import json
 import logging
 from os.path import abspath, dirname, join, exists
@@ -58,7 +56,10 @@ import threading
 import time
 import traceback
 import urllib
+
+from jabberbot import JabberBot, botcmd
 import xmpp
+
 
 # local imports
 from util import get_code_from_url, is_url, is_wrappable, possible_signatures
