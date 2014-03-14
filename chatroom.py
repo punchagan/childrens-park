@@ -385,16 +385,20 @@ class ChatRoomJabberBot(JabberBot):
                 no arguments - Show ideas to you"""
 
     @botcmd(name=',whois')
-    def whois(self, mess, args):
-        """Check who has a particular nick"""
-        user = self.get_sender_username(mess)
-        args = args.strip().replace(' ', '_')
-        if user in self.users:
-            self.log.info('%s queried whois %s.' % (user, args))
-            if args in self.users.values():
-                return filter(lambda u: self.users[u] == args, self.users)[0]
-            else:
-                return 'Nobody!'
+    @requires_subscription
+    def whois(self, user, args):
+        """ Check who has a particular nick. """
+
+        query = args.strip().replace(' ', '_')
+
+        for email, nick in self.users.iteritems():
+            if nick == query:
+                break
+
+        else:
+            email = 'Nobody!'
+
+        return email
 
     @botcmd(name=',uptime')
     @requires_subscription

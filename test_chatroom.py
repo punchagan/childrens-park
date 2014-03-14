@@ -224,6 +224,36 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_find_subscribed_user(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bot.users = {foo: 'foo'}
+        message = xmpp.Protocol(frm=foo, typ='chat')
+
+        # When
+        who = bot.whois(message, 'foo')
+
+        # Then
+        self.assertEqual(who, foo)
+
+        return
+
+    def test_should_not_find_unknown_user(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bot.users = {foo: 'foo'}
+        message = xmpp.Protocol(frm=foo, typ='chat')
+
+        # When
+        who = bot.whois(message, 'fox')
+
+        # Then
+        self.assertEqual(who, 'Nobody!')
+
+        return
+
 if __name__ == "__main__":
     unittest.main()
 
