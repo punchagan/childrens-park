@@ -42,7 +42,7 @@
 from datetime import datetime
 import json
 import logging
-from os.path import abspath, dirname, join, exists
+from os.path import abspath, dirname, join
 from os import execl
 import re
 from subprocess import Popen, PIPE, call
@@ -238,16 +238,14 @@ class ChatRoomJabberBot(JabberBot):
         return message
 
     @botcmd(name=',unsubscribe')
-    def unsubscribe(self, mess, args):
-        """Unsubscribe from the broadcast list"""
-        user = self.get_sender_username(mess)
-        if not user in self.users:
-            return 'You are not subscribed!'
-        else:
-            user = self.users.pop(user)
-            self.message_queue.append('_%s has left the channel_' % user)
-            self.log.info('%s unsubscribed from the broadcast.' % user)
-            return 'You are now unsubscribed.'
+    @requires_subscription
+    def unsubscribe(self, user, args):
+        """ Un-subscribe from the broadcast list. """
+
+        user = self.users.pop(user)
+        self.message_queue.append('_%s has left the channel_' % user)
+
+        return 'You are now un-subscribed.'
 
     @botcmd(name=',dnd')
     def dnd(self, mess, args):

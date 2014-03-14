@@ -48,7 +48,14 @@ def requires_subscription(f):
         message = args[0]
         user = self.get_sender_username(message)
         if user not in self.users:
-            return
-        return f(self, user, *args[1:], **kwargs)
+            message = (
+                'You are not subscribed! Use %s to subscribe' %
+                self.subscribe._jabberbot_command_name
+            )
+
+        else:
+            message = f(self, user, *args[1:], **kwargs)
+
+        return message
 
     return wrapper

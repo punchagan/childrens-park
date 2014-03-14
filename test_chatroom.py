@@ -96,6 +96,37 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_not_unsubscribe_unknown_user(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        # bot.users = {foo: 'foo'}
+        message = xmpp.Protocol(frm=foo, typ='chat')
+
+        # When
+        result = bot.unsubscribe(message, '')
+
+        # Then
+        self.assertIn('You are not subscribed', result)
+
+        return
+
+    def test_should_unsubscribe_user(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bot.users = {foo: 'foo'}
+        message = xmpp.Protocol(frm=foo, typ='chat')
+
+        # When
+        result = bot.unsubscribe(message, '')
+
+        # Then
+        self.assertIn('You are now un-subscribed', result)
+        self.assertEqual(0, len(bot.users))
+
+        return
+
 
 if __name__ == "__main__":
     unittest.main()
