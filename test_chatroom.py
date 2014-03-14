@@ -208,8 +208,21 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_google(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bot.users = {foo: 'foo'}
+        message = xmpp.Protocol(frm=foo, typ='chat')
 
+        # When
+        bot.google(message, 'punchagan')
 
+        # Then
+        self.assertEqual(2, len(bot.message_queue))
+        self.assertIn('punchagan', bot.message_queue[1])
+
+        return
 
 if __name__ == "__main__":
     unittest.main()

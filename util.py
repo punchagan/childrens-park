@@ -1,3 +1,4 @@
+import json
 from urlparse import urlparse
 from urllib2 import urlopen, HTTPError
 from inspect import getargs
@@ -24,6 +25,24 @@ def get_code_from_url(url):
     except HTTPError:
         code = ''
     return code
+
+
+def google(query):
+    """ Query the string on google and return the top most result. """
+
+    url = 'http://ajax.googleapis.com/ajax/services/search/web?v=1.0&%s'
+
+    results = urlopen(url % query)
+    data = json.loads(results.read())
+    top = data.get('responseData', {}).get('results', [{}])[0]
+
+    if 'title' in top and 'url' in top:
+        result = '%s -- %s' % (top['title'], top['url'])
+
+    else:
+        result = None
+
+    return result
 
 
 def possible_signatures():

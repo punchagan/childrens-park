@@ -45,7 +45,7 @@ import logging
 from os.path import abspath, dirname, join
 from os import execl
 import re
-from subprocess import Popen, PIPE, call
+from subprocess import call
 import sys
 import threading
 import time
@@ -58,7 +58,7 @@ import xmpp
 
 # Project library
 from util import (
-    get_code_from_url, is_url, is_wrappable, possible_signatures,
+    get_code_from_url, google, is_url, is_wrappable, possible_signatures,
     requires_subscription
 )
 import serialize
@@ -420,39 +420,46 @@ class ChatRoomJabberBot(JabberBot):
         return
 
     @botcmd(name=',g')
-    def google_fetch(self, mess, args):
-        """Fetch the top-most result from Google"""
-        user = self.get_sender_username(mess)
-        if user in self.users:
-            self.log.info('%s queried %s from Google.' % (user, args))
-            query = urllib.urlencode({'q': args})
-            url = 'http://ajax.googleapis.com/ajax/' + \
-                  'services/search/web?v=1.0&%s' % (query)
-            results = urllib.urlopen(url)
-            data = json.loads(results.read())
-            self.message_queue.append('%s googled for %s ... and here you go'
-                                      % (self.users[user], args))
-            try:
-                top = data['responseData']['results'][0]
-                self.message_queue.append('%s -- %s' % (top['title'], top['url']))
-            except:
-                self.message_queue.append('%s' % "Oops! Nothing found!")
+    @requires_subscription
+    def google(self, user, args):
+        """ Fetch the top-most result from Google. """
+
+        query = urllib.urlencode({'q': args})
+        result = google(query)
+
+        if result is not None:
+            self.message_queue.append(
+                '%s googled for %s... and here you go: '
+                % (self.users[user], args)
+            )
+            self.message_queue.append(result)
+            message = ''
+
+        else:
+            message = 'Oops! nothing found'
+
+        return message
 
     @botcmd(name=',sc')
-    def soundcloud_fetch(self, mess, args):
-        """Fetch the top-most result from Google for site:soundcloud.com"""
-        user = self.get_sender_username(mess)
-        if user in self.users:
-            self.log.info('%s queried %s from Google.' % (user, args))
-            query = urllib.urlencode({'q': "site:soundcloud.com " + args})
-            url = 'http://ajax.googleapis.com/ajax/' + \
-                  'services/search/web?v=1.0&%s' % (query)
-            results = urllib.urlopen(url)
-            data = json.loads(results.read())
-            top = data['responseData']['results'][0]
-            self.message_queue.append('%s googled for %s ... and here you go'
-                                      % (self.users[user], args))
-            self.message_queue.append('%s -- %s' % (top['title'], top['url']))
+    @requires_subscription
+    def soundcloud(self, user, args):
+        """ Fetch the top-most result from Google for site:soundcloud.com """
+
+        query = urllib.urlencode({'q': 'site:soundcloud.com ' + args})
+        result = google(query)
+
+        if result is not None:
+            self.message_queue.append(
+                '%s sound-clouded for %s... and here you go: '
+                % (self.users[user], args)
+            )
+            self.message_queue.append(result)
+            message = ''
+
+        else:
+            message = 'Oops! nothing found'
+
+        return message
 
     @botcmd(name=',see', hidden=True)
     @requires_subscription
