@@ -339,51 +339,6 @@ class ChatRoomJabberBot(JabberBot):
             else:
                 return 'User needs to add me to friend list before they can be invited.'
 
-    @botcmd(name=',ideas')
-    def ideas(self, mess, args):
-        """Maintain a list of ideas/items. Use ,ideas help."""
-        user = self.get_sender_username(mess)
-        if user in self.users:
-            if args.startswith('show'):
-                txt = '\n_%s is ideating_\n' % (self.users[user])
-                for i, idea in enumerate(self.ideas):
-                    txt += '_%s - %s_\n' % (i, idea)
-                self.message_queue.append(txt)
-            elif args.startswith('add'):
-                text = ' '.join(args.split()[1:]).strip()
-                if text == '':
-                    return "Sorry. Cannot add empty idea."
-                self.ideas.append(text)
-                self.message_queue.append('_%s added "%s" as an idea_' % (self.users[user], text))
-            elif args.startswith('del'):
-                try:
-                    num = int(args.split()[1])
-                    if num in range(len(self.ideas)):
-                        self.message_queue.append('_%s deleted "%s" from ideas_' % (self.users[user], self.ideas[num]))
-                        del self.ideas[num]
-                except:
-                    return "Invalid option to delete."
-            elif args.startswith('edit'):
-                try:
-                    num = int(args.split()[1])
-                    if num in range(len(self.ideas)):
-                        txt = ' '.join(args.split()[2:]).strip()
-                        if txt == '':
-                            return "Sorry. Cannot add empty idea."
-                        self.message_queue.append('_%s changed idea %s to %s_' % (self.users[user], num, txt))
-                        self.ideas[num] = txt
-                except:
-                    return "Invalid option to edit."
-            elif not args:
-                return '\n'.join(['_%s - %s_' % (i, t) \
-                                  for i, t in enumerate(self.ideas)])
-            else:
-                return """add - Adds a new idea
-                del n - Deletes n^{th} idea
-                edit n txt - Replace n^{th} idea with 'txt'
-                show - Show ideas in chatroom
-                no arguments - Show ideas to you"""
-
     @botcmd(name=',whois')
     @requires_subscription
     def whois(self, user, args):
