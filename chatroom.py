@@ -543,10 +543,11 @@ class ChatRoomJabberBot(JabberBot):
         """ Reads persisted state from state.json
         """
         state_file = join(self.ROOT, 'state.json')
-        if not exists(state_file):
+        if exists(state_file):
+            with open(state_file) as f:
+                self._state = json.load(f)
+        else:
             self._state = dict()
-        with open(state_file) as f:
-            self._state = json.load(f)
         self.log.info('Obtained saved state from state.json')
 
     def _analyze_logs(self):
