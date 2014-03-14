@@ -71,7 +71,7 @@ class ChatRoomJabberBot(JabberBot):
     def __init__(self, jid, password, res=None):
         super(ChatRoomJabberBot, self).__init__(jid, password, res)
 
-        self._read_state()
+        self._state = self._read_state()
 
         self.users = self._state.get('users', dict())
         self.invited = self._state.get('invited', dict())
@@ -535,15 +535,17 @@ class ChatRoomJabberBot(JabberBot):
         self.log.info('Persisted state data')
 
     def _read_state(self):
-        """ Reads persisted state from state.json
-        """
+        """ Reads persisted state from state.json. """
+
+        state = {}
+
         state_file = join(self.ROOT, 'state.json')
         if exists(state_file):
             with open(state_file) as f:
-                self._state = json.load(f)
-        else:
-            self._state = dict()
-        self.log.info('Obtained saved state from state.json')
+                state.update(json.load(f))
+            self.log.info('Obtained saved state from %s', state_file)
+
+        return state
 
     def _analyze_logs(self):
         self.log.info('Starting analysis...')
