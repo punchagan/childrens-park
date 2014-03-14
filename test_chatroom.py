@@ -5,10 +5,13 @@
 """ Tests for the ChatRoom. """
 
 # Standard library
-from os.path import exists, join
+from os.path import exists
 import shutil
 import tempfile
 import unittest
+
+# 3rd party
+import xmpp
 
 # Project library
 from chatroom import ChatRoomJabberBot
@@ -58,6 +61,38 @@ class TestChatRoom(unittest.TestCase):
         # Then
         self.assertTrue(exists(bot.db))
         self.assertDictEqual(bot.users, serialize.read_state(bot.db)['users'])
+
+        return
+
+    #### Test bot commands ####################################################
+
+    def test_should_not_send_message_from_unsubscribed_user(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        message = xmpp.Protocol(frm='foo@foo.com', typ='chat')
+        text = 'this is my message'
+
+        # When
+        bot.myself(message, text)
+
+        # Then
+        self.assertEqual(0, len(bot.message_queue))
+
+        return
+
+    def test_should_send_message_in_third_person(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bot.users = {foo: 'foo'}
+        message = xmpp.Protocol(frm=foo, typ='chat')
+        text = 'this is my message'
+
+        # When
+        bot.myself(message, text)
+
+        # Then
+        self.assertIn(text, bot.message_queue[0])
 
         return
 

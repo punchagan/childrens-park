@@ -57,7 +57,10 @@ from jabberbot import JabberBot, botcmd
 import xmpp
 
 # Project library
-from util import get_code_from_url, is_url, is_wrappable, possible_signatures
+from util import (
+    get_code_from_url, is_url, is_wrappable, possible_signatures,
+    requires_subscription
+)
 import serialize
 
 
@@ -309,12 +312,13 @@ class ChatRoomJabberBot(JabberBot):
             return user_list
 
     @botcmd(name=',me')
-    def myself(self, mess, args):
-        """Send message in third person"""
-        user = self.get_sender_username(mess)
-        if user in self.users:
-            self.message_queue.append('*%s %s*' % (self.users[user], args))
-            self.log.info('%s says %s in third person.' % (user, args))
+    @requires_subscription
+    def myself(self, user, args):
+        """ Send message in third person. """
+
+        self.message_queue.append('*%s %s*' % (self.users[user], args))
+
+        return
 
     @botcmd(name=',invite')
     def invite(self, mess, args):

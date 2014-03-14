@@ -2,6 +2,7 @@ from urlparse import urlparse
 from urllib2 import urlopen, HTTPError
 from inspect import getargs
 from itertools import combinations
+from functools import wraps
 
 
 def is_url(url):
@@ -37,3 +38,17 @@ def is_wrappable(f):
     args = tuple(getargs(f.func_code).args)
     possible = possible_signatures()
     return args in possible
+
+
+def requires_subscription(f):
+    """ Decorator to ensure that a user is subscribed. """
+
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        message = args[0]
+        user = self.get_sender_username(message)
+        if user not in self.users:
+            return
+        return f(self, user, *args[1:], **kwargs)
+
+    return wrapper
