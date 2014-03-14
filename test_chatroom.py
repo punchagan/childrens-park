@@ -316,6 +316,35 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_disable_dnd(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.invited = {bar: 'bar'}
+        message = xmpp.Protocol(frm=bar, typ='chat')
+
+        # When
+        welcome = bot.dnd(message, '')
+
+        # Then
+        self.assertIn('Welcome', welcome)
+
+        return
+
+    def test_should_enable_dnd(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Protocol(frm=bar, typ='chat')
+
+        # When
+        bye = bot.dnd(message, '')
+
+        # Then
+        self.assertIn('Bye', bye)
+
+        return
 
 
 if __name__ == "__main__":

@@ -254,23 +254,23 @@ class ChatRoomJabberBot(JabberBot):
         return 'You are now un-subscribed.'
 
     @botcmd(name=',dnd')
-    def dnd(self, mess, args):
-        """Switch to do-not-disturb mode. Use ,dnd to switch back."""
-        user = self.get_sender_username(mess)
-        if user not in self.users and user not in self.invited:
-            return 'You are not subscribed!'
-        elif user in self.users:
+    @requires_invite
+    def dnd(self, user, args):
+        """ Command to toggle do-not-disturb mode. """
+
+        if user in self.users:
             name = self.users.pop(user)
             self.invited[user] = name
-            self.message_queue.append('_%s entered NO PARKING ZONE here_' % name)
-            self.log.info('%s entered NO PARKING ZONE here.' % name)
-            return 'NO PARKING ZONE entered.Happy riding!'
-        elif user in self.invited:
+            self.message_queue.append('_%s entered NO PARKING ZONE_' % name)
+            message = 'NO PARKING ZONE entered. Bye!'
+
+        else:
             name = self.invited.pop(user)
             self.users[user] = name
-            self.message_queue.append('_%s came out of NO PARKING ZONE_' % name)
-            self.log.info('%s came out of NO PARKING ZONE.' % name)
-            return 'PARKING ZONE entered. Hey %s!' % name
+            self.message_queue.append('_%s is out of NO PARKING ZONE_' % name)
+            message = 'PARKING ZONE entered. Welcome, %s!' % name
+
+        return message
 
     @botcmd(name=',alias')
     @requires_subscription
