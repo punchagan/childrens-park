@@ -292,14 +292,17 @@ class ChatRoomJabberBot(JabberBot):
         return message
 
     @botcmd(name=',topic')
-    def topic(self, mess, args):
-        """Change the topic/status"""
-        user = self.get_sender_username(mess)
-        if user in self.users:
-            self.topic = args
-            self._JabberBot__set_status(self.topic)
-            self.message_queue.append('_%s changed topic to %s_' % (self.users[user], args))
-            self.log.info('%s changed topic.' % user)
+    @requires_subscription
+    def topic(self, user, args):
+        """ Change the topic/status. """
+
+        self.topic = args
+        self._JabberBot__set_status(self.topic)
+        self.message_queue.append(
+            '_%s changed topic to %s_' % (self.users[user], args)
+        )
+
+        return
 
     @botcmd(name=',list')
     @requires_subscription
