@@ -302,18 +302,20 @@ class ChatRoomJabberBot(JabberBot):
             self.log.info('%s changed topic.' % user)
 
     @botcmd(name=',list')
-    def list(self, mess, args):
-        """List all the members of the list"""
-        user = self.get_sender_username(mess)
-        args = args.replace(' ', '_')
-        if user in self.users or user in self.invited:
-            user_list = 'All these users are subscribed - \n'
-            user_list += '\n'.join(['%s :: %s' % (u, self.users[u]) for u in sorted(self.users)])
-            if self.invited.keys():
-                user_list += '\n The following users are invited - \n'
-                user_list += '\n'.join(self.invited.keys())
-            self.log.info('%s checks list of users.' % user)
-            return user_list
+    @requires_subscription
+    def list(self, user, args):
+        """ List all the subscribed and invited members. """
+
+        user_list = 'All these users are subscribed - \n'
+        user_list += '\n'.join(
+            ['%s :: %s' % (u, self.users[u]) for u in sorted(self.users)]
+        )
+
+        if self.invited.keys():
+            user_list += '\n The following users are invited - \n'
+            user_list += '\n'.join(self.invited.keys())
+
+        return user_list
 
     @botcmd(name=',me')
     @requires_subscription

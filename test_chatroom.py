@@ -254,6 +254,26 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_list_users(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bar = 'bar@bar.com'
+        bot.users = {foo: 'foo'}
+        bot.invited = {bar: 'bar'}
+        message = xmpp.Protocol(frm=foo, typ='chat')
+
+        # When
+        user_list = bot.list(message, '')
+
+        # Then
+        self.assertIn(foo, user_list)
+        self.assertIn(bar, user_list)
+
+        return
+
+
+
 if __name__ == "__main__":
     unittest.main()
 
