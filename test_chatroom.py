@@ -43,6 +43,8 @@ class TestChatRoom(unittest.TestCase):
         # Then
         self.assertDictEqual(bot.users, state['users'])
 
+        return
+
     def test_should_save_state_on_shutdown(self):
         # Given
         bot = ChatRoomJabberBot(self.jid, self.password)
@@ -56,6 +58,8 @@ class TestChatRoom(unittest.TestCase):
         # Then
         self.assertTrue(exists(bot.db))
         self.assertDictEqual(bot.users, serialize.read_state(bot.db)['users'])
+
+        return
 
 
 if __name__ == "__main__":

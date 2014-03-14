@@ -144,8 +144,10 @@ class ChatRoomJabberBot(JabberBot):
 
         return self.conn
 
-    def shutdown(self):
-        self._save_state()
+    def get_sender_nick(self, mess):
+        """ Get the nick of the user from a message. """
+
+        return self.users[self.get_sender_username(mess)]
 
     def get_sender_username(self, mess):
         """ Extract the sender's user name (along with domain) from a message.
@@ -158,20 +160,6 @@ class ChatRoomJabberBot(JabberBot):
         return (
             '%s@%s' % (jid.getNode(), jid.getDomain()) if typ == 'chat' else ''
         )
-
-    def get_sender_nick(self, mess):
-        """ Get the nick of the user from a message. """
-
-        return self.users[self.get_sender_username(mess)]
-
-    def thread_proc(self):
-        while not self.thread_killed:
-            self.message_queue.append('')
-            self._save_state()
-            for i in range(300):
-                time.sleep(1)
-                if self.thread_killed:
-                    return
 
     def idle_proc(self):
         if not len(self.message_queue):
@@ -190,8 +178,23 @@ class ChatRoomJabberBot(JabberBot):
                               message, len(self.users))
             for user in self.users:
                 if not message.startswith("[%s]:" % self.users[user]):
-                    self._chunk_message(user,
-                                       self._highlight_name(message, user))
+                    self._chunk_message(
+                        user, self._highlight_name(message, user)
+                    )
+
+        return
+
+    def thread_proc(self):
+        while not self.thread_killed:
+            self.message_queue.append('')
+            self._save_state()
+            for i in range(300):
+                time.sleep(1)
+                if self.thread_killed:
+                    return
+
+    def shutdown(self):
+        self._save_state()
 
     #### Bot Commands #########################################################
 
