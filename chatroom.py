@@ -58,6 +58,7 @@ import xmpp
 
 # Project library
 from util import get_code_from_url, is_url, is_wrappable, possible_signatures
+import serialize
 
 
 class ChatRoomJabberBot(JabberBot):
@@ -528,8 +529,8 @@ class ChatRoomJabberBot(JabberBot):
                 abspath(__file__))
 
     def _save_state(self):
-        """ Persists the state of the bot.
-        """
+        """ Persists the state of the bot. """
+
         with open(join(self.ROOT, 'state.json'), 'w') as f:
             state = dict(users=self.users,
                          invited=self.invited,
@@ -542,15 +543,7 @@ class ChatRoomJabberBot(JabberBot):
     def _read_state(self):
         """ Reads persisted state from state.json. """
 
-        state = {}
-
-        state_file = join(self.ROOT, 'state.json')
-        if exists(state_file):
-            with open(state_file) as f:
-                state.update(json.load(f))
-            self.log.info('Obtained saved state from %s', state_file)
-
-        return state
+        return serialize.read_state(join(self.ROOT, 'state.json'))
 
     def _analyze_logs(self):
         self.log.info('Starting analysis...')
