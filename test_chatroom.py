@@ -272,6 +272,51 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_not_subscribe_uninvited_user(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        message = xmpp.Protocol(frm=bar, typ='chat')
+
+        # When
+        buzz_off = bot.subscribe(message, '')
+
+        # Then
+        self.assertIn('need to be invited', buzz_off)
+
+        return
+
+    def test_should_not_subscribe_already_subscribed_user(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Protocol(frm=bar, typ='chat')
+
+        # When
+        buzz_off = bot.subscribe(message, '')
+
+        # Then
+        self.assertIn('already subscribed', buzz_off)
+
+        return
+
+    def test_should_subscribe_invited_user(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.invited = {bar: 'bar'}
+        message = xmpp.Protocol(frm=bar, typ='chat')
+
+        # When
+        welcome = bot.subscribe(message, '')
+
+        # Then
+        self.assertIn('Welcome', welcome)
+
+        return
+
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -59,6 +59,28 @@ def is_wrappable(f):
     return args in possible
 
 
+def requires_invite(f):
+    """ Decorator to ensure that a user is atleast invited
+
+    Can be subscribed, obviously!
+
+    """
+
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        message = args[0]
+        user = self.get_sender_username(message)
+        if user not in self.users and user not in self.invited:
+            message = 'You atleast need to be invited!'
+
+        else:
+            message = f(self, user, *args[1:], **kwargs)
+
+        return message
+
+    return wrapper
+
+
 def requires_subscription(f):
     """ Decorator to ensure that a user is subscribed. """
 

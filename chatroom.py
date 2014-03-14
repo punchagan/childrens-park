@@ -59,7 +59,7 @@ import xmpp
 # Project library
 from util import (
     get_code_from_url, google, is_url, is_wrappable, possible_signatures,
-    requires_subscription
+    requires_invite, requires_subscription
 )
 import serialize
 
@@ -225,19 +225,21 @@ class ChatRoomJabberBot(JabberBot):
         return
 
     @botcmd(name=',subscribe')
-    def subscribe(self, mess, args):
-        """ Subscribe to the broadcast list. """
+    @requires_invite
+    def subscribe(self, user, args):
+        """ Subscribe to the chatroom. """
 
-        user = self.get_sender_username(mess)
         if user in self.users:
             message = 'You are already subscribed.'
 
         else:
-            self.users[user] = user.split('@')[0][:self.NICK_LEN]
+            nick = user.split('@')[0][:self.NICK_LEN]
+            self.users[user] = nick
             self.invited.pop(user)
             self.message_queue.append('_%s has joined the channel_' % user)
-            self.log.info('%s subscribed to the broadcast.' % user)
-            message = 'You are now subscribed.'
+            message = '%s, Welcome! Type %s for help.' % (
+                nick, self.help._jabberbot_command_name
+            )
 
         return message
 
