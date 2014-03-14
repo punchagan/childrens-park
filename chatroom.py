@@ -454,17 +454,6 @@ class ChatRoomJabberBot(JabberBot):
                                       % (self.users[user], args))
             self.message_queue.append('%s -- %s' % (top['title'], top['url']))
 
-    @botcmd(name=",stats")
-    def stats(self, mess, args):
-        """ Simple statistics with message count for each user. """
-
-        user = self.get_sender_username(mess)
-        self.log.info('Starting analysis... %s requested' % user)
-        stats_th = threading.Thread(target=self._analyze_logs)
-        stats_th.start()
-
-        return 'Starting analysis... will take a while!'
-
     @botcmd(name=',see', hidden=True)
     @requires_subscription
     def see(self, user, args):
@@ -584,32 +573,6 @@ class ChatRoomJabberBot(JabberBot):
         """ Reads the persisted state. """
 
         return serialize.read_state(self.db)
-
-    def _analyze_logs(self):
-        self.log.info('Starting analysis...')
-        logs = Popen(["grep", "sent:", "nohup.out"], stdout=PIPE)
-        logs = logs.stdout
-        people = {}
-        for line in logs:
-            log = line.strip().split()
-            if not log or len(log) < 10:
-                continue
-            person = log[7]
-            if '@' in person:
-                person = person.split('@')[0]
-            message = ' '.join(log[9:])
-            if person not in people:
-                people[person] = [message]
-            else:
-                people[person].append(message)
-        stats = ["%-15s -- %s" % (dude, len(people[dude])) for dude in people]
-        stats = sorted(stats, key=lambda x: int(x.split()[2]), reverse=True)
-        stats = ["%-15s -- %s" % ("Name", "Message count")] + stats
-
-        stats = 'the stats ...\n' + '\n'.join(stats) + '\n'
-
-        self.log.info('Sending analyzed info')
-        self.message_queue.append(stats)
 
     def _highlight_name(self, msg, user):
         """Emphasizes your name, when sent in a message.
