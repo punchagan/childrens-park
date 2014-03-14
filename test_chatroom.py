@@ -346,6 +346,42 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_broadcast_non_cmd_messages(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(frm=bar, typ='chat', body='foo')
+
+        # When
+        result = bot._callback_message(None, message)
+
+        # Then
+        self.assertIsNone(result)
+        self.assertIn('[bar]: foo', bot.message_queue[0].strip())
+
+        return
+
+    def test_should_not_broadcast_unknown_cmd(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(frm=bar, typ='chat', body=',foo bar')
+        # patching since we are not connected!
+        self.result = ''
+        def reply(x, y): self.result = y
+        bot.send_simple_reply = reply
+
+        # When
+        bot._callback_message(None, message)
+
+        # Then
+        self.assertIn('unknown command', self.result)
+        self.assertEqual(0, len(bot.message_queue))
+
+        return
+
 
 if __name__ == "__main__":
     unittest.main()

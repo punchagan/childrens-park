@@ -568,8 +568,10 @@ class ChatRoomJabberBot(JabberBot):
         return
 
     def _callback_message(self, conn, mess):
-        """Messages sent to the bot will arrive here. Command handling +
-        routing is done in this function.
+        """ Command handling + routing.
+
+        All messages sent to the bot will arrive here.
+
         """
 
         jid = mess.getFrom()
@@ -578,7 +580,7 @@ class ChatRoomJabberBot(JabberBot):
         username = self.get_sender_username(mess)
 
         if username not in self.users.keys() + self.invited.keys():
-            self.log.info("Ignored message from %s." % username)
+            self.log.info('Ignored message from %s.' % username)
             return
 
         self.log.debug("*** props = %s" % props)
@@ -605,7 +607,7 @@ class ChatRoomJabberBot(JabberBot):
         else:
             command, args = text, ''
         cmd = command
-        self.log.debug("*** cmd = %s" % cmd )
+        self.log.debug("*** cmd = %s" % cmd)
 
         if cmd in self.commands and cmd != 'help':
             try:
@@ -702,12 +704,24 @@ class ChatRoomJabberBot(JabberBot):
 
         return
 
-    def _unknown_command(self, mess, cmd, args):
-        user = self.get_sender_username(mess)
-        if user in self.users:
-            self.message_queue.append('[%s]: %s %s' % (self.users[user], cmd, args))
-            self.log.info("%s sent: %s %s" % (user, cmd, args))
-        return ''
+    @requires_subscription
+    def _unknown_command(self, user, cmd, args):
+        """ Handle everything that is not a known command.
+
+        Currently, just sends it to all the other users as a message.
+
+        """
+
+        if not cmd.startswith(','):
+            self.message_queue.append(
+                '[%s]: %s %s' % (self.users[user], cmd, args)
+            )
+            message = ''
+
+        else:
+            message = 'unknown command: %s' % cmd
+
+        return message
 
     def _wrap_function(self, f, code):
         from functools import partial, update_wrapper
