@@ -69,7 +69,7 @@ class TestChatRoom(unittest.TestCase):
     def test_should_not_send_message_from_unsubscribed_user(self):
         # Given
         bot = ChatRoomJabberBot(self.jid, self.password)
-        message = xmpp.Protocol(frm='foo@foo.com', typ='chat')
+        message = xmpp.Message(frm='foo@foo.com', typ='chat')
         text = 'this is my message'
 
         # When
@@ -85,7 +85,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
         text = 'this is my message'
 
         # When
@@ -101,7 +101,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         foo = 'foo@foo.com'
         # bot.users = {foo: 'foo'}
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
 
         # When
         result = bot.unsubscribe(message, '')
@@ -116,7 +116,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
 
         # When
         result = bot.unsubscribe(message, '')
@@ -134,7 +134,7 @@ class TestChatRoom(unittest.TestCase):
         bar = 'bar@bar.com'
         users = {foo: 'foo', bar: 'bar'}
         bot.users = users
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
 
         # When
         bot.alias(message, 'bar')
@@ -149,7 +149,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
 
         # When
         bot.alias(message, 'bazooka')
@@ -163,7 +163,7 @@ class TestChatRoom(unittest.TestCase):
     def test_should_show_help_to_unknown_user(self):
         # Given
         bot = ChatRoomJabberBot(self.jid, self.password)
-        message = xmpp.Protocol(frm='', typ='chat')
+        message = xmpp.Message(frm='', typ='chat')
 
         # When
         help_text = bot.help(message, '')
@@ -180,7 +180,7 @@ class TestChatRoom(unittest.TestCase):
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         bot.topic = 'bazooka'
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
 
         # When
         output = bot.see(message, attributes)
@@ -198,7 +198,7 @@ class TestChatRoom(unittest.TestCase):
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         bot.topic = 'bazooka'
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
 
         # When
         output = bot.see(message, attributes)
@@ -213,7 +213,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
 
         # When
         bot.google(message, 'punchagan')
@@ -229,7 +229,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
 
         # When
         who = bot.whois(message, 'foo')
@@ -244,7 +244,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
 
         # When
         who = bot.whois(message, 'fox')
@@ -261,7 +261,7 @@ class TestChatRoom(unittest.TestCase):
         bar = 'bar@bar.com'
         bot.users = {foo: 'foo'}
         bot.invited = {bar: 'bar'}
-        message = xmpp.Protocol(frm=foo, typ='chat')
+        message = xmpp.Message(frm=foo, typ='chat')
 
         # When
         user_list = bot.list(message, '')
@@ -276,7 +276,7 @@ class TestChatRoom(unittest.TestCase):
         # Given
         bot = ChatRoomJabberBot(self.jid, self.password)
         bar = 'bar@bar.com'
-        message = xmpp.Protocol(frm=bar, typ='chat')
+        message = xmpp.Message(frm=bar, typ='chat')
 
         # When
         buzz_off = bot.subscribe(message, '')
@@ -291,7 +291,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
-        message = xmpp.Protocol(frm=bar, typ='chat')
+        message = xmpp.Message(frm=bar, typ='chat')
 
         # When
         buzz_off = bot.subscribe(message, '')
@@ -306,7 +306,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         bar = 'bar@bar.com'
         bot.invited = {bar: 'bar'}
-        message = xmpp.Protocol(frm=bar, typ='chat')
+        message = xmpp.Message(frm=bar, typ='chat')
 
         # When
         welcome = bot.subscribe(message, '')
@@ -321,7 +321,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         bar = 'bar@bar.com'
         bot.invited = {bar: 'bar'}
-        message = xmpp.Protocol(frm=bar, typ='chat')
+        message = xmpp.Message(frm=bar, typ='chat')
 
         # When
         welcome = bot.dnd(message, '')
@@ -336,7 +336,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
-        message = xmpp.Protocol(frm=bar, typ='chat')
+        message = xmpp.Message(frm=bar, typ='chat')
 
         # When
         bye = bot.dnd(message, '')
