@@ -28,14 +28,14 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_read_state_file(self):
         # Given
-        state_file = join(ChatRoomJabberBot.ROOT, 'state.json')
+        _bot = ChatRoomJabberBot(self.jid, self.password)
         state = {
             'users': {
                 'foo': 'foo@example.com',
                 'bar': 'bar@bazooka.com'
             }
         }
-        serialize.save_state(state_file, state)
+        serialize.save_state(_bot.db, state)
 
         # When
         bot = ChatRoomJabberBot(self.jid, self.password)
@@ -54,9 +54,8 @@ class TestChatRoom(unittest.TestCase):
         bot.shutdown()
 
         # Then
-        path = join(bot.ROOT, 'state.json')
-        self.assertTrue(exists(path))
-        self.assertDictEqual(bot.users, serialize.read_state(path)['users'])
+        self.assertTrue(exists(bot.db))
+        self.assertDictEqual(bot.users, serialize.read_state(bot.db)['users'])
 
 
 if __name__ == "__main__":
