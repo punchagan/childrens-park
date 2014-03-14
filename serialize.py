@@ -18,7 +18,6 @@ def read_state(path):
         with open(path) as f:
             try:
                 state.update(json.load(f))
-                # fixme: log
             except ValueError:
                 pass
 
