@@ -204,7 +204,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',restart')
     @requires_subscription
     def restart(self, user, args):
-        """ Restart the bot. Use resource name as PASSWORD.
+        """ Restart the bot: Use resource name as PASSWORD.
 
         To avoid accidental restarts, resource name is used as argument.
 
@@ -426,7 +426,7 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',sc')
     @requires_subscription
     def soundcloud(self, user, args):
-        """ Fetch the top-most result from Google for site:soundcloud.com """
+        """ Fetch the top-most result from Google for site:soundcloud.com. """
 
         query = urllib.urlencode({'q': 'site:soundcloud.com ' + args})
         result = google(query)
@@ -505,7 +505,8 @@ class ChatRoomJabberBot(JabberBot):
         http://punchagan.github.com/childrens-park/#how-to-add-new-bot-commands
 
         """
-        if not(args):
+
+        if not args:
             return "Didn't get any arguments for the command!"
 
         # Check if first word in args is a URL.
@@ -539,8 +540,8 @@ class ChatRoomJabberBot(JabberBot):
     #### Private interface ####################################################
 
     def _add_gist_commands(self):
-        """ Adds persisted gists as commands (on startup)
-        """
+        """ Adds persisted gists as commands (on startup). """
+
         for url in self.gist_urls[:]:
             code = get_code_from_url(url)
             extra_doc = "\nThe code is at %s" % url
@@ -633,8 +634,8 @@ class ChatRoomJabberBot(JabberBot):
             self._chunk_message(user, msg[idx:])
 
     def _create_cmd_from_code(self, code, extra_doc=None):
-        """ exec code, and make it a new bot cmd, if possible
-        """
+        """ Execute the code, and make it a new bot cmd, if possible. """
+
         from inspect import isfunction
 
         # Evaluate the code and get the function
@@ -673,6 +674,8 @@ class ChatRoomJabberBot(JabberBot):
         return msg
 
     def _install_log_handler(self):
+        """ Install a log handler. """
+
         # create console handler
         chandler = logging.StreamHandler()
         # create formatter
@@ -684,6 +687,8 @@ class ChatRoomJabberBot(JabberBot):
         self.log.addHandler(chandler)
         # set level to INFO
         self.log.setLevel(logging.INFO)
+
+        return
 
     def _read_state(self):
         """ Reads the persisted state. """
