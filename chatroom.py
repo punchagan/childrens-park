@@ -63,7 +63,6 @@ import xmpp
 
 # local imports
 from util import get_code_from_url, is_url, is_wrappable, possible_signatures
-from cric_info import CricInfo
 
 
 class ChatRoomJabberBot(JabberBot):
@@ -88,7 +87,6 @@ class ChatRoomJabberBot(JabberBot):
         self.started = time.time()
         self.message_queue = []
         self.thread_killed = False
-        self.cric_bot = CricInfo(self, SCORECARD, SCORECARD_URL)
 
         self._install_log_handler()
 
@@ -426,12 +424,6 @@ class ChatRoomJabberBot(JabberBot):
                                       % (self.users[user], args))
             self.message_queue.append('%s -- %s' % (top['title'], top['url']))
 
-    @botcmd(name=',cric')
-    def cric(self, mess, args):
-        """ A bunch of Cricinfo commands. Say ,cric help for more info. """
-        cric_th = threading.Thread(target=self.cric_bot, args=(mess, args))
-        cric_th.start()
-
     @botcmd(name=",stats")
     def stats(self, mess, args):
         "Simple statistics with message count for each user."
@@ -765,7 +757,11 @@ if __name__ == "__main__":
     PATH = dirname(abspath(__file__))
     sys.path = [PATH] + sys.path
 
-    from settings import JID, PASSWORD, RES, SCORECARD, SCORECARD_URL, CHANNEL
+    try:
+        from settings import JID, PASSWORD, RES, CHANNEL
+    except ImportError:
+        print('Please copy sample-settings.py to settings.py and edit it!')
+        sys.exit(1)
 
     bc = ChatRoomJabberBot(JID, PASSWORD, RES)
 

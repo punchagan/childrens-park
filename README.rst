@@ -17,7 +17,7 @@ Usage
 =====
 
   + You are required to have a file settings.py with the variables, JID,
-    PASSWORD, CHANNEL, RES
+    PASSWORD, CHANNEL, RES. Copy the `sample-settings.py` and edit it.
 
   + To add new users, the admin can either add them manually to state.json
     file.
@@ -31,6 +31,6 @@ Bugs/Issues
     bot, instead.
 
   + Report other bugs/issues at `GitHub`_
-  
+
 .. _GitHub: https://github.com/punchagan/childrens-park/issues
 
