@@ -140,21 +140,20 @@ class ChatRoomJabberBot(JabberBot):
 
     def get_sender_username(self, mess):
         """ Extract the sender's user name (along with domain) from a message.
+
         """
+
         jid = mess.getFrom()
         typ = mess.getType()
-        username = jid.getNode()
-        domain = jid.getDomain()
-        if typ == "chat":
-            return "%s@%s" % (username, domain)
-        else:
-            return ""
+
+        return (
+            '%s@%s' % (jid.getNode(), jid.getDomain()) if typ == 'chat' else ''
+        )
 
     def get_sender_nick(self, mess):
-        """ Get the nick of the user from a message.
-        """
-        username = self.get_sender_username(mess)
-        return self.users[username]
+        """ Get the nick of the user from a message. """
+
+        return self.users[self.get_sender_username(mess)]
 
     def thread_proc(self):
         while not self.thread_killed:
@@ -192,7 +191,9 @@ class ChatRoomJabberBot(JabberBot):
         """Restart the bot. Use resource name as PASSWORD.
 
         To avoid accidental restarts, resource name is used as argument.
+
         """
+
         user = self.get_sender_username(mess)
 
         if user in self.users and args.strip() == self.res:
@@ -206,16 +207,20 @@ class ChatRoomJabberBot(JabberBot):
 
     @botcmd(name=',subscribe')
     def subscribe(self, mess, args):
-        """Subscribe to the broadcast list"""
+        """ Subscribe to the broadcast list. """
+
         user = self.get_sender_username(mess)
         if user in self.users:
-            return 'You are already subscribed.'
+            message = 'You are already subscribed.'
+
         else:
             self.users[user] = user.split('@')[0][:self.NICK_LEN]
             self.invited.pop(user)
             self.message_queue.append('_%s has joined the channel_' % user)
             self.log.info('%s subscribed to the broadcast.' % user)
-            return 'You are now subscribed.'
+            message = 'You are now subscribed.'
+
+        return message
 
     @botcmd(name=',unsubscribe')
     def unsubscribe(self, mess, args):
