@@ -5,14 +5,14 @@
 """ Tests for the ChatRoom. """
 
 # Standard library
-import json
-from os.path import join
+from os.path import exists, join
 import shutil
 import tempfile
 import unittest
 
 # Project library
 from chatroom import ChatRoomJabberBot
+import serialize
 
 
 class TestChatRoom(unittest.TestCase):
@@ -35,14 +35,28 @@ class TestChatRoom(unittest.TestCase):
                 'bar': 'bar@bazooka.com'
             }
         }
-        with open(state_file, 'w') as f:
-            json.dump(state, f, indent=2)
+        serialize.save_state(state_file, state)
 
         # When
         bot = ChatRoomJabberBot(self.jid, self.password)
 
         # Then
         self.assertDictEqual(bot.users, state['users'])
+
+    def test_should_save_state_on_shutdown(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot.users = {
+            'foo': 'foo@foo.com'
+        }
+
+        # When
+        bot.shutdown()
+
+        # Then
+        path = join(bot.ROOT, 'state.json')
+        self.assertTrue(exists(path))
+        self.assertDictEqual(bot.users, serialize.read_state(path)['users'])
 
 
 if __name__ == "__main__":

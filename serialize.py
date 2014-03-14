@@ -25,5 +25,10 @@ def read_state(path):
     return state
 
 
+def save_state(path, state):
+    """ Save the given state to the given path. """
 
+    with open(path, 'w') as f:
+        json.dump(state, f, indent=2)
 
+    return

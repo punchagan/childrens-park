@@ -531,14 +531,17 @@ class ChatRoomJabberBot(JabberBot):
     def _save_state(self):
         """ Persists the state of the bot. """
 
-        with open(join(self.ROOT, 'state.json'), 'w') as f:
-            state = dict(users=self.users,
-                         invited=self.invited,
-                         topic=self.topic,
-                         ideas=self.ideas,
-                         gist_urls=self.gist_urls)
-            json.dump(state, f, indent=2)
-        self.log.info('Persisted state data')
+        path = join(self.ROOT, 'state.json')
+        state = dict(
+            users=self.users,
+            invited=self.invited,
+            topic=self.topic,
+            ideas=self.ideas,
+            gist_urls=self.gist_urls
+        )
+        serialize.save_state(path, state)
+
+        return
 
     def _read_state(self):
         """ Reads persisted state from state.json. """
