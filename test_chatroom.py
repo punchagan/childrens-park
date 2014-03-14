@@ -160,6 +160,56 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_show_help_to_unknown_user(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        message = xmpp.Protocol(frm='', typ='chat')
+
+        # When
+        help_text = bot.help(message, '')
+
+        # Then
+        self.assertIn(bot.help.__doc__.strip(), help_text)
+
+        return
+
+    def test_should_show_attributes(self):
+        # Given
+        attributes = 'users topic'
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bot.users = {foo: 'foo'}
+        bot.topic = 'bazooka'
+        message = xmpp.Protocol(frm=foo, typ='chat')
+
+        # When
+        output = bot.see(message, attributes)
+
+        # Then
+        self.assertIn('topic: bazooka', output)
+        self.assertIn(foo, output)
+
+        return
+
+    def test_should_not_show_private_attributes(self):
+        # Given
+        attributes = '_state'
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bot.users = {foo: 'foo'}
+        bot.topic = 'bazooka'
+        message = xmpp.Protocol(frm=foo, typ='chat')
+
+        # When
+        output = bot.see(message, attributes)
+
+        # Then
+        self.assertEqual('_state is private', output)
+
+        return
+
+
+
 
 if __name__ == "__main__":
     unittest.main()

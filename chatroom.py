@@ -397,17 +397,27 @@ class ChatRoomJabberBot(JabberBot):
                 return 'Nobody!'
 
     @botcmd(name=',uptime')
-    def uptime(self, mess, args):
-        """Check the uptime of the bot."""
-        user = self.get_sender_username(mess)
-        if user in self.users:
-            t = datetime.fromtimestamp(time.time()) - \
-                   datetime.fromtimestamp(self.started)
-            hours = t.seconds / 3600
-            mins = (t.seconds / 60) % 60
-            secs = t.seconds % 60
-            self.log.info('%s queried uptime.' % (user,))
-            self.message_queue.append("Harbouring conversations, and what's more, memories, relentlessly since %s day(s) %s hour(s) %s min(s) and %s sec(s) for %s & friends" % (t.days, hours, mins, secs, self.users[user]))
+    @requires_subscription
+    def uptime(self, user, args):
+        """ Check the up-time of the bot. """
+
+        t = (
+            datetime.fromtimestamp(time.time()) -
+            datetime.fromtimestamp(self.started)
+        )
+        hours = t.seconds / 3600
+        mins = (t.seconds / 60) % 60
+        secs = t.seconds % 60
+        uptime = '%s day(s) %s hour(s) %s min(s) and %s sec(s)' % (
+            t.days, hours, mins, secs
+        )
+
+        self.message_queue.append(
+            "Harbouring conversations, and what's more, memories, relentlessly"
+            ' since %s for %s & friends' % (uptime, self.users[user])
+        )
+
+        return
 
     @botcmd(name=',g')
     def google_fetch(self, mess, args):
@@ -446,38 +456,47 @@ class ChatRoomJabberBot(JabberBot):
 
     @botcmd(name=",stats")
     def stats(self, mess, args):
-        "Simple statistics with message count for each user."
+        """ Simple statistics with message count for each user. """
+
         user = self.get_sender_username(mess)
         self.log.info('Starting analysis... %s requested' % user)
         stats_th = threading.Thread(target=self._analyze_logs)
         stats_th.start()
+
         return 'Starting analysis... will take a while!'
 
-    @botcmd(name=',see')
-    def bot_see(self, mess, args):
+    @botcmd(name=',see', hidden=True)
+    @requires_subscription
+    def see(self, user, args):
         """ Look at bot's public attributes.
 
-        You can past a list of attributes separated by spaces.
-        """
-        output = ''
-        for arg in args.split():
-            value = getattr(self, arg, None)
-            if value is not None and not arg.startswith('_'):
-                output += '%s is %s\n' %(arg, value)
-            else:
-                output += "%s - No such attribute\n" % arg
-        return output
+        You can pass a list of attributes separated by spaces.
 
-    @botcmd(name=',see-friends')
-    def show_roster(self, mess, args):
-        """ Return the roster of friends.
         """
+
+        attributes = [
+
+            '%s: %s' % (attr, getattr(self, attr, None))
+            if not attr.startswith('_') else '%s is private' % attr
+
+            for attr in args.split()
+
+        ]
+
+        return '\n'.join(attributes)
+
+    @botcmd(name=',see-friends', hidden=True)
+    @requires_subscription
+    def show_roster(self, user, args):
+        """ Return the roster of friends. """
+
         return '\n'.join([contact for contact in self.roster.getItems()])
 
     @botcmd(name=',help')
-    def help_alias(self, mess, args):
-        """An alias to help command."""
-        return self.help(mess, args)
+    def help(self, mess, args):
+        """ Show help for all the bot commands, or a given command. """
+
+        return super(ChatRoomJabberBot, self).help(mess, args)
 
     @botcmd(name=',addbotcmd')
     def add_botcmd(self, mess, args):
