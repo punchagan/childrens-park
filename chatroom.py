@@ -538,39 +538,6 @@ class ChatRoomJabberBot(JabberBot):
 
     #### Private interface ####################################################
 
-    def _attempt_reconnect(self):
-        self.log.info('Restarting...')
-        self.log.info('Pulling changes from GitHub...')
-        call(["git", "pull"])
-        execl('/usr/bin/nohup', sys.executable, sys.executable,
-                abspath(__file__))
-
-    def _save_state(self):
-        """ Persists the state of the bot. """
-
-        state = dict(
-            users=self.users,
-            invited=self.invited,
-            topic=self.topic,
-            ideas=self.ideas,
-            gist_urls=self.gist_urls
-        )
-        serialize.save_state(self.db, state)
-
-        return
-
-    def _read_state(self):
-        """ Reads the persisted state. """
-
-        return serialize.read_state(self.db)
-
-    def _highlight_name(self, msg, user):
-        """Emphasizes your name, when sent in a message.
-        """
-        nick = re.escape(self.users[user])
-        msg = re.sub("(\W|\A)(%s)(\W|\Z)" % nick, "\\1 *\\2* \\3", msg)
-        return msg
-
     def _add_gist_commands(self):
         """ Adds persisted gists as commands (on startup)
         """
@@ -588,96 +555,17 @@ class ChatRoomJabberBot(JabberBot):
                 continue
             self.log.info('Added new command from %s' %url)
 
-    def _create_cmd_from_code(self, code, extra_doc=None):
-        """ exec code, and make it a new bot cmd, if possible
-        """
-        from inspect import isfunction
+    def _attempt_reconnect(self):
+        """ Attempt to reconnect. """
 
-        # Evaluate the code and get the function
-        d = dict()
-        exec(code) in globals(), d
-        # XXX: Should let people define arbit global functions?
-        if len(d) != 1:
-            return False, 'You need to define one callable'
-        f = d.values()[0]
+        self.log.info('Restarting...')
+        self.log.info('Pulling changes from GitHub...')
+        call(["git", "pull"])
+        execl(
+            '/usr/bin/nohup', sys.executable, sys.executable, abspath(__file__)
+        )
 
-        if not (isfunction(f) and f.__doc__):
-            return (False, 'You can only add functions, with doc-strings')
-        elif not is_wrappable(f):
-            possible = possible_signatures()
-            return (False, '%s are the only supported signatures' % possible)
-
-        name = ',' + f.__name__
-        f.__doc__ += "\n%s" % extra_doc or ''
-
-        # Prevent over-riding protected commands
-        if name in self._protected:
-            return False, "Sorry, this function can't be over-written."
-
-        # Wrap the function, as required and register it.
-        self.commands[name] = self._wrap_function(f, code)
-
-        return True, name
-
-    def _wrap_function(self, f, code):
-        from functools import partial, update_wrapper
-        from inspect import getargs
-        expected_args = getargs(f.func_code).args
-
-        if 'self' not in expected_args:
-            # Redefine the function to add a self argument!
-            # XXX this is one heck of a hack!
-            # This is done to support print statements
-            code = re.sub("((\n|\A)def\s+\w+\()", "\\1self, ", code)
-
-        # Replace print statements with 'self.message_queue.extend([args])
-        code = re.sub("(\n\s*)print (.*)",
-                      "\\1self.message_queue.extend([\\2])", code)
-
-        # Re-evaluate code to get new function
-        d = dict()
-        exec(code) in globals(), d
-        f_new = d.values()[0]
-
-        # Wrap with first argument as self, to fake as a method
-        f_ = partial(f_new, self)
-
-        # Wrap to handle, missing mess or args arguments
-        def wrapper(mess, args):
-            f_args = dict()
-            if 'mess' in expected_args:
-                f_args.setdefault('mess', mess)
-            if 'args' in expected_args:
-                f_args.setdefault('args', args)
-            return f_(**f_args)
-
-        # Return a botcmd with the proper doc-string, etc.
-        return botcmd(update_wrapper(wrapper, f))
-
-    def _chunk_message(self, user, msg):
-        LIM_LEN = 512
-        if len(msg) <= LIM_LEN:
-            self.send(user, msg)
-        else:
-            idx = (msg.rfind('\n', 0, LIM_LEN) + 1) or (msg.rfind(' ', 0, LIM_LEN) + 1)
-            if not idx:
-                idx = LIM_LEN
-            self.send(user, msg[:idx])
-            time.sleep(0.1)
-            self._chunk_message(user, msg[idx:])
-
-    def _install_log_handler(self):
-        # create console handler
-        chandler = logging.StreamHandler()
-        # create formatter
-        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        formatter = logging.Formatter(format)
-        # add formatter to handler
-        chandler.setFormatter(formatter)
-        # add handler to logger
-        self.log.addHandler(chandler)
-        # set level to INFO
-        self.log.setLevel(logging.INFO)
+        return
 
     def _callback_message(self, conn, mess):
         """Messages sent to the bot will arrive here. Command handling +
@@ -730,6 +618,90 @@ class ChatRoomJabberBot(JabberBot):
         if reply:
             self.send_simple_reply(mess, unicode(reply))
 
+    def _chunk_message(self, user, msg):
+        LIM_LEN = 512
+        if len(msg) <= LIM_LEN:
+            self.send(user, msg)
+        else:
+            idx = (msg.rfind('\n', 0, LIM_LEN) + 1) or (msg.rfind(' ', 0, LIM_LEN) + 1)
+            if not idx:
+                idx = LIM_LEN
+            self.send(user, msg[:idx])
+            time.sleep(0.1)
+            self._chunk_message(user, msg[idx:])
+
+    def _create_cmd_from_code(self, code, extra_doc=None):
+        """ exec code, and make it a new bot cmd, if possible
+        """
+        from inspect import isfunction
+
+        # Evaluate the code and get the function
+        d = dict()
+        exec(code) in globals(), d
+        # XXX: Should let people define arbit global functions?
+        if len(d) != 1:
+            return False, 'You need to define one callable'
+        f = d.values()[0]
+
+        if not (isfunction(f) and f.__doc__):
+            return False, 'You can only add functions, with doc-strings'
+
+        elif not is_wrappable(f):
+            possible = possible_signatures()
+            return False, '%s are the only supported signatures' % possible
+
+        name = ',' + f.__name__
+        f.__doc__ += "\n%s" % extra_doc or ''
+
+        # Prevent over-riding protected commands
+        if name in self._protected:
+            return False, "Sorry, this function can't be over-written."
+
+        # Wrap the function, as required and register it.
+        self.commands[name] = self._wrap_function(f, code)
+
+        return True, name
+
+    def _highlight_name(self, msg, user):
+        """ Emphasizes your name, when sent in a message. """
+
+        nick = re.escape(self.users[user])
+        msg = re.sub("(\W|\A)(%s)(\W|\Z)" % nick, "\\1 *\\2* \\3", msg)
+
+        return msg
+
+    def _install_log_handler(self):
+        # create console handler
+        chandler = logging.StreamHandler()
+        # create formatter
+        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        formatter = logging.Formatter(format)
+        # add formatter to handler
+        chandler.setFormatter(formatter)
+        # add handler to logger
+        self.log.addHandler(chandler)
+        # set level to INFO
+        self.log.setLevel(logging.INFO)
+
+    def _read_state(self):
+        """ Reads the persisted state. """
+
+        return serialize.read_state(self.db)
+
+    def _save_state(self):
+        """ Persists the state of the bot. """
+
+        state = dict(
+            users=self.users,
+            invited=self.invited,
+            topic=self.topic,
+            ideas=self.ideas,
+            gist_urls=self.gist_urls
+        )
+        serialize.save_state(self.db, state)
+
+        return
+
     def _unknown_command(self, mess, cmd, args):
         user = self.get_sender_username(mess)
         if user in self.users:
@@ -737,8 +709,44 @@ class ChatRoomJabberBot(JabberBot):
             self.log.info("%s sent: %s %s" % (user, cmd, args))
         return ''
 
+    def _wrap_function(self, f, code):
+        from functools import partial, update_wrapper
+        from inspect import getargs
+        expected_args = getargs(f.func_code).args
+
+        if 'self' not in expected_args:
+            # Redefine the function to add a self argument!
+            # XXX this is one heck of a hack!
+            # This is done to support print statements
+            code = re.sub("((\n|\A)def\s+\w+\()", "\\1self, ", code)
+
+        # Replace print statements with 'self.message_queue.extend([args])
+        code = re.sub("(\n\s*)print (.*)",
+                      "\\1self.message_queue.extend([\\2])", code)
+
+        # Re-evaluate code to get new function
+        d = dict()
+        exec(code) in globals(), d
+        f_new = d.values()[0]
+
+        # Wrap with first argument as self, to fake as a method
+        f_ = partial(f_new, self)
+
+        # Wrap to handle, missing mess or args arguments
+        def wrapper(mess, args):
+            f_args = dict()
+            if 'mess' in expected_args:
+                f_args.setdefault('mess', mess)
+            if 'args' in expected_args:
+                f_args.setdefault('args', args)
+            return f_(**f_args)
+
+        # Return a botcmd with the proper doc-string, etc.
+        return botcmd(update_wrapper(wrapper, f))
+
     def __getattr__(self, name):
         """ Overridden to allow easier writing of user commands. """
+
         return None
 
 
