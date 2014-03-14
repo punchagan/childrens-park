@@ -37,13 +37,8 @@
 # This bot is written to behave like a chatroom, where all the
 # messages are sent to all the users subscribed to this bot.
 #
-# You are required to have a file settings.py with the variables,
-# JID, PASSWORD, CHANNEL, RES
-#
-# Depends: python-jabberbot, xmpppy
-#
 
-# standard library imports
+# Standard library
 from datetime import datetime
 import json
 import logging
@@ -57,11 +52,11 @@ import time
 import traceback
 import urllib
 
+# 3rd-party library
 from jabberbot import JabberBot, botcmd
 import xmpp
 
-
-# local imports
+# Project library
 from util import get_code_from_url, is_url, is_wrappable, possible_signatures
 
 
@@ -750,7 +745,7 @@ class ChatRoomJabberBot(JabberBot):
         return ''
 
     def __getattr__(self, name):
-        "Overridden to allow easier writing of user commands"
+        """ Overridden to allow easier writing of user commands. """
         return None
 
 
