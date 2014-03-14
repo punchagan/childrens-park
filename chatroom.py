@@ -165,7 +165,8 @@ class ChatRoomJabberBot(JabberBot):
         )
 
     def idle_proc(self):
-        if not len(self.message_queue):
+
+        if len(self.message_queue) == 0:
             return
 
         # copy the message queue, then empty it
@@ -176,9 +177,12 @@ class ChatRoomJabberBot(JabberBot):
             # If an object in the message queue is not a string, make it one.
             if not isinstance(message, basestring):
                 message = unicode(message)
+
             if len(self.users):
-                self.log.info('sending "%s" to %d user(s).',
-                              message, len(self.users))
+                self.log.info(
+                    'sending "%s" to %d user(s).', message, len(self.users)
+                )
+
             for user in self.users:
                 if not message.startswith("[%s]:" % self.users[user]):
                     self._chunk_message(
@@ -190,6 +194,8 @@ class ChatRoomJabberBot(JabberBot):
     def thread_proc(self):
         while not self.thread_killed:
             self.message_queue.append('')
+            # fixme: this is ugly.  make everything a property, and changes
+            # should trigger a save!
             self._save_state()
             for i in range(300):
                 time.sleep(1)
