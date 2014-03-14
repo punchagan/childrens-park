@@ -202,23 +202,27 @@ class ChatRoomJabberBot(JabberBot):
     #### Bot Commands #########################################################
 
     @botcmd(name=',restart')
-    def restart(self, mess, args):
-        """Restart the bot. Use resource name as PASSWORD.
+    @requires_subscription
+    def restart(self, user, args):
+        """ Restart the bot. Use resource name as PASSWORD.
 
         To avoid accidental restarts, resource name is used as argument.
 
         """
 
-        user = self.get_sender_username(mess)
+        if not args.strip() == self.res:
+            return
 
-        if user in self.users and args.strip() == self.res:
-            self.message_queue.append('_%s restarted me! brb!_'
-                                       % (self.users[user]))
-            self.log.info('%s is restarting me.' % user)
-            self.shutdown()
-            self.idle_proc()
-            self.conn.sendPresence(typ='unavailable')
-            self._attempt_reconnect()
+        self.message_queue.append(
+            '_%s restarted me! brb!_' % (self.users[user])
+        )
+
+        self.shutdown()
+        self.idle_proc()
+        self.conn.sendPresence(typ='unavailable')
+        self._attempt_reconnect()
+
+        return
 
     @botcmd(name=',subscribe')
     def subscribe(self, mess, args):
