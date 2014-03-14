@@ -267,23 +267,29 @@ class ChatRoomJabberBot(JabberBot):
             return 'PARKING ZONE entered. Hey %s!' % name
 
     @botcmd(name=',alias')
-    def alias(self, mess, args):
-        """Change your nick"""
-        user = self.get_sender_username(mess)
-        args = args.strip().replace(' ', '_')
-        if user in self.users:
-            if args in self.users.values():
-                return 'Nick already taken.'
-            elif len(args) == 0:
-                return 'Nick needs to be atleast one character long'
-            elif len(args) > self.NICK_LEN:
-                return 'Nick cannot be longer than %s characters' % (self.NICK_LEN,)
-            else:
-                self.message_queue.append('_%s is now known as %s_' % (self.users[user], args))
-                self.users[user] = args
-                self.log.info('%s changed alias.' % user)
-                self.log.info('%s' % self.users)
-                return 'You are now known as %s' % args
+    @requires_subscription
+    def alias(self, user, args):
+        """ Allows a user to change their nick/alias. """
+
+        nick = args.strip().replace(' ', '_')
+
+        if args in self.users.values():
+            message = 'Nick already taken.'
+
+        elif len(args) == 0:
+            message = 'Nick needs to be atleast one character long'
+
+        elif len(args) > self.NICK_LEN:
+            message = 'Nick cannot be longer than %s chars' % (self.NICK_LEN,)
+
+        else:
+            message = 'You are now known as %s' % nick
+            self.message_queue.append(
+                '_%s is now known as %s_' % (self.users[user], nick)
+            )
+            self.users[user] = nick
+
+        return message
 
     @botcmd(name=',topic')
     def topic(self, mess, args):
@@ -779,3 +785,5 @@ if __name__ == "__main__":
     th = threading.Thread(target=bc.thread_proc)
     bc.serve_forever(connect_callback=lambda: th.start())
     bc.thread_killed = True
+
+#### EOF ######################################################################

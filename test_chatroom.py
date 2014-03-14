@@ -127,6 +127,41 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_not_allow_duplicate_alias(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bar = 'bar@bar.com'
+        users = {foo: 'foo', bar: 'bar'}
+        bot.users = users
+        message = xmpp.Protocol(frm=foo, typ='chat')
+
+        # When
+        bot.alias(message, 'bar')
+
+        # Then
+        self.assertDictEqual(users, bot.users)
+
+        return
+
+    def test_should_change_alias(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bot.users = {foo: 'foo'}
+        message = xmpp.Protocol(frm=foo, typ='chat')
+
+        # When
+        bot.alias(message, 'bazooka')
+
+        # Then
+        self.assertEqual(bot.users[foo], 'bazooka')
+        self.assertIn('bazooka', bot.message_queue[0])
+
+        return
+
 
 if __name__ == "__main__":
     unittest.main()
+
+#### EOF ######################################################################
