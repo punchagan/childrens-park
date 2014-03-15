@@ -40,7 +40,6 @@
 
 # Standard library
 from datetime import datetime
-import json
 import logging
 from os.path import abspath, dirname, join
 from os import execl
@@ -57,11 +56,11 @@ from jabberbot import JabberBot, botcmd
 import xmpp
 
 # Project library
-from util import (
+from park import serialize
+from park.util import (
     get_code_from_url, google, is_url, is_wrappable, possible_signatures,
     requires_invite, requires_subscription
 )
-import serialize
 
 
 class ChatRoomJabberBot(JabberBot):
@@ -780,7 +779,7 @@ if __name__ == "__main__":
     sys.path = [PATH] + sys.path
 
     try:
-        from settings import JID, PASSWORD, RES, CHANNEL
+        from park.settings import JID, PASSWORD, RES, CHANNEL
     except ImportError:
         print('Please copy sample-settings.py to settings.py and edit it!')
         sys.exit(1)

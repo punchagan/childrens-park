@@ -14,8 +14,8 @@ import unittest
 import xmpp
 
 # Project library
-from chatroom import ChatRoomJabberBot
-import serialize
+from park import serialize
+from park.chatroom import ChatRoomJabberBot
 
 
 class TestChatRoom(unittest.TestCase):
