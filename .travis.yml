@@ -4,4 +4,4 @@ python:
 # command to install dependencies
 install: "pip install -r requirements-test.txt"
 # command to run tests
-script: py.test --cov . --cov-report term-missing test_chatroom.py
+script: py.test --cov . --cov-report term-missing tests/
