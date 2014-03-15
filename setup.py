@@ -46,7 +46,7 @@ setup(
     # platform.
     entry_points={
         'console_scripts': [
-            # 'sample=sample:main',
+            'park=park.chatroom:main',
         ],
     }
 )

@@ -774,10 +774,7 @@ class ChatRoomJabberBot(JabberBot):
         return None
 
 
-if __name__ == "__main__":
-    PATH = dirname(abspath(__file__))
-    sys.path = [PATH] + sys.path
-
+def main():
     try:
         from park.settings import JID, PASSWORD, RES, CHANNEL
     except ImportError:
@@ -789,5 +786,10 @@ if __name__ == "__main__":
     th = threading.Thread(target=bc.thread_proc)
     bc.serve_forever(connect_callback=lambda: th.start())
     bc.thread_killed = True
+
+
+if __name__ == "__main__":
+    main()
+
 
 #### EOF ######################################################################
