@@ -40,7 +40,6 @@
 
 # Standard library
 from datetime import datetime
-import logging
 from os.path import abspath, dirname, join
 from os import execl
 import re
@@ -58,8 +57,8 @@ import xmpp
 # Project library
 from park import serialize
 from park.util import (
-    get_code_from_url, google, is_url, is_wrappable, possible_signatures,
-    requires_invite, requires_subscription
+    get_code_from_url, google, install_log_handler, is_url, is_wrappable,
+    possible_signatures, requires_invite, requires_subscription
 )
 
 
@@ -85,8 +84,6 @@ class ChatRoomJabberBot(JabberBot):
         self.started = time.time()
         self.message_queue = []
         self.thread_killed = False
-
-        self._install_log_handler()
 
         return
 
@@ -678,23 +675,6 @@ class ChatRoomJabberBot(JabberBot):
 
         return msg
 
-    def _install_log_handler(self):
-        """ Install a log handler. """
-
-        # create console handler
-        chandler = logging.StreamHandler()
-        # create formatter
-        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        formatter = logging.Formatter(format)
-        # add formatter to handler
-        chandler.setFormatter(formatter)
-        # add handler to logger
-        self.log.addHandler(chandler)
-        # set level to INFO
-        self.log.setLevel(logging.INFO)
-
-        return
-
     def _read_state(self):
         """ Reads the persisted state. """
 
@@ -780,6 +760,8 @@ def main():
     except ImportError:
         print('Please copy sample-settings.py to settings.py and edit it!')
         sys.exit(1)
+
+    install_log_handler()
 
     bc = ChatRoomJabberBot(JID, PASSWORD, RES)
 

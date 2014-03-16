@@ -1,9 +1,33 @@
 import json
+import logging
 from urlparse import urlparse
 from urllib2 import urlopen, HTTPError
 from inspect import getargs
 from itertools import combinations
 from functools import wraps
+
+
+def install_log_handler():
+    """ Install a log handler. """
+
+    # create console handler
+    chandler = logging.StreamHandler()
+
+    # create formatter
+    fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    formatter = logging.Formatter(fmt)
+
+    # add formatter to handler
+    chandler.setFormatter(formatter)
+
+    # add handler to logger
+    log = logging.getLogger()
+    log.addHandler(chandler)
+
+    # set level to INFO
+    log.setLevel(logging.INFO)
+
+    return
 
 
 def is_url(url):
