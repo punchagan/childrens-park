@@ -86,6 +86,9 @@ class ChatRoomJabberBot(JabberBot):
         self.message_queue = []
         self.thread_killed = False
 
+        # Fetch all code from the gist urls and make commands
+        self._add_gist_commands()
+
         return
 
     @property
@@ -137,8 +140,6 @@ class ChatRoomJabberBot(JabberBot):
             self.conn.UnregisterDisconnectHandler(conn.DisconnectHandler)
             self._JabberBot__set_status(self.topic)
 
-            # Fetch all code from the gist urls and make commands
-            self._add_gist_commands()
             ### Send a -- we are online -- message
             self.message_queue.append('_We are up and running!_')
 
