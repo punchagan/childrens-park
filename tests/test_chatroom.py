@@ -445,9 +445,7 @@ class TestChatRoom(unittest.TestCase):
         bot = ChatRoomJabberBot(self.jid, self.password)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
-        message = xmpp.Message(
-            frm=bar, typ='chat', body=',hello_all'
-        )
+        message = xmpp.Message(frm=bar, typ='chat', body=',hello_all')
 
         # When
         bot.commands[',hello_all'](message, '')
@@ -458,7 +456,26 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_update_hello_world_command(self):
+        # Given
+        shutil.copy(join(HERE, 'data', 'hello_world.py'), self.plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(frm=bar, typ='chat', body=',hello_world')
 
+        # When
+        with open(join(HERE, 'data', 'hello_all.py')) as f:
+            with open(join(self.plugin_dir, 'hello_world.py'), 'w') as g:
+                g.write(f.read())
+        bot._add_commands_from_plugins(self.plugin_dir)
+        bot.commands[',hello_world'](message, '')
+
+        # Then
+        self.assertEqual(1, len(bot.message_queue))
+        self.assertEqual('%s says namaste' % bar, bot.message_queue[0].strip())
+
+        return
 
 
 if __name__ == "__main__":

@@ -40,7 +40,7 @@
 
 # Standard library
 from datetime import datetime
-from os.path import abspath, dirname, join
+from os.path import abspath, basename, dirname, join
 from os import execl
 import re
 from subprocess import call
@@ -537,29 +537,10 @@ class ChatRoomJabberBot(JabberBot):
 
     #### Private interface ####################################################
 
-    def _add_gist_commands(self):
-        """ Adds persisted gists as commands (on startup). """
+    def _add_commands_from_plugins(self, plugin_dir):
+        """ Load the plugins from the directory as bot commands. """
 
-        for url in self.gist_urls[:]:
-            code = get_code_from_url(url)
-            extra_doc = "\nThe code is at %s" % url
-            if not code:
-                self.gist_urls.remove(url)
-                self.log.info('Untracking command at %s' %url)
-                continue
-            is_name, name = self._create_cmd_from_code(code, extra_doc)
-            if not is_name:
-                self.gist_urls.remove(url)
-                self.log.info('Untracking command at %s' %url)
-                continue
-            self.log.info('Added new command from %s' %url)
-
-        return
-
-    def _add_local_commands(self):
-        """ Add the locally contributed commands to the bot. """
-
-        plugin_loader = PluginLoader(join(self.ROOT, 'plugins'))
+        plugin_loader = PluginLoader(plugin_dir)
 
         for plugin in plugin_loader.plugins:
             command = wrap_as_bot_command(
@@ -568,8 +549,40 @@ class ChatRoomJabberBot(JabberBot):
             if command is not None:
                 name = getattr(command, '_jabberbot_command_name')
                 self.commands[name] = command
+
             else:
                 self.log('Ignoring plugin %s' % plugin.__name__)
+
+        return
+
+    def _add_gist_commands(self):
+        """ Adds persisted gists as commands (on startup). """
+
+        gist_plugin_dir = join(self.ROOT, 'gist_plugins')
+
+        for url in self.gist_urls[:]:
+            code = get_code_from_url(url)
+            if not code:
+                self.log.info('Could not fetch plugin: %s. Removing!', url)
+                self.gist_urls.remove(url)
+                continue
+
+            else:
+                name = basename(url)
+                if not name.endswith('.py'):
+                    name += '.py'
+                with open(join(gist_plugin_dir, name), 'w') as f:
+                    f.write(code)
+
+        self._add_commands_from_plugins(gist_plugin_dir)
+
+        return
+
+    def _add_local_commands(self):
+        """ Add the locally contributed commands to the bot. """
+
+        plugin_dir = join(self.ROOT, 'plugins')
+        self._add_commands_from_plugins(plugin_dir)
 
         return
 

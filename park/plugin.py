@@ -7,7 +7,9 @@
 # Standard library
 from functools import partial, update_wrapper
 from glob import glob
+import imp
 from inspect import getargspec
+import os
 from os.path import basename, join, splitext
 import sys
 
@@ -30,15 +32,27 @@ class PluginLoader(object):
     def plugins(self):
         """ The list of discovered plugins. """
 
+        self.clean_compiled_files()
+        sys.path.insert(0, self.plugin_dir)
+
         if self._plugins is None:
-            sys.path.insert(0, self.plugin_dir)
             modules = glob(join(self.plugin_dir, '*.py'))
             self._plugins = [
-                __import__(splitext(basename(module))[0]) for module in modules
+                imp.load_source(splitext(basename(module))[0], module, )
+                for module in modules
             ]
-            sys.path = sys.path[1:]
+
+        sys.path = sys.path[1:]
 
         return self._plugins
+
+    def clean_compiled_files(self):
+        """ Remove all the .pyc and .pyo files. """
+
+        for f in glob(join(self.plugin_dir, '*.py[oc]')):
+            os.unlink(f)
+
+        return
 
 
 def wrap_as_bot_command(bot, function, name):
