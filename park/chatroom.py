@@ -689,9 +689,10 @@ class ChatRoomJabberBot(JabberBot):
         """
 
         if not cmd.startswith(','):
-            self.message_queue.append(
-                '[%s]: %s %s' % (self.users[user], cmd, args)
-            )
+            text = '%s %s' % (cmd, args)
+            from park.util import dump_message_with_url
+            dump_message_with_url(join(self.ROOT, 'shit.json'), user, text)
+            self.message_queue.append('[%s]: %s' % (self.users[user], text))
             message = ''
 
         else:

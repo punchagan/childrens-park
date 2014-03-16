@@ -17,7 +17,7 @@ def read_state(path):
     if exists(path):
         with open(path) as f:
             try:
-                state.update(json.load(f))
+                state = json.load(f)
             except ValueError:
                 pass
 

@@ -5,7 +5,6 @@
 """ Tests for the ChatRoom. """
 
 # Standard library
-import os
 from os.path import abspath, dirname, exists, join
 import shutil
 import tempfile
@@ -476,6 +475,25 @@ class TestChatRoom(unittest.TestCase):
         self.assertEqual(
             '%s says namaste' % bar, bot.message_queue[-1].strip()
         )
+
+        return
+
+    def test_should_dump_messages_with_urls(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        url = 'http://muse-amuse.in'
+        text = 'this is %s' % url
+        message = xmpp.Message(frm=bar, typ='chat', body=text)
+
+        # When
+        bot._unknown_command(message, *text.split(' ', 1))
+
+        # Then
+        path = join(bot.ROOT, 'shit.json')
+        self.assertTrue(exists(path))
+        self.assertEqual(serialize.read_state(path)[0]['url'], url)
 
         return
 
