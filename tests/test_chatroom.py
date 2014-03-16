@@ -503,12 +503,13 @@ class TestChatRoom(unittest.TestCase):
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         url = 'http://muse-amuse.in'
-        entry = {'url': url, 'name': bar}
-        path = join(bot.ROOT, 'shit.json')
-        message = xmpp.Message(frm=bar, typ='chat', body=',urls')
-        serialize.save_state(path, [entry])
+        text = 'this is %s' % url
+        bot._unknown_command(
+            xmpp.Message(frm=bar, typ='chat', body=text), *text.split(' ', 1)
+        )
 
         # When
+        message = xmpp.Message(frm=bar, typ='chat', body=',urls')
         result = bot.show_urls(message, '')
 
         # Then

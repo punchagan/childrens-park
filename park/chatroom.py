@@ -469,19 +469,25 @@ class ChatRoomJabberBot(JabberBot):
 
         path = join(self.ROOT, 'shit.json')  #fixme: duplication.
         data = serialize.read_state(path)
-        message = ''
         urls = {}
+
         for entry in data:
             user = entry['user']
             url = entry['url']
-            urls[user] = (urls[user] + '\n' + url) if user in urls else url
-            #message = message + '\n' + entry['user'] + ': ' + entry['url']
+            user_urls = urls.setdefault(user, [])
+            user_urls.append(url)
 
-        for user in urls:
-            message = message + '\n\n' + user +': \n'+ urls[user]
+        messages = [
+            '%s:\n    %s' % (user, '\n    '.join(user_urls))
+            for user, user_urls in urls.iteritems()
+        ]
 
-        if len(message) == 0:
+        if len(messages) == 0:
             message = 'No new urls.'
+
+        else:
+            message = '\n' + '\n'.join(messages)
+
         return message
     
 
