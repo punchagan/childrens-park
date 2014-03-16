@@ -510,7 +510,7 @@ class TestChatRoom(unittest.TestCase):
 
         # When
         message = xmpp.Message(frm=bar, typ='chat', body=',urls')
-        result = bot.show_urls(message, '')
+        result = bot.commands[',urls'](message, '')
 
         # Then
         self.assertIn(url, result)
