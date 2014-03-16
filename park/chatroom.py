@@ -56,6 +56,7 @@ import xmpp
 
 # Project library
 from park import serialize
+from park.plugin import PluginLoader, wrap_as_bot_command
 from park.text_processing import chunk_text
 from park.util import (
     get_code_from_url, google, install_log_handler, is_url, is_wrappable,
@@ -88,6 +89,9 @@ class ChatRoomJabberBot(JabberBot):
 
         # Fetch all code from the gist urls and make commands
         self._add_gist_commands()
+
+        # Load local commands.
+        self._add_local_commands()
 
         return
 
@@ -559,6 +563,23 @@ class ChatRoomJabberBot(JabberBot):
                 continue
             self.log.info('Added new command from %s' %url)
 
+        return
+
+    def _add_local_commands(self):
+        """ Add the locally contributed commands to the bot. """
+
+        plugin_loader = PluginLoader(join(self.ROOT, 'plugins'))
+
+        for plugin in plugin_loader.plugins:
+            command = wrap_as_bot_command(plugin.main, ',%s' % plugin.__name__)
+            if command is not None:
+                name = getattr(command, '_jabberbot_command_name')
+                self.commands[name] = command
+            else:
+                self.log('Ignoring plugin %s' % plugin.__name__)
+
+        return
+
     def _attempt_reconnect(self):
         """ Attempt to reconnect. """
 
@@ -621,6 +642,7 @@ class ChatRoomJabberBot(JabberBot):
                 self.log.exception('An error happened while processing a message ("%s") from %s: %s"' % (text, jid, reply))
         else:
             reply = self._unknown_command(mess, cmd, args)
+
         if reply:
             self.send_simple_reply(mess, unicode(reply))
 

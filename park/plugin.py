@@ -5,10 +5,17 @@
 """ Utilites to work with plugins for bot. """
 
 # Standard library
+from functools import wraps
 from glob import glob
+from inspect import getargspec
 from os.path import basename, join, splitext
 import sys
 
+# 3rd party library
+from jabberbot import botcmd
+
+# Project library
+from park.util import requires_subscription
 
 class PluginLoader(object):
     """ A class to load plugins from a plugin directory. """
@@ -30,3 +37,35 @@ class PluginLoader(object):
             ]
 
         return self._plugins
+
+
+def wrap_as_bot_command(function, name):
+    """ Wrap the given function as a bot command. """
+
+    is_bot_command = getattr(function, '_jabberbot_command', False)
+
+    if is_bot_command:
+       command = function
+
+    else:
+        @wraps(function)
+        @requires_subscription
+        def wrapper(bot, message, args):
+            f_args = getargspec(function).args
+            allowed_args = [bot, message, args]
+            n = len(f_args)
+
+            if n <= 3:
+                args = allowed_args[3-n:]
+                result = function(*args)
+
+            else:
+                result = None
+
+            return result
+
+        command = botcmd(wrapper, name=name)
+
+    return command
+
+#### EOF ######################################################################

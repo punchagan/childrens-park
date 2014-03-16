@@ -5,7 +5,8 @@
 """ Tests for the ChatRoom. """
 
 # Standard library
-from os.path import exists
+import os
+from os.path import abspath, dirname, exists, join
 import shutil
 import tempfile
 import unittest
@@ -16,6 +17,8 @@ import xmpp
 # Project library
 from park import serialize
 from park.chatroom import ChatRoomJabberBot
+
+HERE = dirname(abspath(__file__))
 
 
 class TestChatRoom(unittest.TestCase):
@@ -381,6 +384,87 @@ class TestChatRoom(unittest.TestCase):
         self.assertEqual(0, len(bot.message_queue))
 
         return
+
+    def test_should_add_hello_world_as_bot_command(self):
+        # Given
+        plugin_dir = join(self.tempdir, 'plugins')
+        os.makedirs(plugin_dir)
+        shutil.copy(join(HERE, 'data', 'hello_world.py'), plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(frm=bar, typ='chat', body=',hello_world')
+
+        # When
+        result = bot.commands[',hello_world'](bot, message, '')
+        help = bot.help(message, ',hello_world')
+
+        # Then
+        self.assertEqual('hello world', result)
+        self.assertIn('hello world', help)
+
+        return
+
+    def test_should_add_hello_name_as_bot_command(self):
+        # Given
+        plugin_dir = join(self.tempdir, 'plugins')
+        os.makedirs(plugin_dir)
+        shutil.copy(join(HERE, 'data', 'hello_name.py'), plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(frm=bar, typ='chat', body=',hello_name foo')
+
+        # When
+        result = bot.commands[',hello_name'](bot, message, 'foo')
+
+        # Then
+        self.assertEqual('hello, foo', result)
+
+        return
+
+    def test_should_add_hello_custom_as_bot_command(self):
+        # Given
+        plugin_dir = join(self.tempdir, 'plugins')
+        os.makedirs(plugin_dir)
+        shutil.copy(join(HERE, 'data', 'hello_custom.py'), plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(
+            frm=bar, typ='chat', body=',hello_custom namaste'
+        )
+
+        # When
+        result = bot.commands[',hello_custom'](bot, message, 'namaste')
+
+        # Then
+        self.assertEqual('%s, namaste' % bar, result)
+
+        return
+
+    def test_should_add_hello_all_as_bot_command(self):
+        # Given
+        plugin_dir = join(self.tempdir, 'plugins')
+        os.makedirs(plugin_dir)
+        shutil.copy(join(HERE, 'data', 'hello_all.py'), plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(
+            frm=bar, typ='chat', body=',hello_all'
+        )
+
+        # When
+        bot.commands[',hello_all'](bot, message, '')
+
+        # Then
+        self.assertEqual(1, len(bot.message_queue))
+        self.assertEqual('%s says namaste' % bar, bot.message_queue[0])
+
+        return
+
+
 
 
 if __name__ == "__main__":
