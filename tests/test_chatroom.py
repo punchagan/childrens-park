@@ -5,7 +5,8 @@
 """ Tests for the ChatRoom. """
 
 # Standard library
-from os.path import exists
+import os
+from os.path import abspath, dirname, exists, join
 import shutil
 import tempfile
 import unittest
@@ -17,6 +18,8 @@ import xmpp
 from park import serialize
 from park.chatroom import ChatRoomJabberBot
 
+HERE = dirname(abspath(__file__))
+
 
 class TestChatRoom(unittest.TestCase):
     """ Tests for the ChatRoom. """
@@ -25,6 +28,8 @@ class TestChatRoom(unittest.TestCase):
         self.jid = 'test@example.com'
         self.password = '********'
         self.tempdir = ChatRoomJabberBot.ROOT = tempfile.mkdtemp()
+        self.plugin_dir = join(self.tempdir, 'plugins')
+        shutil.copytree(join(HERE, '..', 'park', 'plugins'), self.plugin_dir)
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
@@ -73,7 +78,7 @@ class TestChatRoom(unittest.TestCase):
         text = 'this is my message'
 
         # When
-        bot.myself(message, text)
+        bot.commands[',me'](message, text)
 
         # Then
         self.assertEqual(0, len(bot.message_queue))
@@ -89,7 +94,7 @@ class TestChatRoom(unittest.TestCase):
         text = 'this is my message'
 
         # When
-        bot.myself(message, text)
+        bot.commands[',me'](message, text)
 
         # Then
         self.assertIn(text, bot.message_queue[0])
@@ -382,6 +387,97 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_add_hello_world_as_bot_command(self):
+        # Given
+        shutil.copy(join(HERE, 'data', 'hello_world.py'), self.plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(frm=bar, typ='chat', body=',hello_world')
+
+        # When
+        result = bot.commands[',hello_world'](message, '')
+        help = bot.help(message, ',hello_world')
+
+        # Then
+        self.assertEqual('hello world', result)
+        self.assertIn('hello world', help)
+
+        return
+
+    def test_should_add_hello_name_as_bot_command(self):
+        # Given
+        shutil.copy(join(HERE, 'data', 'hello_name.py'), self.plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(frm=bar, typ='chat', body=',hello_name foo')
+
+        # When
+        result = bot.commands[',hello_name'](message, 'foo')
+
+        # Then
+        self.assertEqual('hello, foo', result)
+
+        return
+
+    def test_should_add_hello_custom_as_bot_command(self):
+        # Given
+        shutil.copy(join(HERE, 'data', 'hello_custom.py'), self.plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(
+            frm=bar, typ='chat', body=',hello_custom namaste'
+        )
+
+        # When
+        result = bot.commands[',hello_custom'](message, 'namaste')
+
+        # Then
+        self.assertEqual('%s, namaste' % bar, result)
+
+        return
+
+    def test_should_add_hello_all_as_bot_command(self):
+        # Given
+        shutil.copy(join(HERE, 'data', 'hello_all.py'), self.plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(frm=bar, typ='chat', body=',hello_all')
+
+        # When
+        bot.commands[',hello_all'](message, '')
+
+        # Then
+        self.assertEqual(1, len(bot.message_queue))
+        self.assertEqual('%s says namaste' % bar, bot.message_queue[0].strip())
+
+        return
+
+    def test_should_update_hello_world_command(self):
+        # Given
+        shutil.copy(join(HERE, 'data', 'hello_world.py'), self.plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        message = xmpp.Message(frm=bar, typ='chat', body=',hello_world')
+
+        # When
+        with open(join(HERE, 'data', 'hello_all.py')) as f:
+            code = f.read().replace('main', 'hello_world')
+        bot.add_botcmd(
+            xmpp.Message(frm=bar, typ='chat', body=',hello_world'), code
+        )
+        bot.commands[',hello_world'](message, '')
+
+        # Then
+        self.assertEqual(
+            '%s says namaste' % bar, bot.message_queue[-1].strip()
+        )
+
+        return
 
 if __name__ == "__main__":
     unittest.main()

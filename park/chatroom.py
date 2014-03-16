@@ -40,8 +40,9 @@
 
 # Standard library
 from datetime import datetime
-from os.path import abspath, dirname, join
-from os import execl
+import glob
+from os.path import abspath, basename, dirname, exists, join
+from os import execl, makedirs
 import re
 from subprocess import call
 import sys
@@ -56,10 +57,11 @@ import xmpp
 
 # Project library
 from park import serialize
+from park.plugin import load_file, wrap_as_bot_command
 from park.text_processing import chunk_text
 from park.util import (
-    get_code_from_url, google, install_log_handler, is_url, is_wrappable,
-    possible_signatures, requires_invite, requires_subscription
+    get_code_from_url, google, install_log_handler, is_url, make_function_main,
+    requires_invite, requires_subscription
 )
 
 
@@ -85,6 +87,12 @@ class ChatRoomJabberBot(JabberBot):
         self.started = time.time()
         self.message_queue = []
         self.thread_killed = False
+
+        # Fetch all code from the gist urls and make commands
+        self._add_gist_commands()
+
+        # Load local commands.
+        self._add_local_commands()
 
         return
 
@@ -137,8 +145,6 @@ class ChatRoomJabberBot(JabberBot):
             self.conn.UnregisterDisconnectHandler(conn.DisconnectHandler)
             self._JabberBot__set_status(self.topic)
 
-            # Fetch all code from the gist urls and make commands
-            self._add_gist_commands()
             ### Send a -- we are online -- message
             self.message_queue.append('_We are up and running!_')
 
@@ -328,15 +334,6 @@ class ChatRoomJabberBot(JabberBot):
 
         return user_list
 
-    @botcmd(name=',me')
-    @requires_subscription
-    def myself(self, user, args):
-        """ Send message in third person. """
-
-        self.message_queue.append('*%s %s*' % (self.users[user], args))
-
-        return
-
     @botcmd(name=',invite')
     @requires_subscription
     def invite(self, user, args):
@@ -354,7 +351,7 @@ class ChatRoomJabberBot(JabberBot):
                 args,
                 '%s invited you to join %s. '
                 'Say %s to join!'
-                % (user, CHANNEL, self.subscribe._jabberbot_command_name)
+                % (user, self.jid, self.subscribe._jabberbot_command_name)
             )
             self.roster.Authorize(email)
             self.invited[email] = email
@@ -480,7 +477,8 @@ class ChatRoomJabberBot(JabberBot):
         return super(ChatRoomJabberBot, self).help(mess, args)
 
     @botcmd(name=',addbotcmd')
-    def add_botcmd(self, mess, args):
+    @requires_subscription
+    def add_botcmd(self, user, args):
         """ Define a bot command on the fly!
 
         This command lets you add bot commands, during runtime. New
@@ -513,50 +511,90 @@ class ChatRoomJabberBot(JabberBot):
 
         # Check if first word in args is a URL.
         gist_url = args.split()[0]
+
         if is_url(gist_url):
             code = get_code_from_url(gist_url)
-            extra_doc = 'The code is at %s' % gist_url
+            name = basename(gist_url)
+
         else:
             code = args
-            gist_url = False
-            extra_doc = ''
+            try:
+                name, code = make_function_main(code)
 
-        is_name, name = self._create_cmd_from_code(code, extra_doc)
+            except:
+                name = None
 
-        if not is_name:
-            # Return the error message
-            return name
+        if name is None:
+            return 'could not compile your code.'
 
-        # Persist the url, if it's not already persisted
-        if gist_url and gist_url not in self.gist_urls:
-            self.gist_urls.append(gist_url)
-
-        # Log and celebrate!
-        user = self.users[self.get_sender_username(mess)]
-        self.log.info('%s registered command %s' % (user, name))
+        self._add_command_from_code(name, code)
         self.message_queue.append('%s registered command %s' % (user, name))
-        self.message_queue.append('Say ,help %s to see the help' % name)
-        if extra_doc:
-            self.message_queue.append(extra_doc)
+
+        return
 
     #### Private interface ####################################################
+
+    def _add_command_from_code(self, name, code):
+        """ Add the given string of code as a command. """
+
+        # fixme: the directory should be called something meaningful.
+        gist_plugin_dir = join(self.ROOT, 'gist_plugins')
+        if not exists(gist_plugin_dir):
+            makedirs(gist_plugin_dir)
+
+        if not name.endswith('.py'):
+            name += '.py'
+
+        if code:
+            with open(join(gist_plugin_dir, name), 'w') as f:
+                f.write(code)
+
+            self._add_command_from_path(f.name)
+
+        return
+
+    def _add_command_from_gist(self, url):
+        """ Add the code at the given url as a command. """
+
+        code = get_code_from_url(url)
+        # fixme: may need to fix name to valid module name
+        name = basename(url)
+        self._add_command_from_code(name, code)
+
+        return
+
+    def _add_command_from_path(self, path):
+        """  Add the plugin at the given path as a command. """
+
+        plugin = load_file(path)
+        command = wrap_as_bot_command(
+            self, plugin.main, ',%s' % plugin.__name__
+        )
+        if command is not None:
+            name = getattr(command, '_jabberbot_command_name')
+            self.commands[name] = command
+
+        else:
+            self.log('Ignoring plugin %s' % plugin.__name__)
+
+        return
 
     def _add_gist_commands(self):
         """ Adds persisted gists as commands (on startup). """
 
         for url in self.gist_urls[:]:
-            code = get_code_from_url(url)
-            extra_doc = "\nThe code is at %s" % url
-            if not code:
-                self.gist_urls.remove(url)
-                self.log.info('Untracking command at %s' %url)
-                continue
-            is_name, name = self._create_cmd_from_code(code, extra_doc)
-            if not is_name:
-                self.gist_urls.remove(url)
-                self.log.info('Untracking command at %s' %url)
-                continue
-            self.log.info('Added new command from %s' %url)
+            self._add_command_from_gist(url)
+
+        return
+
+    def _add_local_commands(self):
+        """ Add the locally contributed commands to the bot. """
+
+        plugin_dir = join(self.ROOT, 'plugins')
+        for path in glob.glob(join(plugin_dir, '*.py')):
+            self._add_command_from_path(path)
+
+        return
 
     def _attempt_reconnect(self):
         """ Attempt to reconnect. """
@@ -620,40 +658,9 @@ class ChatRoomJabberBot(JabberBot):
                 self.log.exception('An error happened while processing a message ("%s") from %s: %s"' % (text, jid, reply))
         else:
             reply = self._unknown_command(mess, cmd, args)
+
         if reply:
             self.send_simple_reply(mess, unicode(reply))
-
-    def _create_cmd_from_code(self, code, extra_doc=None):
-        """ Execute the code, and make it a new bot cmd, if possible. """
-
-        from inspect import isfunction
-
-        # Evaluate the code and get the function
-        d = dict()
-        exec(code) in globals(), d
-        # XXX: Should let people define arbit global functions?
-        if len(d) != 1:
-            return False, 'You need to define one callable'
-        f = d.values()[0]
-
-        if not (isfunction(f) and f.__doc__):
-            return False, 'You can only add functions, with doc-strings'
-
-        elif not is_wrappable(f):
-            possible = possible_signatures()
-            return False, '%s are the only supported signatures' % possible
-
-        name = ',' + f.__name__
-        f.__doc__ += "\n%s" % extra_doc or ''
-
-        # Prevent over-riding protected commands
-        if name in self._protected:
-            return False, "Sorry, this function can't be over-written."
-
-        # Wrap the function, as required and register it.
-        self.commands[name] = self._wrap_function(f, code)
-
-        return True, name
 
     def _highlight_name(self, msg, user):
         """ Emphasizes your name, when sent in a message. """
@@ -701,41 +708,6 @@ class ChatRoomJabberBot(JabberBot):
 
         return message
 
-    def _wrap_function(self, f, code):
-        from functools import partial, update_wrapper
-        from inspect import getargs
-        expected_args = getargs(f.func_code).args
-
-        if 'self' not in expected_args:
-            # Redefine the function to add a self argument!
-            # XXX this is one heck of a hack!
-            # This is done to support print statements
-            code = re.sub("((\n|\A)def\s+\w+\()", "\\1self, ", code)
-
-        # Replace print statements with 'self.message_queue.extend([args])
-        code = re.sub("(\n\s*)print (.*)",
-                      "\\1self.message_queue.extend([\\2])", code)
-
-        # Re-evaluate code to get new function
-        d = dict()
-        exec(code) in globals(), d
-        f_new = d.values()[0]
-
-        # Wrap with first argument as self, to fake as a method
-        f_ = partial(f_new, self)
-
-        # Wrap to handle, missing mess or args arguments
-        def wrapper(mess, args):
-            f_args = dict()
-            if 'mess' in expected_args:
-                f_args.setdefault('mess', mess)
-            if 'args' in expected_args:
-                f_args.setdefault('args', args)
-            return f_(**f_args)
-
-        # Return a botcmd with the proper doc-string, etc.
-        return botcmd(update_wrapper(wrapper, f))
-
     def __getattr__(self, name):
         """ Overridden to allow easier writing of user commands. """
 
@@ -744,7 +716,7 @@ class ChatRoomJabberBot(JabberBot):
 
 def main():
     try:
-        from park.settings import JID, PASSWORD, RES, CHANNEL
+        from park.settings import JID, PASSWORD, RES
     except ImportError:
         print('Please copy sample-settings.py to settings.py and edit it!')
         sys.exit(1)
@@ -760,6 +732,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 #### EOF ######################################################################

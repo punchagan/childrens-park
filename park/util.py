@@ -1,10 +1,50 @@
-import json
-import logging
-from urlparse import urlparse
-from urllib2 import urlopen, HTTPError
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright (c) 2011 Puneeth Chaganti <punchagan@gmail.com>
+""" Miscellaneous utilites. """
+# fixme: move them to their proper homes!
+
+import ast
+from functools import wraps
 from inspect import getargs
 from itertools import combinations
-from functools import wraps
+import json
+import logging
+from StringIO import StringIO
+import sys
+from urlparse import urlparse
+from urllib2 import urlopen, HTTPError
+
+
+class captured_stdout(object):
+    """ A context manager to capture anything written to stdout. """
+
+    #### 'contextmanager' protocol ############################################
+
+    def __enter__(self):
+        self.stream = StringIO()
+        self._output = None
+        self.old = sys.stdout
+        sys.stdout = self.stream
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._output = self.stream.getvalue()
+        sys.stdout = self.old
+
+    #### 'captured_stdout' protocol ###########################################
+
+    @property
+    def output(self):
+        if self._output is None:
+            output = self.stream.getvalue()
+
+        else:
+            output = self._output
+
+        return output
 
 
 def install_log_handler():
@@ -69,19 +109,18 @@ def google(query):
     return result
 
 
-def possible_signatures():
-    possible = list(combinations(['self', 'mess', 'args'], 0)) + \
-               list(combinations(['self', 'mess', 'args'], 1)) + \
-               list(combinations(['self', 'mess', 'args'], 2)) + \
-               list(combinations(['self', 'mess', 'args'], 3))
-    return possible
+def make_function_main(code):
+    """ Rename first function as main, and return (original name, code). """
 
+    functions = [
+        element for element in ast.parse(code.strip(), 'string').body
+        if isinstance(element, ast.FunctionDef)
+    ]
 
-def is_wrappable(f):
-    args = tuple(getargs(f.func_code).args)
-    possible = possible_signatures()
-    return args in possible
+    name = functions[0].name
+    code = code.replace('def %s' % name, 'def main')
 
+    return name, code
 
 def requires_invite(f):
     """ Decorator to ensure that a user is atleast invited
