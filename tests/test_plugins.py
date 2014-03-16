@@ -14,7 +14,7 @@ import unittest
 # 3rd party
 
 # Project library
-from park.plugin import PluginLoader
+from park.plugin import load_file
 
 HERE = dirname(abspath(__file__))
 
@@ -30,26 +30,15 @@ class TestPlugins(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tempdir)
 
-    def test_should_be_silent_when_no_plugins(self):
-        # When
-        plugin_loader = PluginLoader(self.plugin_dir)
-
-        # Then
-        self.assertEqual([], plugin_loader.plugins)
-
-        return
-
     def test_should_load_hello_world(self):
         # Given
-        shutil.copy(join(HERE, 'data', 'hello_world.py'), self.plugin_dir)
+        hello_world = join(HERE, 'data', 'hello_world.py')
 
         # When
-        plugin_loader = PluginLoader(self.plugin_dir)
-        plugins = plugin_loader.plugins
+        plugin = load_file(hello_world)
 
         # Then
-        self.assertEqual(1, len(plugins))
-        self.assertEqual('hello world', plugins[0].main())
+        self.assertEqual('hello world', plugin.main())
 
         return
 

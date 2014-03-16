@@ -10,7 +10,7 @@ from glob import glob
 import imp
 from inspect import getargspec
 import os
-from os.path import basename, join, splitext
+from os.path import basename, dirname, splitext
 import sys
 
 # 3rd party library
@@ -20,39 +20,15 @@ from jabberbot import botcmd
 from park.util import captured_stdout, requires_subscription
 
 
-class PluginLoader(object):
-    """ A class to load plugins from a plugin directory. """
+def load_file(path):
+    """  Import the file at the given path. """
 
-    def __init__(self, plugin_dir):
-        self.plugin_dir = plugin_dir
-        self._plugins = None
-        return
+    _clean_compiled_file(path)
+    sys.path.insert(0, dirname(path))
+    module = imp.load_source(splitext(basename(path))[0], path)
+    sys.path = sys.path[1:]
 
-    @property
-    def plugins(self):
-        """ The list of discovered plugins. """
-
-        self.clean_compiled_files()
-        sys.path.insert(0, self.plugin_dir)
-
-        if self._plugins is None:
-            modules = glob(join(self.plugin_dir, '*.py'))
-            self._plugins = [
-                imp.load_source(splitext(basename(module))[0], module, )
-                for module in modules
-            ]
-
-        sys.path = sys.path[1:]
-
-        return self._plugins
-
-    def clean_compiled_files(self):
-        """ Remove all the .pyc and .pyo files. """
-
-        for f in glob(join(self.plugin_dir, '*.py[oc]')):
-            os.unlink(f)
-
-        return
+    return module
 
 
 def wrap_as_bot_command(bot, function, name):
@@ -89,5 +65,18 @@ def wrap_as_bot_command(bot, function, name):
         command = botcmd(wrapper, name=name)
 
     return command
+
+
+#### Private protocol #########################################################
+
+def _clean_compiled_file(path):
+    """ Clean the compiled versions .pyc/.pyo of a given file. """
+
+    for f in glob(path+'[co]'):
+        os.unlink(f)
+
+    return
+
+
 
 #### EOF ######################################################################

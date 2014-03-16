@@ -466,17 +466,18 @@ class TestChatRoom(unittest.TestCase):
 
         # When
         with open(join(HERE, 'data', 'hello_all.py')) as f:
-            with open(join(self.plugin_dir, 'hello_world.py'), 'w') as g:
-                g.write(f.read())
-        bot._add_commands_from_plugins(self.plugin_dir)
+            code = f.read().replace('main', 'hello_world')
+        bot.add_botcmd(
+            xmpp.Message(frm=bar, typ='chat', body=',hello_world'), code
+        )
         bot.commands[',hello_world'](message, '')
 
         # Then
-        self.assertEqual(1, len(bot.message_queue))
-        self.assertEqual('%s says namaste' % bar, bot.message_queue[0].strip())
+        self.assertEqual(
+            '%s says namaste' % bar, bot.message_queue[-1].strip()
+        )
 
         return
-
 
 if __name__ == "__main__":
     unittest.main()
