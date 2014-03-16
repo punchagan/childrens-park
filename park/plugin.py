@@ -5,7 +5,7 @@
 """ Utilites to work with plugins for bot. """
 
 # Standard library
-from functools import wraps
+from functools import partial, update_wrapper
 from glob import glob
 from inspect import getargspec
 from os.path import basename, join, splitext
@@ -41,7 +41,7 @@ class PluginLoader(object):
         return self._plugins
 
 
-def wrap_as_bot_command(function, name):
+def wrap_as_bot_command(bot, function, name):
     """ Wrap the given function as a bot command. """
 
     is_bot_command = getattr(function, '_jabberbot_command', False)
@@ -50,9 +50,9 @@ def wrap_as_bot_command(function, name):
        command = function
 
     else:
-        @wraps(function)
+
         @requires_subscription
-        def wrapper(bot, message, args):
+        def wrapper(self, message, args):
             f_args = getargspec(function).args
             allowed_args = [bot, message, args]
             n = len(f_args)
@@ -63,12 +63,14 @@ def wrap_as_bot_command(function, name):
                     result = function(*args)
 
                 if captured.output:
-                    bot.message_queue.append(captured.output)
+                    self.message_queue.append(captured.output)
 
             else:
                 result = None
 
             return result
+
+        wrapper = update_wrapper(partial(wrapper, bot), function)
 
         command = botcmd(wrapper, name=name)
 

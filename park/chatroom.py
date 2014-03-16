@@ -562,7 +562,9 @@ class ChatRoomJabberBot(JabberBot):
         plugin_loader = PluginLoader(join(self.ROOT, 'plugins'))
 
         for plugin in plugin_loader.plugins:
-            command = wrap_as_bot_command(plugin.main, ',%s' % plugin.__name__)
+            command = wrap_as_bot_command(
+                self, plugin.main, ',%s' % plugin.__name__
+            )
             if command is not None:
                 name = getattr(command, '_jabberbot_command_name')
                 self.commands[name] = command

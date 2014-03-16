@@ -78,7 +78,7 @@ class TestChatRoom(unittest.TestCase):
         text = 'this is my message'
 
         # When
-        bot.commands[',me'](bot, message, text)
+        bot.commands[',me'](message, text)
 
         # Then
         self.assertEqual(0, len(bot.message_queue))
@@ -94,7 +94,7 @@ class TestChatRoom(unittest.TestCase):
         text = 'this is my message'
 
         # When
-        bot.commands[',me'](bot, message, text)
+        bot.commands[',me'](message, text)
 
         # Then
         self.assertIn(text, bot.message_queue[0])
@@ -396,7 +396,7 @@ class TestChatRoom(unittest.TestCase):
         message = xmpp.Message(frm=bar, typ='chat', body=',hello_world')
 
         # When
-        result = bot.commands[',hello_world'](bot, message, '')
+        result = bot.commands[',hello_world'](message, '')
         help = bot.help(message, ',hello_world')
 
         # Then
@@ -414,7 +414,7 @@ class TestChatRoom(unittest.TestCase):
         message = xmpp.Message(frm=bar, typ='chat', body=',hello_name foo')
 
         # When
-        result = bot.commands[',hello_name'](bot, message, 'foo')
+        result = bot.commands[',hello_name'](message, 'foo')
 
         # Then
         self.assertEqual('hello, foo', result)
@@ -432,7 +432,7 @@ class TestChatRoom(unittest.TestCase):
         )
 
         # When
-        result = bot.commands[',hello_custom'](bot, message, 'namaste')
+        result = bot.commands[',hello_custom'](message, 'namaste')
 
         # Then
         self.assertEqual('%s, namaste' % bar, result)
@@ -450,7 +450,7 @@ class TestChatRoom(unittest.TestCase):
         )
 
         # When
-        bot.commands[',hello_all'](bot, message, '')
+        bot.commands[',hello_all'](message, '')
 
         # Then
         self.assertEqual(1, len(bot.message_queue))
