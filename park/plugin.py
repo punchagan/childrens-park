@@ -36,6 +36,7 @@ class PluginLoader(object):
             self._plugins = [
                 __import__(splitext(basename(module))[0]) for module in modules
             ]
+            sys.path = sys.path[1:]
 
         return self._plugins
 
