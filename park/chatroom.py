@@ -350,7 +350,7 @@ class ChatRoomJabberBot(JabberBot):
                 args,
                 '%s invited you to join %s. '
                 'Say %s to join!'
-                % (user, CHANNEL, self.subscribe._jabberbot_command_name)
+                % (user, self.jid, self.subscribe._jabberbot_command_name)
             )
             self.roster.Authorize(email)
             self.invited[email] = email
@@ -760,7 +760,7 @@ class ChatRoomJabberBot(JabberBot):
 
 def main():
     try:
-        from park.settings import JID, PASSWORD, RES, CHANNEL
+        from park.settings import JID, PASSWORD, RES
     except ImportError:
         print('Please copy sample-settings.py to settings.py and edit it!')
         sys.exit(1)
@@ -774,8 +774,8 @@ def main():
     bc.thread_killed = True
 
 
+
 if __name__ == "__main__":
     main()
-
 
 #### EOF ######################################################################
