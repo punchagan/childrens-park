@@ -56,6 +56,7 @@ import xmpp
 
 # Project library
 from park import serialize
+from park.text_processing import chunk_text
 from park.util import (
     get_code_from_url, google, install_log_handler, is_url, is_wrappable,
     possible_signatures, requires_invite, requires_subscription
@@ -166,14 +167,15 @@ class ChatRoomJabberBot(JabberBot):
             return
 
         # copy the message queue, then empty it
-        messages = self.message_queue
+        queue = self.message_queue
         self.message_queue = []
 
-        for message in messages:
-            # If an object in the message queue is not a string, make it one.
-            if not isinstance(message, basestring):
-                message = unicode(message)
+        messages = []
 
+        for message in queue:
+            messages.extend(chunk_text(message))
+
+        for message in messages:
             if len(self.users):
                 self.log.info(
                     'sending "%s" to %d user(s).', message, len(self.users)
@@ -181,9 +183,7 @@ class ChatRoomJabberBot(JabberBot):
 
             for user in self.users:
                 if not message.startswith("[%s]:" % self.users[user]):
-                    self._chunk_message(
-                        user, self._highlight_name(message, user)
-                    )
+                    self.send(user, self._highlight_name(message, user))
 
         return
 
@@ -622,18 +622,6 @@ class ChatRoomJabberBot(JabberBot):
             reply = self._unknown_command(mess, cmd, args)
         if reply:
             self.send_simple_reply(mess, unicode(reply))
-
-    def _chunk_message(self, user, msg):
-        LIM_LEN = 512
-        if len(msg) <= LIM_LEN:
-            self.send(user, msg)
-        else:
-            idx = (msg.rfind('\n', 0, LIM_LEN) + 1) or (msg.rfind(' ', 0, LIM_LEN) + 1)
-            if not idx:
-                idx = LIM_LEN
-            self.send(user, msg[:idx])
-            time.sleep(0.1)
-            self._chunk_message(user, msg[idx:])
 
     def _create_cmd_from_code(self, code, extra_doc=None):
         """ Execute the code, and make it a new bot cmd, if possible. """
