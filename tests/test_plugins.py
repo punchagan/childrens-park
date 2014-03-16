@@ -6,17 +6,17 @@
 
 # Standard library
 import os
-from os.path import exists, join
+from os.path import abspath, dirname, join
 import shutil
 import tempfile
-from textwrap import dedent
 import unittest
 
 # 3rd party
-import xmpp
 
 # Project library
 from park.plugin import PluginLoader
+
+HERE = dirname(abspath(__file__))
 
 
 class TestPlugins(unittest.TestCase):
@@ -41,15 +41,7 @@ class TestPlugins(unittest.TestCase):
 
     def test_should_load_hello_world(self):
         # Given
-        code = dedent(
-            """
-            def main():
-                return 'hello world'
-            """
-        )
-
-        with open(join(self.plugin_dir, 'hello_world.py'), 'w') as f:
-            f.write(code)
+        shutil.copy(join(HERE, 'data', 'hello_world.py'), self.plugin_dir)
 
         # When
         plugin_loader = PluginLoader(self.plugin_dir)
