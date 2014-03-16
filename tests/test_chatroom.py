@@ -460,7 +460,7 @@ class TestChatRoom(unittest.TestCase):
 
         # Then
         self.assertEqual(1, len(bot.message_queue))
-        self.assertEqual('%s says namaste' % bar, bot.message_queue[0])
+        self.assertEqual('%s says namaste' % bar, bot.message_queue[0].strip())
 
         return
 

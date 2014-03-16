@@ -15,7 +15,8 @@ import sys
 from jabberbot import botcmd
 
 # Project library
-from park.util import requires_subscription
+from park.util import captured_stdout, requires_subscription
+
 
 class PluginLoader(object):
     """ A class to load plugins from a plugin directory. """
@@ -57,7 +58,11 @@ def wrap_as_bot_command(function, name):
 
             if n <= 3:
                 args = allowed_args[3-n:]
-                result = function(*args)
+                with captured_stdout() as captured:
+                    result = function(*args)
+
+                if captured.output:
+                    bot.message_queue.append(captured.output)
 
             else:
                 result = None

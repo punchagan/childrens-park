@@ -1,10 +1,49 @@
-import json
-import logging
-from urlparse import urlparse
-from urllib2 import urlopen, HTTPError
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# Copyright (c) 2011 Puneeth Chaganti <punchagan@gmail.com>
+""" Miscellaneous utilites. """
+# fixme: move them to their proper homes!
+
+from functools import wraps
 from inspect import getargs
 from itertools import combinations
-from functools import wraps
+import json
+import logging
+from StringIO import StringIO
+import sys
+from urlparse import urlparse
+from urllib2 import urlopen, HTTPError
+
+
+class captured_stdout(object):
+    """ A context manager to capture anything written to stdout. """
+
+    #### 'contextmanager' protocol ############################################
+
+    def __enter__(self):
+        self.stream = StringIO()
+        self._output = None
+        self.old = sys.stdout
+        sys.stdout = self.stream
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._output = self.stream.getvalue()
+        sys.stdout = self.old
+
+    #### 'captured_stdout' protocol ###########################################
+
+    @property
+    def output(self):
+        if self._output is None:
+            output = self.stream.getvalue()
+
+        else:
+            output = self._output
+
+        return output
 
 
 def install_log_handler():
