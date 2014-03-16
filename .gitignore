@@ -20,5 +20,5 @@ pip-log.txt
 .coverage
 .tox
 /users.py
-/settings.py
-/state.py
+*settings.py
+*state.py
