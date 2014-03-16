@@ -333,15 +333,6 @@ class ChatRoomJabberBot(JabberBot):
 
         return user_list
 
-    @botcmd(name=',me')
-    @requires_subscription
-    def myself(self, user, args):
-        """ Send message in third person. """
-
-        self.message_queue.append('*%s %s*' % (self.users[user], args))
-
-        return
-
     @botcmd(name=',invite')
     @requires_subscription
     def invite(self, user, args):

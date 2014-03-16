@@ -28,6 +28,8 @@ class TestChatRoom(unittest.TestCase):
         self.jid = 'test@example.com'
         self.password = '********'
         self.tempdir = ChatRoomJabberBot.ROOT = tempfile.mkdtemp()
+        self.plugin_dir = join(self.tempdir, 'plugins')
+        shutil.copytree(join(HERE, '..', 'park', 'plugins'), self.plugin_dir)
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
@@ -76,7 +78,7 @@ class TestChatRoom(unittest.TestCase):
         text = 'this is my message'
 
         # When
-        bot.myself(message, text)
+        bot.commands[',me'](bot, message, text)
 
         # Then
         self.assertEqual(0, len(bot.message_queue))
@@ -92,7 +94,7 @@ class TestChatRoom(unittest.TestCase):
         text = 'this is my message'
 
         # When
-        bot.myself(message, text)
+        bot.commands[',me'](bot, message, text)
 
         # Then
         self.assertIn(text, bot.message_queue[0])
@@ -387,9 +389,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_add_hello_world_as_bot_command(self):
         # Given
-        plugin_dir = join(self.tempdir, 'plugins')
-        os.makedirs(plugin_dir)
-        shutil.copy(join(HERE, 'data', 'hello_world.py'), plugin_dir)
+        shutil.copy(join(HERE, 'data', 'hello_world.py'), self.plugin_dir)
         bot = ChatRoomJabberBot(self.jid, self.password)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
@@ -407,9 +407,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_add_hello_name_as_bot_command(self):
         # Given
-        plugin_dir = join(self.tempdir, 'plugins')
-        os.makedirs(plugin_dir)
-        shutil.copy(join(HERE, 'data', 'hello_name.py'), plugin_dir)
+        shutil.copy(join(HERE, 'data', 'hello_name.py'), self.plugin_dir)
         bot = ChatRoomJabberBot(self.jid, self.password)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
@@ -425,9 +423,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_add_hello_custom_as_bot_command(self):
         # Given
-        plugin_dir = join(self.tempdir, 'plugins')
-        os.makedirs(plugin_dir)
-        shutil.copy(join(HERE, 'data', 'hello_custom.py'), plugin_dir)
+        shutil.copy(join(HERE, 'data', 'hello_custom.py'), self.plugin_dir)
         bot = ChatRoomJabberBot(self.jid, self.password)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
@@ -445,9 +441,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_add_hello_all_as_bot_command(self):
         # Given
-        plugin_dir = join(self.tempdir, 'plugins')
-        os.makedirs(plugin_dir)
-        shutil.copy(join(HERE, 'data', 'hello_all.py'), plugin_dir)
+        shutil.copy(join(HERE, 'data', 'hello_all.py'), self.plugin_dir)
         bot = ChatRoomJabberBot(self.jid, self.password)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
