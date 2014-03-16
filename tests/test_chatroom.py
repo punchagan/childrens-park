@@ -497,6 +497,26 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_show_urls(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        url = 'http://muse-amuse.in'
+        entry = {'url': url, 'name': bar}
+        path = join(bot.ROOT, 'shit.json')
+        message = xmpp.Message(frm=bar, typ='chat', body=',urls')
+        serialize.save_state(path, [entry])
+
+        # When
+        result = bot.show_urls(message, '')
+
+        # Then
+        self.assertIn(url, result)
+
+        return
+
+
 if __name__ == "__main__":
     unittest.main()
 

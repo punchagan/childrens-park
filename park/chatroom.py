@@ -461,6 +461,29 @@ class ChatRoomJabberBot(JabberBot):
         ]
 
         return '\n'.join(attributes)
+    
+    @botcmd(name=',urls')
+    @requires_subscription
+    def show_urls(self, user, args):
+        """ Show URLs posted by buddies. The ones since I last checked"""
+
+        path = join(self.ROOT, 'shit.json')  #fixme: duplication.
+        data = serialize.read_state(path)
+        message = ''
+        urls = {}
+        for entry in data:
+            user = entry['user']
+            url = entry['url']
+            urls[user] = (urls[user] + '\n' + url) if user in urls else url
+            #message = message + '\n' + entry['user'] + ': ' + entry['url']
+
+        for user in urls:
+            message = message + '\n\n' + user +': \n'+ urls[user]
+
+        if len(message) == 0:
+            message = 'No new urls.'
+        return message
+    
 
     @botcmd(name=',see-friends', hidden=True)
     @requires_subscription
