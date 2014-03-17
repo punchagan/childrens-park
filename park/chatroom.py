@@ -43,7 +43,6 @@ from datetime import datetime
 import glob
 from os.path import abspath, basename, dirname, exists, join
 from os import execl, makedirs
-import re
 from subprocess import call
 import sys
 import threading
@@ -58,7 +57,7 @@ import xmpp
 # Project library
 from park import serialize
 from park.plugin import load_file, wrap_as_bot_command
-from park.text_processing import chunk_text
+from park.text_processing import chunk_text, highlight_word
 from park.util import (
     get_code_from_url, google, install_log_handler, is_url, make_function_main,
     requires_invite, requires_subscription
@@ -189,7 +188,7 @@ class ChatRoomJabberBot(JabberBot):
 
             for user in self.users:
                 if not message.startswith("[%s]:" % self.users[user]):
-                    self.send(user, self._highlight_name(message, user))
+                    self.send(user, highlight_word(message, self.users[user]))
 
         return
 
@@ -661,14 +660,6 @@ class ChatRoomJabberBot(JabberBot):
 
         if reply:
             self.send_simple_reply(mess, unicode(reply))
-
-    def _highlight_name(self, msg, user):
-        """ Emphasizes your name, when sent in a message. """
-
-        nick = re.escape(self.users[user])
-        msg = re.sub("(\W|\A)(%s)(\W|\Z)" % nick, "\\1 *\\2* \\3", msg)
-
-        return msg
 
     def _read_state(self):
         """ Reads the persisted state. """

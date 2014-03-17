@@ -4,6 +4,9 @@
 # Copyright (c) 2014 Puneeth Chaganti <punchagan@muse-amuse.in>
 """ Utilities for processing text messages. """
 
+# Standard library
+import re
+
 
 def chunk_text(text, limit=512, messages=None):
     """ Chunk a text message into a messages of length less than limit. """
@@ -25,3 +28,11 @@ def chunk_text(text, limit=512, messages=None):
         messages.append(text)
 
     return messages[::-1]
+
+
+def highlight_word(text, word):
+    """ Highlights the given word in the given text string. """
+
+    nick = re.escape(word)
+
+    return re.sub("(\W|\A)(%s)(\W|\Z)" % nick, "\\1*\\2*\\3", text)

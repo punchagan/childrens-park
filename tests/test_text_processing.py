@@ -8,7 +8,7 @@
 import unittest
 
 # Project library
-from park.text_processing import chunk_text
+from park.text_processing import chunk_text, highlight_word
 
 
 class TestTextProcessing(unittest.TestCase):
@@ -56,6 +56,46 @@ class TestTextProcessing(unittest.TestCase):
         self.assertEqual(400, len(messages[2]))
 
         return
+
+    def test_should_highlight_exact_word(self):
+        # Given
+        word = 'foo'
+        text = 'this is foo bar'
+
+        # When
+        text = highlight_word(text, word)
+
+        # Then
+        self.assertEqual(text, 'this is *foo* bar')
+
+        return
+
+    def test_should_highlight_word_at_ends(self):
+        # Given
+        word = 'foo'
+        text = 'foo this is foo'
+
+        # When
+        text = highlight_word(text, word)
+
+        # Then
+        self.assertEqual(text, '*foo* this is *foo*')
+
+        return
+
+    def test_should_highlight_punctuated_word(self):
+        # Given
+        word = 'foo'
+        text = "foo's bar or foo?"
+
+        # When
+        text = highlight_word(text, word)
+
+        # Then
+        self.assertEqual(text, "*foo*'s bar or *foo*?")
+
+        return
+
 
 
 if __name__ == '__main__':
