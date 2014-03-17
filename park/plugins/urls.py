@@ -1,11 +1,17 @@
 # Standard library
 import datetime
+import hashlib
 import os
-from os.path import join
+from os.path import abspath, dirname, join
+
+# 3rd party library
+from premailer import transform
 
 # Project library
 from park import serialize
-from park.util import send_email
+from park.util import render_template, send_email
+
+HERE = dirname(abspath(__file__))
 
 
 def main(bot, user, args):
@@ -64,13 +70,35 @@ def _clear_urls(path):
     return
 
 
+def _get_email_content(bot, urls):
+    """" Return the content section of the email. """
+
+    for entry in urls:
+        email = entry['user']
+        entry['name'] = bot.users.get(email) or bot.invited.get(email, email)
+        entry['hash'] = hashlib.md5(email).hexdigest()
+        # fixme: get the url title.
+
+    return urls
+
+
+def _get_email(context):
+    """ Return the content to be used for the newsletter. """
+
+    template = join(HERE, 'data', 'newsletter_template.html')
+    return transform(render_template(template, context))
+
+
 def _send_newsletter(bot, urls):
     """ Send the newsletter and save the timestamp to the state. """
 
     # fixme: hard-coded values.
     fro = 'park@muse-amuse.in'
     subject = 'Parkly Newsletter'
-    body = str(urls)
+    context = {
+        'entries': _get_email_content(bot, urls[:]), 'title': subject
+    }
+    body = _get_email(context)
     to = ', '.join(bot.users.keys() + bot.invited.keys())
     send_email(fro, to, subject, body, typ_='html', debug=bot.debug)
 

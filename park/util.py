@@ -19,6 +19,9 @@ import sys
 from urlparse import urlparse
 from urllib2 import urlopen, HTTPError
 
+# 3rd party library
+from jinja2 import Template
+
 # Project library
 from park.text_processing import strip_tags
 
@@ -155,6 +158,15 @@ def make_function_main(code):
     code = code.replace('def %s' % name, 'def main')
 
     return name, code
+
+
+def render_template(path, context):
+    """  Render the given template using the given context. """
+
+    with open(path) as f:
+        template = Template(f.read())
+
+    return template.render(**context)
 
 
 def requires_invite(f):

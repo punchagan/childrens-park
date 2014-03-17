@@ -536,9 +536,12 @@ class TestChatRoom(unittest.TestCase):
             self._run_bot(bot, lambda: captured.output)
 
         # Then
+        print captured.output
         self.assertIn(url, captured.output)
 
         return
+
+    #### Private protocol #####################################################
 
     def _run_bot(self, bot, condition):
         """ Run the bot until the condition returns True. """

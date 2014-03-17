@@ -59,6 +59,6 @@ class _MLStripper(HTMLParser):
         self.data.append(d)
 
     def get_data(self):
-        return ''.join(self.data)
+        return ''.join(self.data).strip()
 
 #### EOF ######################################################################
