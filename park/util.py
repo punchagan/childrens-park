@@ -8,7 +8,6 @@
 # Standard library
 import ast
 from functools import wraps
-from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import json
@@ -54,34 +53,6 @@ class captured_stdout(object):
             output = self._output
 
         return output
-
-
-# fixme: this should be contributed via a hook, too.
-# currently, we don't have a hook for processing all messages before sending...
-def dump_message_with_url(path, user, text):
-    """ Dump a message to shit.json if it has a url. """
-
-    tokens = text.split()
-    urls = [token for token in tokens if is_url(token)]
-
-    if len(urls) == 0:
-        return
-
-    from park.serialize import read_state, save_state
-
-    for url in urls:
-        data = read_state(path)
-        if not data:
-            data = []
-        entry = {
-            'user': user,  # fixme: do we want nick or email?
-            'url': url,
-            'timestamp': datetime.now().isoformat()
-        }
-        data.append(entry)
-        save_state(path, data)
-
-    return
 
 
 def install_log_handler():

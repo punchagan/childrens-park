@@ -57,6 +57,7 @@ import xmpp
 # Project library
 from park import serialize
 from park.plugin import load_file, wrap_as_bot_command
+from park.plugins.urls import dump_message_with_url
 from park.text_processing import chunk_text, highlight_word
 from park.util import (
     get_code_from_url, google, install_log_handler, is_url, make_function_main,
@@ -730,8 +731,7 @@ class ChatRoomJabberBot(JabberBot):
 
         if not cmd.startswith(','):
             text = '%s %s' % (cmd, args)
-            from park.util import dump_message_with_url
-            dump_message_with_url(join(self.ROOT, 'shit.json'), user, text)
+            dump_message_with_url(user, text, self.ROOT)
             self.message_queue.append('[%s]: %s' % (self.users[user], text))
             message = ''
 

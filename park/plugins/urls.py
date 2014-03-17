@@ -9,15 +9,62 @@ from premailer import transform
 
 # Project library
 from park import serialize
-from park.util import render_template, send_email
+from park.serialize import read_state, save_state
+from park.util import is_url, render_template, send_email
 
 HERE = dirname(abspath(__file__))
+DB_NAME = 'shit.json'
+
+
+# fixme: this should be contributed via a hook, too.
+# currently, we don't have a hook for processing all messages before sending...
+def dump_message_with_url(user, text, target_dir):
+    """ Dump a message to the db in the target dir, if it has a url. """
+
+    tokens = text.split()
+    urls = [token for token in tokens if is_url(token)]
+
+    if len(urls) == 0:
+        return
+
+    path = join(target_dir, DB_NAME)
+
+    for url in urls:
+        data = read_state(path)
+        if not data:
+            data = []
+        entry = {
+            'user': user,
+            'url': url,
+            'timestamp': datetime.datetime.now().isoformat()
+        }
+        data.append(entry)
+        save_state(path, data)
+
+    return
+
+
+# fixme: possibly could live in it's own plugin, once we do more than urls
+def idle_hook(bot):
+    """ Check if it is time to send the newsletter, and send it. """
+
+    db = join(bot.ROOT, DB_NAME)
+    data = bot.read_state()
+    last_newsletter = data.get('last_newsletter', None)
+
+    if last_newsletter is None or _time_since(last_newsletter).days >= 7:
+        urls = serialize.read_state(db)
+        if len(urls) > 0:
+            _send_newsletter(bot, urls)
+            _clear_urls(db)
+
+    return
 
 
 def main(bot, user, args):
     """ Show URLs posted by buddies. The ones since I last checked """
 
-    path = join(bot.ROOT, 'shit.json')  # fixme: duplication.
+    path = join(bot.ROOT, DB_NAME)
     data = serialize.read_state(path)
     urls = {}
 
@@ -40,22 +87,6 @@ def main(bot, user, args):
 
     return message
 
-
-def idle_hook(bot):
-    """ Check if it is time to send the newsletter, and send it. """
-
-    # fixme: possibly could live in it's own plugin, once we do more than urls
-    db = join(bot.ROOT, 'shit.json')
-    data = bot.read_state()
-    last_newsletter = data.get('last_newsletter', None)
-
-    if last_newsletter is None or _time_since(last_newsletter).days >= 7:
-        urls = serialize.read_state(db)
-        if len(urls) > 0:
-            _send_newsletter(bot, urls)
-            _clear_urls(db)
-
-    return
 
 #### Private protocol #########################################################
 

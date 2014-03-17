@@ -18,6 +18,7 @@ import xmpp
 # Project library
 from park import serialize
 from park.chatroom import ChatRoomJabberBot
+from park.plugins.urls import DB_NAME
 from park.util import captured_stdout
 
 HERE = dirname(abspath(__file__))
@@ -494,7 +495,7 @@ class TestChatRoom(unittest.TestCase):
         bot._unknown_command(message, *text.split(' ', 1))
 
         # Then
-        path = join(bot.ROOT, 'shit.json')
+        path = join(bot.ROOT, DB_NAME)
         self.assertTrue(exists(path))
         self.assertEqual(serialize.read_state(path)[0]['url'], url)
 
