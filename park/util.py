@@ -5,15 +5,22 @@
 """ Miscellaneous utilites. """
 # fixme: move them to their proper homes!
 
+# Standard library
 import ast
 from functools import wraps
 from datetime import datetime
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import json
 import logging
 from StringIO import StringIO
+import smtplib
 import sys
 from urlparse import urlparse
 from urllib2 import urlopen, HTTPError
+
+# Project library
+from park.text_processing import strip_tags
 
 
 class captured_stdout(object):
@@ -191,3 +198,29 @@ def requires_subscription(f):
         return message
 
     return wrapper
+
+
+def send_email(fro, to, subject, body, typ_='text', debug=False):
+    """ Send an email. """
+
+    if typ_ == 'text':
+        msg = MIMEText(body)
+
+    else:
+        msg = MIMEMultipart('alternative')
+        msg.attach(MIMEText(strip_tags(body), 'plain'))
+        msg.attach(MIMEText(body, 'html'))
+
+    msg['To'] = to
+    msg['From'] = fro
+    msg['Subject'] = subject
+
+    if not debug:
+        s = smtplib.SMTP()
+        s.connect()
+        s.sendmail(fro, to, msg.as_string())
+        s.quit()
+
+    return msg
+
+#### EOF ######################################################################
