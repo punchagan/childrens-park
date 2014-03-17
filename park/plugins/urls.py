@@ -5,6 +5,7 @@ from os.path import join
 
 # Project library
 from park import serialize
+from park.util import send_email
 
 
 def main(bot, user, args):
@@ -66,12 +67,12 @@ def _clear_urls(path):
 def _send_newsletter(bot, urls):
     """ Send the newsletter and save the timestamp to the state. """
 
-    if bot.debug:
-        print urls
-
-    else:
-        # fixme: actually send it!
-        pass
+    # fixme: hard-coded values.
+    fro = 'park@muse-amuse.in'
+    subject = 'Parkly Newsletter'
+    body = str(urls)
+    to = ', '.join(bot.users.keys() + bot.invited.keys())
+    send_email(fro, to, subject, body, typ_='html', debug=bot.debug)
 
     bot.save_state(
         {'last_newsletter': datetime.datetime.now().strftime(_TIMESTAMP_FMT)}

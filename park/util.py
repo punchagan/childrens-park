@@ -221,6 +221,9 @@ def send_email(fro, to, subject, body, typ_='text', debug=False):
         s.sendmail(fro, to, msg.as_string())
         s.quit()
 
+    else:
+        print msg.as_string()
+
     return msg
 
 #### EOF ######################################################################
