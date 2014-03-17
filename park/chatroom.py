@@ -87,11 +87,15 @@ class ChatRoomJabberBot(JabberBot):
         self.message_queue = []
         self.thread_killed = False
 
+        # Plugins
+        self._command_plugins = []
+        self._idle_hooks = []
+
         # Fetch all code from the gist urls and make commands
         self._add_gist_commands()
 
         # Load local commands.
-        self._add_local_commands()
+        self._load_plugins()
 
         return
 
@@ -198,6 +202,8 @@ class ChatRoomJabberBot(JabberBot):
             # fixme: this is ugly.  make everything a property, and changes
             # should trigger a save!
             self._save_state()
+            for hook in self._idle_hooks:
+                self._run_hook_in_thread(hook, self)
             for i in range(300):
                 time.sleep(1)
                 if self.thread_killed:
@@ -566,6 +572,13 @@ class ChatRoomJabberBot(JabberBot):
         """  Add the plugin at the given path as a command. """
 
         plugin = load_file(path)
+        self._add_command_from_plugin(plugin)
+
+        return
+
+    def _add_command_from_plugin(self, plugin):
+        """ Add the given plugin's main as a command. """
+
         command = wrap_as_bot_command(
             self, plugin.main, ',%s' % plugin.__name__
         )
@@ -583,15 +596,6 @@ class ChatRoomJabberBot(JabberBot):
 
         for url in self.gist_urls[:]:
             self._add_command_from_gist(url)
-
-        return
-
-    def _add_local_commands(self):
-        """ Add the locally contributed commands to the bot. """
-
-        plugin_dir = join(self.ROOT, 'plugins')
-        for path in glob.glob(join(plugin_dir, '*.py')):
-            self._add_command_from_path(path)
 
         return
 
@@ -661,10 +665,35 @@ class ChatRoomJabberBot(JabberBot):
         if reply:
             self.send_simple_reply(mess, unicode(reply))
 
+    def _load_plugins(self):
+        """ Load all the plugins from the plugin directory. """
+
+        plugin_dir = join(self.ROOT, 'plugins')
+
+        for path in glob.glob(join(plugin_dir, '*.py')):
+            plugin = load_file(path)
+
+            if getattr(plugin, 'main', None) is not None:
+                self._add_command_from_plugin(plugin)
+
+            if getattr(plugin, 'idle_hook', None) is not None:
+                self._idle_hooks.append(plugin.idle_hook)
+
+        return
+
     def _read_state(self):
         """ Reads the persisted state. """
 
         return serialize.read_state(self.db)
+
+    def _run_hook_in_thread(self, hook, *args, **kwargs):
+        """ Run the given hook in a new thread. """
+
+        thread = threading.Thread(target=hook, args=args, kwargs=kwargs)
+        thread.daemon = True
+        thread.start()
+
+        return
 
     def _save_state(self):
         """ Persists the state of the bot. """

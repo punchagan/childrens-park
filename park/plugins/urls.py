@@ -30,3 +30,9 @@ def main(bot, user, args):
         message = '\n' + '\n'.join(messages)
 
     return message
+
+
+def idle_hook(bot):
+    """ Check if it is time to send the newsletter, and send it. """
+
+    # fixme: possibly could live in it's own plugin.
