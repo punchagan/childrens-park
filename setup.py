@@ -32,6 +32,9 @@ setup(
     # simple. Or you can use find_packages.
     packages=find_packages(exclude=['docs', 'tests*']),
 
+    # Non python files to be bundled in the egg.
+    package_data={'park.plugins': ['data/*.*']},
+
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed.
     install_requires=[
