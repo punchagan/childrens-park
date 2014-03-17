@@ -66,12 +66,18 @@ def _clear_urls(path):
 def _send_newsletter(bot, urls):
     """ Send the newsletter and save the timestamp to the state. """
 
-    # fixme: actually send it!
-    print urls
+    if bot.debug:
+        print urls
+
+    else:
+        # fixme: actually send it!
+        pass
 
     bot.save_state(
         {'last_newsletter': datetime.datetime.now().strftime(_TIMESTAMP_FMT)}
     )
+
+    return
 
 
 def _time_since(timestamp):

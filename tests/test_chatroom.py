@@ -8,6 +8,8 @@
 from os.path import abspath, dirname, exists, join
 import shutil
 import tempfile
+import threading
+import time
 import unittest
 
 # 3rd party
@@ -16,6 +18,7 @@ import xmpp
 # Project library
 from park import serialize
 from park.chatroom import ChatRoomJabberBot
+from park.util import captured_stdout
 
 HERE = dirname(abspath(__file__))
 
@@ -514,6 +517,37 @@ class TestChatRoom(unittest.TestCase):
 
         # Then
         self.assertIn(url, result)
+
+        return
+
+    def test_should_send_newsletter(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password, debug=True)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        url = 'http://muse-amuse.in'
+        text = 'this is %s' % url
+        bot._unknown_command(
+            xmpp.Message(frm=bar, typ='chat', body=text), *text.split(' ', 1)
+        )
+
+        # When
+        with captured_stdout() as captured:
+            self._run_bot(bot, lambda: captured.output)
+
+        # Then
+        self.assertIn(url, captured.output)
+
+        return
+
+    def _run_bot(self, bot, condition):
+        """ Run the bot until the condition returns True. """
+
+        thread = threading.Thread(target=bot.thread_proc)
+        thread.daemon = True
+        thread.start()
+        while not condition():
+            time.sleep(0.1)
 
         return
 

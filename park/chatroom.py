@@ -72,8 +72,11 @@ class ChatRoomJabberBot(JabberBot):
 
     ROOT = dirname(abspath(__file__))
 
-    def __init__(self, jid, password, res=None):
-        super(ChatRoomJabberBot, self).__init__(jid, password, res)
+    def __init__(self, jid, password, res=None, debug=False):
+        super(ChatRoomJabberBot, self).__init__(
+            jid, password, res, debug=debug
+        )
+        self.debug = debug
 
         self._state = self.read_state()
 
@@ -736,11 +739,6 @@ class ChatRoomJabberBot(JabberBot):
             message = 'unknown command: %s' % cmd
 
         return message
-
-    def __getattr__(self, name):
-        """ Overridden to allow easier writing of user commands. """
-
-        return None
 
 
 def main():
