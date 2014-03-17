@@ -75,7 +75,7 @@ class ChatRoomJabberBot(JabberBot):
     def __init__(self, jid, password, res=None):
         super(ChatRoomJabberBot, self).__init__(jid, password, res)
 
-        self._state = self._read_state()
+        self._state = self.read_state()
 
         self.users = self._state.get('users', dict())
         self.invited = self._state.get('invited', dict())
@@ -196,12 +196,17 @@ class ChatRoomJabberBot(JabberBot):
 
         return
 
+    def read_state(self):
+        """ Reads the persisted state. """
+
+        return serialize.read_state(self.db)
+
     def thread_proc(self):
         while not self.thread_killed:
             self.message_queue.append('')
             # fixme: this is ugly.  make everything a property, and changes
             # should trigger a save!
-            self._save_state()
+            self.save_state()
             for hook in self._idle_hooks:
                 self._run_hook_in_thread(hook, self)
             for i in range(300):
@@ -209,8 +214,27 @@ class ChatRoomJabberBot(JabberBot):
                 if self.thread_killed:
                     return
 
+    def save_state(self, extra_state=None):
+        """ Persists the state of the bot. """
+
+        old_state = self.read_state()
+        new_state = dict(
+            users=self.users,
+            invited=self.invited,
+            topic=self.topic,
+            ideas=self.ideas,
+            gist_urls=self.gist_urls
+        )
+        old_state.update(new_state)
+        if extra_state is not None:
+            old_state.update(extra_state)
+
+        serialize.save_state(self.db, old_state)
+
+        return
+
     def shutdown(self):
-        self._save_state()
+        self.save_state()
 
     #### Bot Commands #########################################################
 
@@ -681,31 +705,12 @@ class ChatRoomJabberBot(JabberBot):
 
         return
 
-    def _read_state(self):
-        """ Reads the persisted state. """
-
-        return serialize.read_state(self.db)
-
     def _run_hook_in_thread(self, hook, *args, **kwargs):
         """ Run the given hook in a new thread. """
 
         thread = threading.Thread(target=hook, args=args, kwargs=kwargs)
         thread.daemon = True
         thread.start()
-
-        return
-
-    def _save_state(self):
-        """ Persists the state of the bot. """
-
-        state = dict(
-            users=self.users,
-            invited=self.invited,
-            topic=self.topic,
-            ideas=self.ideas,
-            gist_urls=self.gist_urls
-        )
-        serialize.save_state(self.db, state)
 
         return
 
