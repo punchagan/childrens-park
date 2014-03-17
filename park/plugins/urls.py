@@ -1,4 +1,6 @@
 # Standard library
+import datetime
+import os
 from os.path import join
 
 # Project library
@@ -35,4 +37,54 @@ def main(bot, user, args):
 def idle_hook(bot):
     """ Check if it is time to send the newsletter, and send it. """
 
-    # fixme: possibly could live in it's own plugin.
+    # fixme: possibly could live in it's own plugin, once we do more than urls
+    db = join(bot.ROOT, 'shit.json')
+    data = bot.read_state()
+    last_newsletter = data.get('last_newsletter', None)
+
+    if last_newsletter is None or _time_since(last_newsletter).days >= 7:
+        urls = serialize.read_state(db)
+        if len(urls) > 0:
+            _send_newsletter(bot, urls)
+            _clear_urls(db)
+
+    return
+
+#### Private protocol #########################################################
+
+_TIMESTAMP_FMT = '%Y-%m-%dT%H:%M:%S.%f'
+
+
+def _clear_urls(path):
+    """ Remove the db file where urls are saved. """
+
+    os.unlink(path)
+
+    return
+
+
+def _send_newsletter(bot, urls):
+    """ Send the newsletter and save the timestamp to the state. """
+
+    # fixme: actually send it!
+    print urls
+
+    bot.save_state(
+        {'last_newsletter': datetime.datetime.now().strftime(_TIMESTAMP_FMT)}
+    )
+
+
+def _time_since(timestamp):
+    """ Return a timedelta of current time and the given timestamp. """
+
+    if timestamp is not None:
+        old = datetime.datetime.strptime(timestamp, _TIMESTAMP_FMT)
+        now = datetime.datetime.now()
+        since = now - old
+
+    else:
+        since = None
+
+    return since
+
+#### EOF ######################################################################

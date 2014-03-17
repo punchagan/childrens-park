@@ -203,12 +203,15 @@ class ChatRoomJabberBot(JabberBot):
 
     def thread_proc(self):
         while not self.thread_killed:
+
+            # fixme: do we need this?
             self.message_queue.append('')
-            # fixme: this is ugly.  make everything a property, and changes
-            # should trigger a save!
-            self.save_state()
+
             for hook in self._idle_hooks:
                 self._run_hook_in_thread(hook, self)
+
+            self.save_state()
+
             for i in range(300):
                 time.sleep(1)
                 if self.thread_killed:
