@@ -165,6 +165,21 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_not_allow_empty_nick(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bot.users = {foo: 'foo'}
+        message = xmpp.Message(frm=foo, typ='chat')
+
+        # When
+        bot.alias(message, '  ')
+
+        # Then
+        self.assertEqual(bot.users[foo], 'foo')
+
+        return
+
     def test_should_show_help_to_unknown_user(self):
         # Given
         bot = ChatRoomJabberBot(self.jid, self.password)

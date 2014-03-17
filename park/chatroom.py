@@ -286,13 +286,13 @@ class ChatRoomJabberBot(JabberBot):
 
         nick = args.strip().replace(' ', '_')
 
-        if args in self.users.values():
+        if nick in self.users.values():
             message = 'Nick already taken.'
 
-        elif len(args) == 0:
-            message = 'Nick needs to be atleast one character long'
+        elif len(nick) == 0:
+            message = 'Nick needs to be at least one character long'
 
-        elif len(args) > self.NICK_LEN:
+        elif len(nick) > self.NICK_LEN:
             message = 'Nick cannot be longer than %s chars' % (self.NICK_LEN,)
 
         else:
