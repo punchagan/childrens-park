@@ -123,8 +123,7 @@ def _get_email(context):
 def _send_newsletter(bot, urls):
     """ Send the newsletter and save the timestamp to the state. """
 
-    # fixme: hard-coded values.
-    fro = 'park@muse-amuse.in'
+    fro = bot.username
     subject = 'Parkly Newsletter'
     context = {
         'entries': _get_email_content(bot, urls[:]), 'title': subject

@@ -73,11 +73,13 @@ class ChatRoomJabberBot(JabberBot):
 
     ROOT = dirname(abspath(__file__))
 
-    def __init__(self, jid, password, res=None, debug=False):
+    def __init__(self, username, password, res=None, debug=False):
         super(ChatRoomJabberBot, self).__init__(
-            jid, password, res, debug=debug
+            username, password, res, debug=debug
         )
+
         self.debug = debug
+        self.username = username
 
         self._state = self.read_state()
 
@@ -743,14 +745,14 @@ class ChatRoomJabberBot(JabberBot):
 
 def main():
     try:
-        from park.settings import JID, PASSWORD, RES
+        from park.settings import USERNAME, PASSWORD, RES
     except ImportError:
         print('Please copy sample-settings.py to settings.py and edit it!')
         sys.exit(1)
 
     install_log_handler()
 
-    bc = ChatRoomJabberBot(JID, PASSWORD, RES)
+    bc = ChatRoomJabberBot(USERNAME, PASSWORD, RES)
 
     th = threading.Thread(target=bc.thread_proc)
     bc.serve_forever(connect_callback=lambda: th.start())
