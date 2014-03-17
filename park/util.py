@@ -46,6 +46,34 @@ class captured_stdout(object):
         return output
 
 
+# fixme: this should be contributed via a hook, too.
+# currently, we don't have a hook for processing all messages before sending...
+def dump_message_with_url(path, user, text):
+    """ Dump a message to shit.json if it has a url. """
+
+    tokens = text.split()
+    urls = [token for token in tokens if is_url(token)]
+
+    if len(urls) == 0:
+        return
+
+    from park.serialize import read_state, save_state
+
+    for url in urls:
+        data = read_state(path)
+        if not data:
+            data = []
+        entry = {
+            'user': user,  # fixme: do we want nick or email?
+            'url': url,
+            'timestamp': datetime.now().isoformat()
+        }
+        data.append(entry)
+        save_state(path, data)
+
+    return
+
+
 def install_log_handler():
     """ Install a log handler. """
 
@@ -121,6 +149,7 @@ def make_function_main(code):
 
     return name, code
 
+
 def requires_invite(f):
     """ Decorator to ensure that a user is atleast invited
 
@@ -162,31 +191,3 @@ def requires_subscription(f):
         return message
 
     return wrapper
-
-
-# fixme: this is a shit function.  It is meant to  be used in parallel, not in
-# the message pipeline. It doesn't return anything.
-def dump_message_with_url(path, user, text):
-    """ Dump a message to shit.json if it has a url. """
-
-    tokens = text.split()
-    urls = [token for token in tokens if is_url(token)]
-
-    if len(urls) == 0:
-        return
-
-    from park.serialize import read_state, save_state
-
-    for url in urls:
-        data = read_state(path)
-        if not data:
-            data = []
-        entry = {
-            'user': user,  # fixme: do we want nick or email?
-            'url': url,
-            'timestamp': datetime.now().isoformat()
-        }
-        data.append(entry)
-        save_state(path, data)
-
-    return
