@@ -13,7 +13,7 @@ from park.serialize import read_state, save_state
 from park.util import is_url, render_template, send_email
 
 HERE = dirname(abspath(__file__))
-DB_NAME = 'shit.json'
+DB_NAME = 'newsletter.json'
 
 
 # fixme: this should be contributed via a hook, too.
