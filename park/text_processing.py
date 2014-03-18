@@ -5,6 +5,7 @@
 """ Utilities for processing text messages. """
 
 # Standard library
+from HTMLParser import HTMLParser
 import re
 
 
@@ -36,3 +37,28 @@ def highlight_word(text, word):
     nick = re.escape(word)
 
     return re.sub("(\W|\A)(%s)(\W|\Z)" % nick, "\\1*\\2*\\3", text)
+
+
+def strip_tags(html):
+    """ Strip out the tags from given html. """
+
+    s = _MLStripper()
+    s.feed(html)
+
+    return s.get_data()
+
+
+#### Private interface ########################################################
+
+class _MLStripper(HTMLParser):
+    def __init__(self):
+        self.reset()
+        self.data = []
+
+    def handle_data(self, d):
+        self.data.append(d)
+
+    def get_data(self):
+        return ''.join(self.data).strip()
+
+#### EOF ######################################################################

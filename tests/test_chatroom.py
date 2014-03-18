@@ -5,10 +5,12 @@
 """ Tests for the ChatRoom. """
 
 # Standard library
-import os
+from datetime import datetime, timedelta
 from os.path import abspath, dirname, exists, join
 import shutil
 import tempfile
+import threading
+import time
 import unittest
 
 # 3rd party
@@ -17,6 +19,8 @@ import xmpp
 # Project library
 from park import serialize
 from park.chatroom import ChatRoomJabberBot
+from park.plugins.urls import DB_NAME
+from park.util import captured_stdout
 
 HERE = dirname(abspath(__file__))
 
@@ -493,6 +497,85 @@ class TestChatRoom(unittest.TestCase):
         )
 
         return
+
+    def test_should_dump_messages_with_urls(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        url = 'http://muse-amuse.in'
+        text = 'this is %s' % url
+        message = xmpp.Message(frm=bar, typ='chat', body=text)
+
+        # When
+        bot._unknown_command(message, *text.split(' ', 1))
+
+        # Then
+        path = join(bot.ROOT, DB_NAME)
+        self.assertTrue(exists(path))
+        self.assertEqual(serialize.read_state(path)[0]['url'], url)
+
+        return
+
+    def test_should_show_urls(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        url = 'http://muse-amuse.in'
+        text = 'this is %s' % url
+        bot._unknown_command(
+            xmpp.Message(frm=bar, typ='chat', body=text), *text.split(' ', 1)
+        )
+
+        # When
+        message = xmpp.Message(frm=bar, typ='chat', body=',urls')
+        result = bot.commands[',urls'](message, '')
+
+        # Then
+        self.assertIn(url, result)
+
+        return
+
+    def test_should_send_newsletter(self):
+        # Given
+        bot = ChatRoomJabberBot(self.jid, self.password, debug=True)
+        bar = 'bar@bar.com'
+        bot.users = {bar: 'bar'}
+        url = 'http://muse-amuse.in'
+        text = 'this is %s' % url
+        bot._unknown_command(
+            xmpp.Message(frm=bar, typ='chat', body=text), *text.split(' ', 1)
+        )
+        extra_state = {
+            'last_newsletter': (datetime.now() - timedelta(10)).isoformat()
+        }
+        bot.save_state(extra_state=extra_state)
+
+        # When
+        with captured_stdout() as captured:
+            self._run_bot(bot, lambda: captured.output)
+
+        # Then
+        print captured.output
+        self.assertIn(url, captured.output)
+
+        return
+
+    #### Private protocol #####################################################
+
+    def _run_bot(self, bot, condition, timeout=5):
+        """ Run the bot until the condition returns True. """
+
+        thread = threading.Thread(target=bot.thread_proc)
+        thread.daemon = True
+        thread.start()
+        started = time.time()
+        while not condition() and time.time() - started < timeout:
+            time.sleep(0.1)
+
+        return
+
 
 if __name__ == "__main__":
     unittest.main()

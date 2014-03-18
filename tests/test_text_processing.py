@@ -8,7 +8,7 @@
 import unittest
 
 # Project library
-from park.text_processing import chunk_text, highlight_word
+from park.text_processing import chunk_text, highlight_word, strip_tags
 
 
 class TestTextProcessing(unittest.TestCase):
@@ -96,6 +96,43 @@ class TestTextProcessing(unittest.TestCase):
 
         return
 
+    def test_should_strip_tags_should_not_barf_on_plain_text(self):
+        # Given
+        text = 'this is plain text'
+
+        # When
+        result = strip_tags(text)
+
+        # Then
+        self.assertEqual(text, result)
+
+        return
+
+    def test_should_strip_tags_from_html(self):
+        # Given
+        text = 'this is plain text'
+        html = '<a>%s</a>' % text
+
+        # When
+        result = strip_tags(html)
+
+        # Then
+        self.assertEqual(text, result)
+
+        return
+
+    def test_should_strip_tags_from_broken_html(self):
+        # Given
+        text = 'this is plain text'
+        html = '<a>%s' % text
+
+        # When
+        result = strip_tags(html)
+
+        # Then
+        self.assertEqual(text, result)
+
+        return
 
 
 if __name__ == '__main__':

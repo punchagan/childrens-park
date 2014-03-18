@@ -57,6 +57,7 @@ import xmpp
 # Project library
 from park import serialize
 from park.plugin import load_file, wrap_as_bot_command
+from park.plugins.urls import dump_message_with_url
 from park.text_processing import chunk_text, highlight_word
 from park.util import (
     get_code_from_url, google, install_log_handler, is_url, make_function_main,
@@ -72,10 +73,15 @@ class ChatRoomJabberBot(JabberBot):
 
     ROOT = dirname(abspath(__file__))
 
-    def __init__(self, jid, password, res=None):
-        super(ChatRoomJabberBot, self).__init__(jid, password, res)
+    def __init__(self, username, password, res=None, debug=False):
+        super(ChatRoomJabberBot, self).__init__(
+            username, password, res, debug=debug
+        )
 
-        self._state = self._read_state()
+        self.debug = debug
+        self.username = username
+
+        self._state = self.read_state()
 
         self.users = self._state.get('users', dict())
         self.invited = self._state.get('invited', dict())
@@ -87,11 +93,15 @@ class ChatRoomJabberBot(JabberBot):
         self.message_queue = []
         self.thread_killed = False
 
+        # Plugins
+        self._command_plugins = []
+        self._idle_hooks = []
+
         # Fetch all code from the gist urls and make commands
         self._add_gist_commands()
 
         # Load local commands.
-        self._add_local_commands()
+        self._load_plugins()
 
         return
 
@@ -192,19 +202,48 @@ class ChatRoomJabberBot(JabberBot):
 
         return
 
+    def read_state(self):
+        """ Reads the persisted state. """
+
+        return serialize.read_state(self.db)
+
     def thread_proc(self):
         while not self.thread_killed:
+
+            # fixme: do we need this?
             self.message_queue.append('')
-            # fixme: this is ugly.  make everything a property, and changes
-            # should trigger a save!
-            self._save_state()
+
+            for hook in self._idle_hooks:
+                self._run_hook_in_thread(hook, self)
+
+            self.save_state()
+
             for i in range(300):
                 time.sleep(1)
                 if self.thread_killed:
                     return
 
+    def save_state(self, extra_state=None):
+        """ Persists the state of the bot. """
+
+        old_state = self.read_state()
+        new_state = dict(
+            users=self.users,
+            invited=self.invited,
+            topic=self.topic,
+            ideas=self.ideas,
+            gist_urls=self.gist_urls
+        )
+        old_state.update(new_state)
+        if extra_state is not None:
+            old_state.update(extra_state)
+
+        serialize.save_state(self.db, old_state)
+
+        return
+
     def shutdown(self):
-        self._save_state()
+        self.save_state()
 
     #### Bot Commands #########################################################
 
@@ -566,6 +605,13 @@ class ChatRoomJabberBot(JabberBot):
         """  Add the plugin at the given path as a command. """
 
         plugin = load_file(path)
+        self._add_command_from_plugin(plugin)
+
+        return
+
+    def _add_command_from_plugin(self, plugin):
+        """ Add the given plugin's main as a command. """
+
         command = wrap_as_bot_command(
             self, plugin.main, ',%s' % plugin.__name__
         )
@@ -583,15 +629,6 @@ class ChatRoomJabberBot(JabberBot):
 
         for url in self.gist_urls[:]:
             self._add_command_from_gist(url)
-
-        return
-
-    def _add_local_commands(self):
-        """ Add the locally contributed commands to the bot. """
-
-        plugin_dir = join(self.ROOT, 'plugins')
-        for path in glob.glob(join(plugin_dir, '*.py')):
-            self._add_command_from_path(path)
 
         return
 
@@ -661,22 +698,28 @@ class ChatRoomJabberBot(JabberBot):
         if reply:
             self.send_simple_reply(mess, unicode(reply))
 
-    def _read_state(self):
-        """ Reads the persisted state. """
+    def _load_plugins(self):
+        """ Load all the plugins from the plugin directory. """
 
-        return serialize.read_state(self.db)
+        plugin_dir = join(self.ROOT, 'plugins')
 
-    def _save_state(self):
-        """ Persists the state of the bot. """
+        for path in glob.glob(join(plugin_dir, '*.py')):
+            plugin = load_file(path)
 
-        state = dict(
-            users=self.users,
-            invited=self.invited,
-            topic=self.topic,
-            ideas=self.ideas,
-            gist_urls=self.gist_urls
-        )
-        serialize.save_state(self.db, state)
+            if getattr(plugin, 'main', None) is not None:
+                self._add_command_from_plugin(plugin)
+
+            if getattr(plugin, 'idle_hook', None) is not None:
+                self._idle_hooks.append(plugin.idle_hook)
+
+        return
+
+    def _run_hook_in_thread(self, hook, *args, **kwargs):
+        """ Run the given hook in a new thread. """
+
+        thread = threading.Thread(target=hook, args=args, kwargs=kwargs)
+        thread.daemon = True
+        thread.start()
 
         return
 
@@ -689,9 +732,9 @@ class ChatRoomJabberBot(JabberBot):
         """
 
         if not cmd.startswith(','):
-            self.message_queue.append(
-                '[%s]: %s %s' % (self.users[user], cmd, args)
-            )
+            text = '%s %s' % (cmd, args)
+            dump_message_with_url(user, text, self.ROOT)
+            self.message_queue.append('[%s]: %s' % (self.users[user], text))
             message = ''
 
         else:
@@ -699,22 +742,17 @@ class ChatRoomJabberBot(JabberBot):
 
         return message
 
-    def __getattr__(self, name):
-        """ Overridden to allow easier writing of user commands. """
-
-        return None
-
 
 def main():
     try:
-        from park.settings import JID, PASSWORD, RES
+        from park.settings import USERNAME, PASSWORD, RES
     except ImportError:
         print('Please copy sample-settings.py to settings.py and edit it!')
         sys.exit(1)
 
     install_log_handler()
 
-    bc = ChatRoomJabberBot(JID, PASSWORD, RES)
+    bc = ChatRoomJabberBot(USERNAME, PASSWORD, RES)
 
     th = threading.Thread(target=bc.thread_proc)
     bc.serve_forever(connect_callback=lambda: th.start())

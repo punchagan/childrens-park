@@ -1,3 +1,5 @@
+premailer
+jinja2
 jabberbot
 xmpppy==0.5.0rc1
 beautifulsoup
