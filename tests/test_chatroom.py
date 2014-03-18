@@ -571,8 +571,10 @@ class TestChatRoom(unittest.TestCase):
         thread.daemon = True
         thread.start()
         started = time.time()
-        while not condition() and time.time() - started < timeout:
+        while not condition():
             time.sleep(0.1)
+            if time.time() - started < timeout:
+                raise RuntimeError('Timed out')
 
         return
 
