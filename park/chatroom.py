@@ -612,9 +612,14 @@ class ChatRoomJabberBot(JabberBot):
     def _add_command_from_plugin(self, plugin):
         """ Add the given plugin's main as a command. """
 
-        command = wrap_as_bot_command(
-            self, plugin.main, ',%s' % plugin.__name__
-        )
+        if hasattr(plugin, 'main'):
+            command = wrap_as_bot_command(
+                self, plugin.main, ',%s' % plugin.__name__
+            )
+
+        else:
+            command = None
+
         if command is not None:
             name = getattr(command, '_jabberbot_command_name')
             self.commands[name] = command
