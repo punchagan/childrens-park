@@ -12,6 +12,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import json
 import logging
+from logging.handlers import TimedRotatingFileHandler
 from StringIO import StringIO
 import smtplib
 import sys
@@ -58,19 +59,18 @@ class captured_stdout(object):
 def install_log_handler():
     """ Install a log handler. """
 
-    # create console handler
-    chandler = logging.StreamHandler()
+    handler = TimedRotatingFileHandler('park.log', when='W0')
 
     # create formatter
     fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     formatter = logging.Formatter(fmt)
 
     # add formatter to handler
-    chandler.setFormatter(formatter)
+    handler.setFormatter(formatter)
 
     # add handler to logger
     log = logging.getLogger()
-    log.addHandler(chandler)
+    log.addHandler(handler)
 
     # set level to INFO
     log.setLevel(logging.INFO)
