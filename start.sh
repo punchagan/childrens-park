@@ -2,7 +2,7 @@
 
 SCRIPT="vir-santa/bin/park"
 DIR=`dirname $0`
-pushd $DIR
+pushd $DIR > /dev/null
 
 if [ `ps -ef|grep $SCRIPT|grep -v grep|wc -l` -lt 1 ]; then
     echo "Bot not running, Starting ..."
@@ -17,4 +17,4 @@ else
     echo "Bot running..." > /dev/null
 fi
 
-popd
+popd > /dev/null
