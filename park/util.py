@@ -56,10 +56,10 @@ class captured_stdout(object):
         return output
 
 
-def install_log_handler():
+def install_log_handler(filename):
     """ Install a log handler. """
 
-    handler = TimedRotatingFileHandler('park.log', when='W0')
+    handler = TimedRotatingFileHandler(filename, when='W0')
 
     # create formatter
     fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'

@@ -65,6 +65,8 @@ from park.util import (
     requires_invite, requires_subscription
 )
 
+LOG_FILE_NAME = 'park.log'
+
 
 class ChatRoomJabberBot(JabberBot):
     """A bot based on JabberBot and broadcast example given in there."""
@@ -759,7 +761,7 @@ def main():
         print('Please copy sample-settings.py to settings.py and edit it!')
         sys.exit(1)
 
-    install_log_handler()
+    install_log_handler(LOG_FILE_NAME)
 
     bc = ChatRoomJabberBot(USERNAME, PASSWORD, RES)
 
