@@ -50,13 +50,20 @@ def idle_hook(bot):
 
     db = join(bot.ROOT, DB_NAME)
     data = bot.read_state()
-    last_newsletter = data.get('last_newsletter', None)
+    last_newsletter = (
+        datetime.datetime.strptime(data['last_newsletter'], _TIMESTAMP_FMT)
+        if 'last_newsletter' in data else None
+    )
 
-    if last_newsletter is None or _time_since(last_newsletter).days >= 7:
+    if last_newsletter is None:
+        _save_timestamp(bot)
+
+    elif _time_since(last_newsletter).days >= 7:
         urls = serialize.read_state(db)
         if len(urls) > 0:
-            _send_newsletter(bot, urls)
+            _send_newsletter(bot, urls, last_newsletter)
             _clear_urls(db)
+            _save_timestamp(bot)
 
     return
 
@@ -120,17 +127,8 @@ def _get_email(context):
     return transform(render_template(template, context))
 
 
-def _send_newsletter(bot, urls):
-    """ Send the newsletter and save the timestamp to the state. """
-
-    fro = bot.username
-    subject = 'Parkly Newsletter'
-    context = {
-        'entries': _get_email_content(bot, urls[:]), 'title': subject
-    }
-    body = _get_email(context)
-    to = ', '.join(bot.users.keys() + bot.invited.keys())
-    send_email(fro, to, subject, body, typ_='html', debug=bot.debug)
+def _save_timestamp(bot):
+    """ Save the current time to the bot's state db. """
 
     bot.save_state(
         {'last_newsletter': datetime.datetime.now().strftime(_TIMESTAMP_FMT)}
@@ -139,17 +137,26 @@ def _send_newsletter(bot, urls):
     return
 
 
+def _send_newsletter(bot, urls, last_sent):
+    """ Send the newsletter and save the timestamp to the state. """
+
+    fro = bot.username
+    last_sent = last_sent.strftime('%b %d')
+    now = datetime.datetime.now().strftime('%b %d')
+    subject = 'Parkly Newsletter for %s to %s' % (last_sent, now)
+    context = {
+        'entries': _get_email_content(bot, urls[:]), 'title': subject
+    }
+    body = _get_email(context)
+    to = ', '.join(bot.users.keys() + bot.invited.keys())
+    send_email(fro, to, subject, body, typ_='html', debug=bot.debug)
+
+    return
+
+
 def _time_since(timestamp):
     """ Return a timedelta of current time and the given timestamp. """
 
-    if timestamp is not None:
-        old = datetime.datetime.strptime(timestamp, _TIMESTAMP_FMT)
-        now = datetime.datetime.now()
-        since = now - old
-
-    else:
-        since = None
-
-    return since
+    return datetime.datetime.now() - timestamp
 
 #### EOF ######################################################################

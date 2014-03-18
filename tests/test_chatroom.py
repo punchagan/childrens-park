@@ -5,6 +5,7 @@
 """ Tests for the ChatRoom. """
 
 # Standard library
+from datetime import datetime, timedelta
 from os.path import abspath, dirname, exists, join
 import shutil
 import tempfile
@@ -531,6 +532,10 @@ class TestChatRoom(unittest.TestCase):
         bot._unknown_command(
             xmpp.Message(frm=bar, typ='chat', body=text), *text.split(' ', 1)
         )
+        extra_state = {
+            'last_newsletter': (datetime.now() - timedelta(10)).isoformat()
+        }
+        bot.save_state(extra_state=extra_state)
 
         # When
         with captured_stdout() as captured:
@@ -544,13 +549,14 @@ class TestChatRoom(unittest.TestCase):
 
     #### Private protocol #####################################################
 
-    def _run_bot(self, bot, condition):
+    def _run_bot(self, bot, condition, timeout=5):
         """ Run the bot until the condition returns True. """
 
         thread = threading.Thread(target=bot.thread_proc)
         thread.daemon = True
         thread.start()
-        while not condition():
+        started = time.time()
+        while not condition() and time.time() - started < timeout:
             time.sleep(0.1)
 
         return
