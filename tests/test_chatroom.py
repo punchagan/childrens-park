@@ -34,6 +34,10 @@ class TestChatRoom(unittest.TestCase):
         self.tempdir = ChatRoomJabberBot.ROOT = tempfile.mkdtemp()
         self.plugin_dir = join(self.tempdir, 'plugins')
         shutil.copytree(join(HERE, '..', 'park', 'plugins'), self.plugin_dir)
+        shutil.copy(
+            join(HERE, '..', 'sample-settings.py'),
+            join(HERE, '..', 'park', 'sample-settings.py')
+        )
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
@@ -573,7 +577,7 @@ class TestChatRoom(unittest.TestCase):
         started = time.time()
         while not condition():
             time.sleep(0.1)
-            if time.time() - started < timeout:
+            if time.time() - started > timeout:
                 raise RuntimeError('Timed out')
 
         return
