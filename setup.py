@@ -5,6 +5,26 @@ def find_version():
     return '1.5a1'
 
 
+def init_settings():
+    """ Initialize settings. """
+
+    import shutil
+    from os.path import abspath, dirname, exists, join
+
+    here = dirname(abspath(__file__))
+
+    target_settings = join(here, 'park', 'settings.py')
+    target_state = join(here, 'park', 'state.json')
+
+    if not exists(target_settings):
+        shutil.copy(join(here, 'sample-settings.py'), target_settings)
+
+    if not exists(target_state):
+        shutil.copy(join(here, 'initial-state.json'), target_state)
+
+    return
+
+
 # Get the long description from the relevant file
 with open('README.rst') as f:
     long_description = f.read()
@@ -33,7 +53,7 @@ setup(
     packages=find_packages(exclude=['docs', 'tests*']),
 
     # Non python files to be bundled in the egg.
-    package_data={'park.plugins': ['data/*.*']},
+    package_data={'park': ['state.json'], 'park.plugins': ['data/*.*']},
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed.
@@ -53,3 +73,6 @@ setup(
         ],
     }
 )
+
+if __name__ == "__main__":
+    init_settings()
