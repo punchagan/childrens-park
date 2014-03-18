@@ -41,9 +41,10 @@
 # Standard library
 from datetime import datetime
 import glob
+import logging
 from os.path import abspath, basename, dirname, exists, join
 from os import execl, makedirs
-from subprocess import call
+from subprocess import call, STDOUT
 import sys
 import threading
 import time
@@ -63,6 +64,8 @@ from park.util import (
     get_code_from_url, google, install_log_handler, is_url, make_function_main,
     requires_invite, requires_subscription
 )
+
+LOG_FILE_NAME = 'park.log'
 
 
 class ChatRoomJabberBot(JabberBot):
@@ -642,10 +645,13 @@ class ChatRoomJabberBot(JabberBot):
 
         self.log.info('Restarting...')
         self.log.info('Pulling changes from GitHub...')
-        call(["git", "pull"])
-        execl(
-            '/usr/bin/nohup', sys.executable, sys.executable, abspath(__file__)
+        call(
+            ["git", "pull"],
+            stdout=self.log.root.handlers[0].stream,
+            stderr=STDOUT
         )
+        logging.shutdown()
+        execl(sys.executable, sys.executable, abspath(__file__))
 
         return
 
@@ -662,7 +668,7 @@ class ChatRoomJabberBot(JabberBot):
         username = self.get_sender_username(mess)
 
         if username not in self.users.keys() + self.invited.keys():
-            self.log.info('Ignored message from %s.' % username)
+            self.log.info('Ignored message %s from %s', username, text)
             return
 
         self.log.debug("*** props = %s" % props)
@@ -755,7 +761,7 @@ def main():
         print('Please copy sample-settings.py to settings.py and edit it!')
         sys.exit(1)
 
-    install_log_handler()
+    install_log_handler(LOG_FILE_NAME)
 
     bc = ChatRoomJabberBot(USERNAME, PASSWORD, RES)
 
