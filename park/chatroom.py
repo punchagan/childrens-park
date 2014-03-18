@@ -41,9 +41,10 @@
 # Standard library
 from datetime import datetime
 import glob
+import logging
 from os.path import abspath, basename, dirname, exists, join
 from os import execl, makedirs
-from subprocess import call
+from subprocess import call, STDOUT
 import sys
 import threading
 import time
@@ -642,10 +643,13 @@ class ChatRoomJabberBot(JabberBot):
 
         self.log.info('Restarting...')
         self.log.info('Pulling changes from GitHub...')
-        call(["git", "pull"])
-        execl(
-            '/usr/bin/nohup', sys.executable, sys.executable, abspath(__file__)
+        call(
+            ["git", "pull"],
+            stdout=self.log.root.handlers[0].stream,
+            stderr=STDOUT
         )
+        logging.shutdown()
+        execl(sys.executable, sys.executable, abspath(__file__))
 
         return
 
