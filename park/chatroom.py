@@ -681,7 +681,7 @@ class ChatRoomJabberBot(JabberBot):
         if xmpp.NS_DELAY in props:
             return
 
-        # If a message format is not supported (eg. encrypted), txt will be None
+        # If message format is not supported (eg. encrypted), txt will be None
         if not text:
             return
 
@@ -702,7 +702,10 @@ class ChatRoomJabberBot(JabberBot):
                 reply = self.commands[cmd](mess, args)
             except Exception as e:
                 reply = traceback.format_exc(e)
-                self.log.exception('An error happened while processing a message ("%s") from %s: %s"' % (text, jid, reply))
+                self.log.exception(
+                    "An error happened while processing a message "
+                    "('%s') from %s: %s", text, jid, reply
+                )
         else:
             reply = self._unknown_command(mess, cmd, args)
 
