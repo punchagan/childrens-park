@@ -502,25 +502,6 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
-    def test_should_dump_messages_with_urls(self):
-        # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
-        bar = 'bar@bar.com'
-        bot.users = {bar: 'bar'}
-        url = 'http://muse-amuse.in'
-        text = 'this is %s' % url
-        message = xmpp.Message(frm=bar, typ='chat', body=text)
-
-        # When
-        bot._unknown_command(message, *text.split(' ', 1))
-
-        # Then
-        path = join(bot.ROOT, DB_NAME)
-        self.assertTrue(exists(path))
-        self.assertEqual(serialize.read_state(path)[0]['url'], url)
-
-        return
-
     def test_should_show_urls(self):
         # Given
         bot = ChatRoomJabberBot(self.jid, self.password)
@@ -528,9 +509,11 @@ class TestChatRoom(unittest.TestCase):
         bot.users = {bar: 'bar'}
         url = 'http://muse-amuse.in'
         text = 'this is %s' % url
-        bot._unknown_command(
-            xmpp.Message(frm=bar, typ='chat', body=text), *text.split(' ', 1)
+        db_path = join(bot.ROOT, DB_NAME)
+        bot._callback_message(
+            None,  xmpp.Message(frm=bar, typ='chat', body=text)
         )
+        self._run_bot(bot, lambda: exists(db_path))
 
         # When
         message = xmpp.Message(frm=bar, typ='chat', body=',urls')
@@ -548,8 +531,8 @@ class TestChatRoom(unittest.TestCase):
         bot.users = {bar: 'bar'}
         url = 'http://muse-amuse.in'
         text = 'this is %s' % url
-        bot._unknown_command(
-            xmpp.Message(frm=bar, typ='chat', body=text), *text.split(' ', 1)
+        bot._callback_message(
+            None,  xmpp.Message(frm=bar, typ='chat', body=text)
         )
         extra_state = {
             'last_newsletter': (datetime.now() - timedelta(10)).isoformat()
@@ -558,7 +541,7 @@ class TestChatRoom(unittest.TestCase):
 
         # When
         with captured_stdout() as captured:
-            self._run_bot(bot, lambda: captured.output)
+            self._run_bot(bot, lambda: url in captured.output)
 
         # Then
         print captured.output
@@ -570,7 +553,6 @@ class TestChatRoom(unittest.TestCase):
 
     def _run_bot(self, bot, condition, timeout=5):
         """ Run the bot until the condition returns True. """
-
         thread = threading.Thread(target=bot.thread_proc)
         thread.daemon = True
         thread.start()
@@ -579,6 +561,8 @@ class TestChatRoom(unittest.TestCase):
             time.sleep(0.1)
             if time.time() - started > timeout:
                 raise RuntimeError('Timed out')
+        bot.thread_killed = True
+        thread.join()
 
         return
 
