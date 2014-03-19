@@ -188,7 +188,7 @@ ul li, ol li {
 			<!-- content -->
 			<div class="content">
                 {% for entry in entries %}
-                {% set url, email, name, hash, timestamp = entry['url'], entry['user'], entry['name'], entry['hash'], entry['timestamp'] %}
+                {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['timestamp'] %}
                 <p>
                 <table>
                 <tr>
@@ -196,7 +196,7 @@ ul li, ol li {
                         <img src="http://www.gravatar.com/avatar/{{hash}}?s=50" alt="{{email}}"/>
                     </td>
                     <td>
-                        <span>{{name}}</span> posted <a href="{{url}}">{{url}}</a> at {{timestamp}}
+                        <span>{{name}}</span> posted <a href="{{url}}">{{title}}</a> at {{timestamp}}
                     </td>
                 </tr>
                 </table>

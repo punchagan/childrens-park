@@ -1,6 +1,7 @@
 # Standard library
 import datetime
 import hashlib
+from lxml import html
 import os
 from os.path import abspath, dirname, join
 
@@ -19,26 +20,25 @@ DB_NAME = 'newsletter.json'
 def message_processor(bot, user, text):
     """ Dump a message to the db in the bot's ROOT, if it has a url. """
 
-    tokens = text.split()
-    urls = [token for token in tokens if is_url(token)]
+    urls = [token for token in text.split() if is_url(token)]
 
     if len(urls) == 0:
         return
 
-    path = join(bot.ROOT, DB_NAME)
+    entries = []
 
-    bot.lock.acquire()
-    data = read_state(path)
     for url in urls:
-        if not data:
-            data = []
         entry = {
-            'user': user,
             'url': url,
+            'title': _get_title(url),
+            'user': user,
             'timestamp': datetime.datetime.now().isoformat()
         }
-        data.append(entry)
-        save_state(path, data)
+        entries.append(entry)
+
+    path = join(bot.ROOT, DB_NAME)
+    bot.lock.acquire()
+    _save_entries(path, entries)
     bot.lock.release()
 
     return
@@ -121,7 +121,7 @@ def _get_email_content(bot, urls):
         email = entry['user']
         entry['name'] = bot.users.get(email) or bot.invited.get(email, email)
         entry['hash'] = hashlib.md5(email).hexdigest()
-        # fixme: get the url title.
+        entry['title'] = url if 'title' not in entry else entry['title']
 
     return urls
 
@@ -131,6 +131,23 @@ def _get_email(context):
 
     template = join(HERE, 'data', 'newsletter_template.html')
     return transform(render_template(template, context))
+
+
+def _get_title(url):
+    """ Get the title of the page for a given url. """
+
+    return html.parse(url).find('.//title').text or url
+
+
+def _save_entries(path, entries):
+    """ Save the url data to the db. """
+
+    data = read_state(path)
+    data = [] if not data else data
+    data.extend(entries)
+    save_state(path, data)
+
+    return
 
 
 def _save_timestamp(bot):

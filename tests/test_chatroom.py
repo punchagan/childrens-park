@@ -513,7 +513,7 @@ class TestChatRoom(unittest.TestCase):
         bot._callback_message(
             None,  xmpp.Message(frm=bar, typ='chat', body=text)
         )
-        self._run_bot(bot, lambda: exists(db_path))
+        self._wait_while(lambda: not exists(db_path))
 
         # When
         message = xmpp.Message(frm=bar, typ='chat', body=',urls')
@@ -531,9 +531,11 @@ class TestChatRoom(unittest.TestCase):
         bot.users = {bar: 'bar'}
         url = 'http://muse-amuse.in'
         text = 'this is %s' % url
+        db_path = join(bot.ROOT, DB_NAME)
         bot._callback_message(
             None,  xmpp.Message(frm=bar, typ='chat', body=text)
         )
+        self._wait_while(lambda: not exists(db_path))
         extra_state = {
             'last_newsletter': (datetime.now() - timedelta(10)).isoformat()
         }
@@ -541,7 +543,7 @@ class TestChatRoom(unittest.TestCase):
 
         # When
         with captured_stdout() as captured:
-            self._run_bot(bot, lambda: url in captured.output)
+            self._run_bot(bot, lambda: captured.output)
 
         # Then
         print captured.output
@@ -556,13 +558,19 @@ class TestChatRoom(unittest.TestCase):
         thread = threading.Thread(target=bot.thread_proc)
         thread.daemon = True
         thread.start()
+        self._wait_while(lambda: not condition(), timeout=timeout)
+        bot.thread_killed = True
+        thread.join()
+
+        return
+
+    def _wait_while(self, condition, timeout=10):
+        """ Wait while the condition is True. """
         started = time.time()
-        while not condition():
+        while condition():
             time.sleep(0.1)
             if time.time() - started > timeout:
                 raise RuntimeError('Timed out')
-        bot.thread_killed = True
-        thread.join()
 
         return
 
