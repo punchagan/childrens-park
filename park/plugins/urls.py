@@ -112,7 +112,8 @@ def _get_email_content(bot, urls):
         email = entry['user']
         entry['name'] = bot.users.get(email) or bot.invited.get(email, email)
         entry['hash'] = hashlib.md5(email).hexdigest()
-        entry['title'] = url if 'title' not in entry else entry['title']
+        if 'title' not in entry:
+            entry['title'] = entry['url']
 
     return urls
 
