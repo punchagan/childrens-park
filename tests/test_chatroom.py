@@ -504,7 +504,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_show_urls(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, debug=True)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         url = 'http://muse-amuse.in'
@@ -517,10 +517,12 @@ class TestChatRoom(unittest.TestCase):
 
         # When
         message = xmpp.Message(frm=bar, typ='chat', body=',urls')
-        result = bot.commands[',urls'](message, '')
+        bot.commands[',urls'](message, '')
 
         # Then
-        self.assertIn(url, result)
+        # Any prints in bot commands are sent as messages. In debug mode,
+        # send_email prints out the email.
+        self.assertIn(url, bot.message_queue[0])
 
         return
 

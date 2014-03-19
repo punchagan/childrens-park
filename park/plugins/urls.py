@@ -79,24 +79,15 @@ def main(bot, user, args):
     data = serialize.read_state(path)
     bot.lock.release()
 
-    urls = {}
-
-    for entry in data:
-        user = entry['user']
-        url = entry['url']
-        user_urls = urls.setdefault(user, [])
-        user_urls.append(url)
-
-    messages = [
-        '%s:\n    %s' % (user, '\n    '.join(user_urls))
-        for user, user_urls in urls.iteritems()
-    ]
-
-    if len(messages) == 0:
+    if len(data) == 0:
         message = 'No new urls.'
 
     else:
-        message = '\n' + '\n'.join(messages)
+        message = ''
+        fro = bot.username
+        subject = 'Park updates since last newsletter'
+        body = _get_email(bot, data, subject)
+        send_email(fro, user, subject, body, typ_='html', debug=bot.debug)
 
     return message
 
@@ -126,8 +117,12 @@ def _get_email_content(bot, urls):
     return urls
 
 
-def _get_email(context):
+def _get_email(bot, urls, subject):
     """ Return the content to be used for the newsletter. """
+
+    context = {
+        'entries': _get_email_content(bot, urls[:]), 'title': subject
+    }
 
     template = join(HERE, 'data', 'newsletter_template.html')
     return transform(render_template(template, context))
@@ -163,15 +158,13 @@ def _save_timestamp(bot):
 def _send_newsletter(bot, urls, last_sent):
     """ Send the newsletter and save the timestamp to the state. """
 
-    fro = bot.username
     last_sent = last_sent.strftime('%b %d')
     now = datetime.datetime.now().strftime('%b %d')
     subject = 'Parkly Newsletter for %s to %s' % (last_sent, now)
-    context = {
-        'entries': _get_email_content(bot, urls[:]), 'title': subject
-    }
-    body = _get_email(context)
+    body = _get_email(bot, urls, subject)
+    fro = bot.username
     to = ', '.join(bot.users.keys() + bot.invited.keys())
+
     send_email(fro, to, subject, body, typ_='html', debug=bot.debug)
 
     return
