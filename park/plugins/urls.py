@@ -4,6 +4,7 @@ import hashlib
 from lxml import html
 import os
 from os.path import abspath, dirname, join
+from urllib import urlopen
 
 # 3rd party library
 from premailer import transform
@@ -132,7 +133,7 @@ def _get_email(bot, urls, subject):
 def _get_title(url):
     """ Get the title of the page for a given url. """
 
-    return html.parse(url).find('.//title').text or url
+    return html.parse(urlopen(url)).find('.//title').text or url
 
 
 def _save_entries(path, entries):
