@@ -34,9 +34,7 @@
 #
 # Commentary:
 #
-# This bot is written to behave like a chatroom, where all the
-# messages are sent to all the users subscribed to this bot.
-#
+""" A chatroom bot that uses the XMPP protocol. """
 
 # Standard library
 from datetime import datetime
@@ -68,7 +66,11 @@ LOG_FILE_NAME = 'park.log'
 
 
 class ChatRoomJabberBot(JabberBot):
-    """A bot based on JabberBot and broadcast example given in there."""
+    """ A chatroom bot that uses the XMPP protocol.
+
+    Based on JabberBot and the broadcast example in the jabberbot package.
+
+    """
 
     #: Maximum allowed length of nick
     NICK_LEN = 24
@@ -91,7 +93,7 @@ class ChatRoomJabberBot(JabberBot):
         self.ideas = self._state.get('ideas', [])
         self.topic = self._state.get('topic', '')
         self.gist_urls = self._state.get('gist_urls', [])
-        self._protected = [',addbotcmd', ',restart']
+        self._protected = [',add', ',restart']
         self.started = time.time()
         self.message_queue = []
         self.thread_killed = False
@@ -525,28 +527,29 @@ class ChatRoomJabberBot(JabberBot):
 
         return super(ChatRoomJabberBot, self).help(mess, args)
 
-    @botcmd(name=',addbotcmd')
+    @botcmd(name=',add')
     @requires_subscription
-    def add_botcmd(self, user, args):
+    def add(self, user, args):
         """ Define a bot command on the fly!
 
-        This command lets you add bot commands, during runtime. New
-        commands can be added as shown below ::
+        This command lets you add bot commands, through the xmpp interface.
+        New commands can be added as shown below ::
 
-            ,addbotcmd<space>
-            def clear():
+            ,add<space>
+            def main():
                 ''' Clears the screen!
 
                 This command is intended to be used when you want to
                 divert attention of the users from the previous
                 discussion.
                 '''
+
                 print '\\n' * 80
 
         The commands can be added to a gist and the *raw* url can be passed
         to this command, like so ::
 
-            ,addbotcmd <raw-gist-url>
+            ,add <raw-gist-url>
 
         Commands added using gists are persisted between restarts.
 

@@ -490,9 +490,7 @@ class TestChatRoom(unittest.TestCase):
         # When
         with open(join(HERE, 'data', 'hello_all.py')) as f:
             code = f.read().replace('main', 'hello_world')
-        bot.add_botcmd(
-            xmpp.Message(frm=bar, typ='chat', body=',hello_world'), code
-        )
+        bot.add(xmpp.Message(frm=bar, typ='chat', body=',hello_world'), code)
         bot.commands[',hello_world'](message, '')
 
         # Then

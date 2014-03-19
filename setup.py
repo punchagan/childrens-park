@@ -2,7 +2,8 @@ from setuptools import setup, find_packages
 
 
 def find_version():
-    return '1.5a1'
+    import park
+    return park.__version__
 
 
 def init_settings():
