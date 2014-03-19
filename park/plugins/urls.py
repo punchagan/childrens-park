@@ -83,11 +83,11 @@ def main(bot, user, args):
         message = 'No new urls.'
 
     else:
-        message = ''
         fro = bot.username
         subject = 'Park updates since last newsletter'
         body = _get_email(bot, data, subject)
         send_email(fro, user, subject, body, typ_='html', debug=bot.debug)
+        message = 'Sent email to %s' % user
 
     return message
 
