@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -8,15 +6,15 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Welcome to childrens-park’s documentation! &mdash; childrens-park 0.8.1 documentation</title>
+    <title>Welcome to childrens-park’s documentation! &mdash; childrens-park 1.5a1 documentation</title>
     
     <link rel="stylesheet" href="_static/agogo.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
-        VERSION:     '0.8.1',
+        URL_ROOT:    './',
+        VERSION:     '1.5a1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,13 +23,13 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="childrens-park 0.8.1 documentation" href="#" /> 
+    <link rel="top" title="childrens-park 1.5a1 documentation" href="#" /> 
   </head>
   <body>
     <div class="header-wrapper">
       <div class="header">
         <div class="headertitle"><a
-          href="#">childrens-park 0.8.1 documentation</a></div>
+          href="#">childrens-park 1.5a1 documentation</a></div>
         <div class="rel">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a>
@@ -51,206 +49,46 @@
 <h1>Welcome to childrens-park&#8217;s documentation!<a class="headerlink" href="#welcome-to-childrens-park-s-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="description">
 <h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
-<p>This is a Jabber/Gtalk bot written using the python-jabberbot library.  This
-bot is written to behave like a chatroom, where all the messages are sent to
-all the subscribed users.</p>
+<p><tt class="docutils literal"><span class="pre">park</span></tt> is a Jabber/Gtalk bot written using the python-jabberbot library.
+This bot is written to behave like a chatroom, where all the messages are
+sent to all the subscribed users.</p>
 </div>
-<div class="section" id="dependencies">
-<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
-<blockquote>
-<div><ul class="simple">
-<li>python-jabberbot</li>
-<li>xmpppy</li>
-<li>BeautifulSoup</li>
-<li>gdata</li>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Clone the repository from <a class="reference external" href="https://github.com/punchagan/childrens-park/">GitHub</a></li>
+<li>Run <tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">develop</span></tt> to install the dependencies and
+setup your environment for running the bot.</li>
+<li>This will create a dummy <tt class="docutils literal"><span class="pre">settings.py</span></tt> and <tt class="docutils literal"><span class="pre">state.json</span></tt> in the
+<tt class="docutils literal"><span class="pre">park</span></tt> directory. Edit these files with the appropriate values.</li>
 </ul>
-</div></blockquote>
 </div>
 <div class="section" id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
-<blockquote>
-<div><ul class="simple">
-<li>You are required to have a file settings.py with the variables, JID,
-PASSWORD, CHANNEL, RES</li>
-<li>To add new users, the admin can either add them manually to state.json
-file.</li>
-</ul>
-</div></blockquote>
+<p>You can run the bot using the command <tt class="docutils literal"><span class="pre">park</span></tt> after installing it.
+You should have the first user manually &#8220;registered&#8221; in the
+<tt class="docutils literal"><span class="pre">state.json</span></tt>, and he/she can invite the other users.</p>
 </div>
 <div class="section" id="bugs-issues">
 <h2>Bugs/Issues<a class="headerlink" href="#bugs-issues" title="Permalink to this headline">¶</a></h2>
-<blockquote>
-<div><ul class="simple">
+<ul class="simple">
 <li><em>Known Issue</em>: Google doesn&#8217;t allow sending and receiving more than 50
-messages in a period of 12.5 seconds.  This is a big problem if you have
-even three or four members in the channel.  Use jabber.org for hosting the
-bot, instead.</li>
-<li>Report other bugs/issues at <a class="reference external" href="https://github.com/punchagan/childrens-park/issues">GitHub</a></li>
+messages in a period of 12.5 seconds.  This basically makes the bot
+unusable, even for three or four users in the channel.  Use jabber.org for
+hosting the bot, instead.</li>
+<li>Report other bugs/issues at <a class="reference external" href="https://github.com/punchagan/childrens-park/">GitHub</a></li>
 </ul>
-</div></blockquote>
 </div>
 <div class="section" id="features">
 <h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
-<p>The bot comes in with a bunch of builtin commands.  Run ,help or look at the
-<a class="reference internal" href="#auto-doc"><em>ChatRoomJabberBot</em></a> documentation.</p>
-<p>But, apart from this you can add new commands using the ,addbotcmd. Look at
-<a class="reference internal" href="#howto-add-cmd"><em>How-to add new bot commands</em></a>.</p>
-</div>
-<div class="section" id="how-to-add-new-bot-commands">
-<span id="howto-add-cmd"></span><h2>How-to add new bot commands<a class="headerlink" href="#how-to-add-new-bot-commands" title="Permalink to this headline">¶</a></h2>
-<p>New commands can be added to the bot using the ,addbotcmd.  The command can
-take either a <a class="reference external" href="https://gist.github.com">raw gist url</a> url or a string, with
-the required function definition, as an argument. For example</p>
-<div class="highlight-python"><pre>,addbotcmd https://gist.github.com/punchagan/7cb723285b00c4900ce5/raw/468f0c72ad0e01eb11754816bcf3d9f789b558ff/youtube_cmd.py
-
-,addbotcmd&lt;space&gt;
-&lt;Your function goes here&gt;</pre>
-</div>
-<p>Only the commands added through a gist-url will be persisted across restarts.</p>
-<p>Here are a few things, you need to keep in mind, when writing your code:</p>
-<blockquote>
-<div><ul>
-<li><p class="first">As of now, your code (in the gist or directly typed into chat) should
-have only one function definition, and nothing else.  You can, obviously
-have other functions or classes defined within your own function.</p>
-</li>
-<li><p class="first">Your function must have a doc-string, which will be shown in the help
-shown to the users</p>
-</li>
-<li><p class="first">Your function can take upto 3 arguments, which is any ordered-
-combination of (self, mess, args) &#8211; i.e, your function can only have
-any one of the following signatures</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">f</span><span class="p">(),</span>
-<span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">mess</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">args</span><span class="p">),</span>
-<span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mess</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">args</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">mess</span><span class="p">,</span> <span class="n">args</span><span class="p">),</span>
-<span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mess</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><cite>self</cite> is the <tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt>, <cite>mess</cite> is the actual message
-object, from which you can extract information about the sender, etc.,
-and <cite>args</cite> is the text in the message, after stripping out the command
-name.</p>
-</li>
-<li><p class="first">Anything returned by your function, will be sent only to the invoker of
-your command.</p>
-</li>
-<li><p class="first">Anything that is printed by your function will be sent to all the users.
-Alternately, you can append your messages to the <tt class="xref py py-attr docutils literal"><span class="pre">message_queue</span></tt>
-of the <tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt> instance passed to your function.</p>
-</li>
-<li><p class="first">To help debug your code, a built-in <cite>,see</cite> command is provided.  You can
-pass this command the names of the attributes that you&#8217;d like to <em>see</em>,
-at any point. For instance, send the message <cite>,see users</cite> to see the
-list of all the users currently subscribed.</p>
-</li>
-<li><p class="first">You can also dynamically add your own instance variables, to the
-<tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt> instance.  The <tt class="xref py py-meth docutils literal"><span class="pre">__getattr__()</span></tt> of
-<tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt> has been overridden to return a <cite>None</cite>
-instead of raising and <cite>AttributeError</cite> when accessing undefined
-attributes.  This lets you add attributes in your function, just by
-checking if it&#8217;s None, without having to use things like <cite>getattr</cite> or
-<cite>hasattr</cite>.</p>
-</li>
-<li><p class="first">To prevent over-writing variables, defined by other users, it is
-recommended that you use a namespace convention <cite>cmd_name_variable_name</cite>
-for your variables.  For example, if your command is called <cite>rps</cite> and
-you&#8217;d like to add a <cite>score</cite>, use the name <cite>rps_score</cite> for your variable.
-If you don&#8217;t variables to be viewable using the <cite>,see</cite> command, use a
-private variable like <cite>_rps_score</cite>.</p>
-</li>
-</ul>
-</div></blockquote>
-<p>We have tried to make it as easy as possible for developers to develop their
-code, without having to test on a running instance of the bot.  Feel free to
-comment upon/suggest any more ideas to make this easier on developers.</p>
-<p>With all this in mind, let&#8217;s write a simple command called <cite>time_it</cite> that
-gives you the time between the current invocation and the previous invocation
-of the command.  We start writing a simple module <cite>time_it.py</cite> that can run
-independently.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">prev_time</span> <span class="o">=</span> <span class="bp">None</span>
-
-<span class="k">def</span> <span class="nf">time_it</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot; Send time delta since the last run, to all users.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">time</span>
-    <span class="k">global</span> <span class="n">prev_time</span>
-    <span class="n">cur_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">prev_time</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="k">print</span> <span class="s">&quot;This is the first run.&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">print</span> <span class="n">cur_time</span> <span class="o">-</span> <span class="n">prev_time</span><span class="p">,</span> <span class="s">&quot;seconds, since last run.&quot;</span>
-    <span class="n">prev_time</span> <span class="o">=</span> <span class="n">cur_time</span>
-    <span class="k">return</span> <span class="s">&#39;The current time is&#39;</span><span class="p">,</span> <span class="n">cur_time</span>
-
-<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">time_it</span><span class="p">()</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="n">time_it</span><span class="p">()</span>
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">time_it</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>All the variables, that we intend to set as attributes of the
-<tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt> are initialized as globals, and set to None.  All
-the messages that should be sent to all users, are just printed out.  Once we
-have a working function, we can modify it, to have it working with the bot.
-In the above function, we change the function to take one argument <cite>self</cite>, and
-change the global <cite>prev_time</cite> to be an attribute of the
-<tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt>.  The code finally, would look as follows</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">time_it</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Send time delta since the last run, to all users.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="kn">import</span> <span class="nn">time</span>
-    <span class="n">cur_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prev_time</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="k">print</span> <span class="s">&quot;This is the first run.&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">print</span> <span class="n">cur_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">prev_time</span><span class="p">,</span> <span class="s">&quot;seconds, since last run.&quot;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">prev_time</span> <span class="o">=</span> <span class="n">cur_time</span>
-    <span class="k">return</span> <span class="s">&#39;The current time is&#39;</span><span class="p">,</span> <span class="n">cur_time</span>
-</pre></div>
-</div>
-<p>Now, we can go ahead and add this code as a new bot command!</p>
-<p>More examples are available on github &#8211;</p>
-<blockquote>
-<div><ul class="simple">
-<li><a class="reference external" href="https://gist.github.com/37d4875e41056b58a8f5">Clear command</a></li>
-<li><a class="reference external" href="https://gist.github.com/e5de28c7afd150d60fc0">Cows and Bulls game</a></li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="chatroomjabberbot">
-<span id="auto-doc"></span><h2><tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt><a class="headerlink" href="#chatroomjabberbot" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="useful-attributes">
-<h3>Useful Attributes<a class="headerlink" href="#useful-attributes" title="Permalink to this headline">¶</a></h3>
-<dl class="attribute">
-<dt id="users">
-<tt class="descname">users</tt><a class="headerlink" href="#users" title="Permalink to this definition">¶</a></dt>
-<dd><p>List of all users subscribed to the bot</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="invited">
-<tt class="descname">invited</tt><a class="headerlink" href="#invited" title="Permalink to this definition">¶</a></dt>
-<dd><p>List of all users invited to the bot</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="topic">
-<tt class="descname">topic</tt><a class="headerlink" href="#topic" title="Permalink to this definition">¶</a></dt>
-<dd><p>Topic for the bot</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="gist_urls">
-<tt class="descname">gist_urls</tt><a class="headerlink" href="#gist_urls" title="Permalink to this definition">¶</a></dt>
-<dd><p>List of all gist urls added as bot commands</p>
-</dd></dl>
-
-</div>
-<div class="section" id="methods-docs">
-<h3>Methods docs<a class="headerlink" href="#methods-docs" title="Permalink to this headline">¶</a></h3>
-</div>
+<p>The bot comes in with a bunch of builtin commands.  Run <tt class="docutils literal"><span class="pre">,help</span></tt> or look
+at the <a class="reference internal" href="plugins.html#auto-doc"><em>ChatRoomJabberBot</em></a> documentation.</p>
+<p>New commands can be added by editing the source and adding new methods
+on the <tt class="xref py py-class docutils literal"><span class="pre">ChatRoomJabberBot</span></tt> class, decorated with the
+<tt class="xref py py-func docutils literal"><span class="pre">botcmd()</span></tt> decorator.</p>
+<p>New commands can also be added through plugins added into the source
+or, more interestingly, via chat.  Look at the <a class="reference internal" href="plugins.html#plugins"><em>Plugins</em></a>
+documentation, for details on how to do this.</p>
 </div>
 </div>
 
@@ -291,7 +129,7 @@ change the global <cite>prev_time</cite> to be an attribute of the
           
     <div class="footer">
         &copy; Copyright 2012, Puneeth Chaganti.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
         </div>
         <div class="clearer"></div>

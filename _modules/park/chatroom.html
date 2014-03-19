@@ -1,0 +1,889 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>park.chatroom &mdash; childrens-park 1.5a1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/agogo.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '1.5a1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="childrens-park 1.5a1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="header-wrapper">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../../index.html">childrens-park 1.5a1 documentation</a></div>
+        <div class="rel">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for park.chatroom</h1><div class="highlight"><pre>
+<span class="c">#!/usr/bin/python</span>
+<span class="c"># -*- coding: utf-8 -*-</span>
+
+<span class="c"># Copyright (c) 2011 Puneeth Chaganti &lt;punchagan@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># This program is free software; you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation; either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># This program is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># A portion of this code is from the code of JabberBot copyrighted by</span>
+<span class="c"># Thomas Perl the copyright of which is included below.</span>
+<span class="c"># JabberBot: A simple jabber/xmpp bot framework</span>
+<span class="c">#</span>
+<span class="c"># Copyright (c) 2007-2011 Thomas Perl &lt;thp.io/about&gt;</span>
+<span class="c">#</span>
+<span class="c"># This program is free software; you can redistribute it and/or modify</span>
+<span class="c"># it under the terms of the GNU General Public License as published by</span>
+<span class="c"># the Free Software Foundation; either version 3 of the License, or</span>
+<span class="c"># (at your option) any later version.</span>
+<span class="c">#</span>
+<span class="c"># This program is distributed in the hope that it will be useful,</span>
+<span class="c"># but WITHOUT ANY WARRANTY; without even the implied warranty of</span>
+<span class="c"># MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</span>
+<span class="c"># GNU General Public License for more details.</span>
+<span class="c">#</span>
+<span class="c"># You should have received a copy of the GNU General Public License</span>
+<span class="c"># along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.</span>
+<span class="c">#</span>
+<span class="c"># Commentary:</span>
+<span class="c">#</span>
+<span class="sd">&quot;&quot;&quot; A chatroom bot that uses the XMPP protocol. &quot;&quot;&quot;</span>
+
+<span class="c"># Standard library</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">exists</span><span class="p">,</span> <span class="n">join</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">execl</span><span class="p">,</span> <span class="n">makedirs</span>
+<span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">call</span><span class="p">,</span> <span class="n">STDOUT</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+
+<span class="c"># 3rd-party library</span>
+<span class="kn">from</span> <span class="nn">jabberbot</span> <span class="kn">import</span> <span class="n">JabberBot</span><span class="p">,</span> <span class="n">botcmd</span>
+<span class="kn">import</span> <span class="nn">xmpp</span>
+
+<span class="c"># Project library</span>
+<span class="kn">from</span> <span class="nn">park</span> <span class="kn">import</span> <span class="n">serialize</span>
+<span class="kn">from</span> <span class="nn">park.plugin</span> <span class="kn">import</span> <span class="n">load_file</span><span class="p">,</span> <span class="n">wrap_as_bot_command</span>
+<span class="kn">from</span> <span class="nn">park.text_processing</span> <span class="kn">import</span> <span class="n">chunk_text</span><span class="p">,</span> <span class="n">highlight_word</span>
+<span class="kn">from</span> <span class="nn">park.util</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_code_from_url</span><span class="p">,</span> <span class="n">google</span><span class="p">,</span> <span class="n">install_log_handler</span><span class="p">,</span> <span class="n">is_url</span><span class="p">,</span> <span class="n">make_function_main</span><span class="p">,</span>
+    <span class="n">requires_invite</span><span class="p">,</span> <span class="n">requires_subscription</span>
+<span class="p">)</span>
+
+<span class="n">LOG_FILE_NAME</span> <span class="o">=</span> <span class="s">&#39;park.log&#39;</span>
+
+
+<div class="viewcode-block" id="ChatRoomJabberBot"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot">[docs]</a><span class="k">class</span> <span class="nc">ChatRoomJabberBot</span><span class="p">(</span><span class="n">JabberBot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; A chatroom bot that uses the XMPP protocol.</span>
+
+<span class="sd">    Based on JabberBot and the broadcast example in the jabberbot package.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c">#: Maximum allowed length of nick</span>
+    <span class="n">NICK_LEN</span> <span class="o">=</span> <span class="mi">24</span>
+
+    <span class="n">ROOT</span> <span class="o">=</span> <span class="n">dirname</span><span class="p">(</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ChatRoomJabberBot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span>
+            <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">debug</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">debug</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_state</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">users</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;users&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invited</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;invited&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ideas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;ideas&#39;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;topic&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gist_urls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;gist_urls&#39;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_protected</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;,add&#39;</span><span class="p">,</span> <span class="s">&#39;,restart&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">started</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thread_killed</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="c"># Plugins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_command_plugins</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_idle_hooks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_message_processors</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c"># Fetch all code from the gist urls and make commands</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_gist_commands</span><span class="p">()</span>
+
+        <span class="c"># Load local commands.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_plugins</span><span class="p">()</span>
+
+        <span class="k">return</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.db"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.db">[docs]</a>    <span class="k">def</span> <span class="nf">db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the path to the persistence file. &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ROOT</span><span class="p">,</span> <span class="s">&#39;state.json&#39;</span><span class="p">)</span>
+
+    <span class="c">#### JabberBot interface ##################################################</span>
+</div>
+    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="p">:</span>
+            <span class="n">conn</span> <span class="o">=</span> <span class="n">xmpp</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jid</span><span class="o">.</span><span class="n">getDomain</span><span class="p">(),</span> <span class="n">debug</span><span class="o">=</span><span class="p">[])</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">jid</span><span class="o">.</span><span class="n">getDomain</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;gmail.com&#39;</span><span class="p">:</span>
+                <span class="n">conres</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">server</span><span class="o">=</span><span class="p">(</span><span class="s">&#39;talk.google.com&#39;</span><span class="p">,</span> <span class="mi">5222</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">conres</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">conres</span><span class="p">:</span>
+                <span class="n">server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jid</span><span class="o">.</span><span class="n">getDomain</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;unable to connect to </span><span class="si">%s</span><span class="s">.&#39;</span> <span class="o">%</span> <span class="n">server</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">if</span> <span class="n">conres</span> <span class="o">!=</span> <span class="s">&#39;tls&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;TLS failed! - using unsecure connection&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Connected to server&#39;</span><span class="p">)</span>
+
+            <span class="n">authres</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">auth</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jid</span><span class="o">.</span><span class="n">getNode</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_JabberBot__password</span><span class="p">,</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">authres</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;unable to authorize with server.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_attempt_reconnect</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">authres</span> <span class="o">!=</span> <span class="s">&#39;sasl&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;SASL failed on </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">jid</span><span class="o">.</span><span class="n">getDomain</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">warging</span><span class="p">(</span><span class="s">&quot;Old authentication method used!&quot;</span><span class="p">)</span>
+
+            <span class="n">conn</span><span class="o">.</span><span class="n">sendInitPresence</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">conn</span> <span class="o">=</span> <span class="n">conn</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">roster</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">Roster</span><span class="o">.</span><span class="n">getRoster</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;*** roster ***&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">contact</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roster</span><span class="o">.</span><span class="n">getItems</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;  </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">contact</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;*** roster ***&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">RegisterHandler</span><span class="p">(</span><span class="s">&#39;message&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback_message</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">RegisterDisconnectHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_attempt_reconnect</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">UnregisterDisconnectHandler</span><span class="p">(</span><span class="n">conn</span><span class="o">.</span><span class="n">DisconnectHandler</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_JabberBot__set_status</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topic</span><span class="p">)</span>
+
+            <span class="c">### Send a -- we are online -- message</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;_We are up and running!_&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span>
+
+<div class="viewcode-block" id="ChatRoomJabberBot.get_sender_nick"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.get_sender_nick">[docs]</a>    <span class="k">def</span> <span class="nf">get_sender_nick</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mess</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the nick of the user from a message. &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_sender_username</span><span class="p">(</span><span class="n">mess</span><span class="p">)]</span>
+</div>
+<div class="viewcode-block" id="ChatRoomJabberBot.get_sender_username"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.get_sender_username">[docs]</a>    <span class="k">def</span> <span class="nf">get_sender_username</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mess</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Extract the sender&#39;s user name (along with domain) from a message.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">jid</span> <span class="o">=</span> <span class="n">mess</span><span class="o">.</span><span class="n">getFrom</span><span class="p">()</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">mess</span><span class="o">.</span><span class="n">getType</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s">&#39;</span><span class="si">%s</span><span class="s">@</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">jid</span><span class="o">.</span><span class="n">getNode</span><span class="p">(),</span> <span class="n">jid</span><span class="o">.</span><span class="n">getDomain</span><span class="p">())</span> <span class="k">if</span> <span class="n">typ</span> <span class="o">==</span> <span class="s">&#39;chat&#39;</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="p">)</span>
+</div>
+    <span class="k">def</span> <span class="nf">idle_proc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># copy the message queue, then empty it</span>
+        <span class="n">queue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">messages</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">queue</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">chunk_text</span><span class="p">(</span><span class="n">message</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s">&#39;sending &quot;</span><span class="si">%s</span><span class="s">&quot; to </span><span class="si">%d</span><span class="s"> user(s).&#39;</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">message</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&quot;[</span><span class="si">%s</span><span class="s">]:&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">]):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">highlight_word</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">]))</span>
+
+        <span class="k">return</span>
+
+<div class="viewcode-block" id="ChatRoomJabberBot.read_state"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.read_state">[docs]</a>    <span class="k">def</span> <span class="nf">read_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Reads the persisted state. &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">serialize</span><span class="o">.</span><span class="n">read_state</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+</div>
+    <span class="k">def</span> <span class="nf">thread_proc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">thread_killed</span><span class="p">:</span>
+
+            <span class="c"># fixme: do we need this?</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idle_hooks</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_run_hook_in_thread</span><span class="p">(</span><span class="n">hook</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_state</span><span class="p">()</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">300</span><span class="p">):</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thread_killed</span><span class="p">:</span>
+                    <span class="k">return</span>
+
+<div class="viewcode-block" id="ChatRoomJabberBot.save_state"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.save_state">[docs]</a>    <span class="k">def</span> <span class="nf">save_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extra_state</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Persists the state of the bot. &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="n">old_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_state</span><span class="p">()</span>
+        <span class="n">new_state</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">users</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">,</span>
+            <span class="n">invited</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">invited</span><span class="p">,</span>
+            <span class="n">topic</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">topic</span><span class="p">,</span>
+            <span class="n">ideas</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ideas</span><span class="p">,</span>
+            <span class="n">gist_urls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gist_urls</span>
+        <span class="p">)</span>
+        <span class="n">old_state</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">extra_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">old_state</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">extra_state</span><span class="p">)</span>
+
+        <span class="n">serialize</span><span class="o">.</span><span class="n">save_state</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="p">,</span> <span class="n">old_state</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+
+        <span class="k">return</span>
+</div>
+    <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_state</span><span class="p">()</span>
+
+    <span class="c">#### Bot Commands #########################################################</span>
+
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,restart&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.restart"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.restart">[docs]</a>    <span class="k">def</span> <span class="nf">restart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Restart the bot: Use resource name as PASSWORD.</span>
+
+<span class="sd">        To avoid accidental restarts, resource name is used as argument.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">res</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s">&#39;_</span><span class="si">%s</span><span class="s"> restarted me! brb!_&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">])</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">idle_proc</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">sendPresence</span><span class="p">(</span><span class="n">typ</span><span class="o">=</span><span class="s">&#39;unavailable&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_attempt_reconnect</span><span class="p">()</span>
+
+        <span class="k">return</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,subscribe&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_invite</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.subscribe"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.subscribe">[docs]</a>    <span class="k">def</span> <span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Subscribe to the chatroom. &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;You are already subscribed.&#39;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nick</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;@&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">][:</span><span class="bp">self</span><span class="o">.</span><span class="n">NICK_LEN</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">]</span> <span class="o">=</span> <span class="n">nick</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">invited</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;_</span><span class="si">%s</span><span class="s"> has joined the channel_&#39;</span> <span class="o">%</span> <span class="n">user</span><span class="p">)</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">, Welcome! Type </span><span class="si">%s</span><span class="s"> for help.&#39;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">nick</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">help</span><span class="o">.</span><span class="n">_jabberbot_command_name</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">message</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,unsubscribe&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.unsubscribe"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.unsubscribe">[docs]</a>    <span class="k">def</span> <span class="nf">unsubscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Un-subscribe from the broadcast list. &quot;&quot;&quot;</span>
+
+        <span class="n">user</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;_</span><span class="si">%s</span><span class="s"> has left the channel_&#39;</span> <span class="o">%</span> <span class="n">user</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s">&#39;You are now un-subscribed.&#39;</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,dnd&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_invite</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.dnd"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.dnd">[docs]</a>    <span class="k">def</span> <span class="nf">dnd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Command to toggle do-not-disturb mode. &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">invited</span><span class="p">[</span><span class="n">user</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;_</span><span class="si">%s</span><span class="s"> entered NO PARKING ZONE_&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;NO PARKING ZONE entered. Bye!&#39;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">invited</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;_</span><span class="si">%s</span><span class="s"> is out of NO PARKING ZONE_&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;PARKING ZONE entered. Welcome, </span><span class="si">%s</span><span class="s">!&#39;</span> <span class="o">%</span> <span class="n">name</span>
+
+        <span class="k">return</span> <span class="n">message</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,alias&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.alias"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.alias">[docs]</a>    <span class="k">def</span> <span class="nf">alias</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Allows a user to change their nick/alias. &quot;&quot;&quot;</span>
+
+        <span class="n">nick</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">nick</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;Nick already taken.&#39;</span>
+
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">nick</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;Nick needs to be at least one character long&#39;</span>
+
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">nick</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">NICK_LEN</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;Nick cannot be longer than </span><span class="si">%s</span><span class="s"> chars&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">NICK_LEN</span><span class="p">,)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;You are now known as </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">nick</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s">&#39;_</span><span class="si">%s</span><span class="s"> is now known as </span><span class="si">%s</span><span class="s">_&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">],</span> <span class="n">nick</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">]</span> <span class="o">=</span> <span class="n">nick</span>
+
+        <span class="k">return</span> <span class="n">message</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,topic&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.topic"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.topic">[docs]</a>    <span class="k">def</span> <span class="nf">topic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Change the topic/status. &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">topic</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_JabberBot__set_status</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topic</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s">&#39;_</span><span class="si">%s</span><span class="s"> changed topic to </span><span class="si">%s</span><span class="s">_&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">],</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,list&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.list"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.list">[docs]</a>    <span class="k">def</span> <span class="nf">list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; List all the subscribed and invited members. &quot;&quot;&quot;</span>
+
+        <span class="n">user_list</span> <span class="o">=</span> <span class="s">&#39;All these users are subscribed - </span><span class="se">\n</span><span class="s">&#39;</span>
+        <span class="n">user_list</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="p">[</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> :: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">u</span><span class="p">])</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">invited</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">user_list</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s"> The following users are invited - </span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="n">user_list</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">invited</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">user_list</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,invite&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.invite"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.invite">[docs]</a>    <span class="k">def</span> <span class="nf">invite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Invite a person to join the room.</span>
+
+<span class="sd">        Works only if the person has added the bot as a friend.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">jid</span> <span class="o">=</span> <span class="n">xmpp</span><span class="o">.</span><span class="n">JID</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">email</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">@</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">jid</span><span class="o">.</span><span class="n">getNode</span><span class="p">(),</span> <span class="n">jid</span><span class="o">.</span><span class="n">getDomain</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">email</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roster</span><span class="o">.</span><span class="n">getItems</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span>
+                <span class="n">args</span><span class="p">,</span>
+                <span class="s">&#39;</span><span class="si">%s</span><span class="s"> invited you to join </span><span class="si">%s</span><span class="s">. &#39;</span>
+                <span class="s">&#39;Say </span><span class="si">%s</span><span class="s"> to join!&#39;</span>
+                <span class="o">%</span> <span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">jid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">subscribe</span><span class="o">.</span><span class="n">_jabberbot_command_name</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">roster</span><span class="o">.</span><span class="n">Authorize</span><span class="p">(</span><span class="n">email</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">invited</span><span class="p">[</span><span class="n">email</span><span class="p">]</span> <span class="o">=</span> <span class="n">email</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s">&#39;_</span><span class="si">%s</span><span class="s"> invited </span><span class="si">%s</span><span class="s">_&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">],</span> <span class="n">args</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> in not in my friend list. Cannot invite.&#39;</span> <span class="o">%</span> <span class="n">email</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,whois&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.whois"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.whois">[docs]</a>    <span class="k">def</span> <span class="nf">whois</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check who has a particular nick. &quot;&quot;&quot;</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">email</span><span class="p">,</span> <span class="n">nick</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">nick</span> <span class="o">==</span> <span class="n">query</span><span class="p">:</span>
+                <span class="k">break</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">email</span> <span class="o">=</span> <span class="s">&#39;Nobody!&#39;</span>
+
+        <span class="k">return</span> <span class="n">email</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,uptime&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.uptime"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.uptime">[docs]</a>    <span class="k">def</span> <span class="nf">uptime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check the up-time of the bot. &quot;&quot;&quot;</span>
+
+        <span class="n">t</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span> <span class="o">-</span>
+            <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">started</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">hours</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">seconds</span> <span class="o">/</span> <span class="mi">3600</span>
+        <span class="n">mins</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">seconds</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span> <span class="o">%</span> <span class="mi">60</span>
+        <span class="n">secs</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">seconds</span> <span class="o">%</span> <span class="mi">60</span>
+        <span class="n">uptime</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> day(s) </span><span class="si">%s</span><span class="s"> hour(s) </span><span class="si">%s</span><span class="s"> min(s) and </span><span class="si">%s</span><span class="s"> sec(s)&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">days</span><span class="p">,</span> <span class="n">hours</span><span class="p">,</span> <span class="n">mins</span><span class="p">,</span> <span class="n">secs</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s">&quot;Harbouring conversations, and what&#39;s more, memories, relentlessly&quot;</span>
+            <span class="s">&#39; since </span><span class="si">%s</span><span class="s"> for </span><span class="si">%s</span><span class="s"> &amp; friends&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">uptime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">])</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,g&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.google"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.google">[docs]</a>    <span class="k">def</span> <span class="nf">google</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Fetch the top-most result from Google. &quot;&quot;&quot;</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlencode</span><span class="p">({</span><span class="s">&#39;q&#39;</span><span class="p">:</span> <span class="n">args</span><span class="p">})</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">google</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s">&#39;</span><span class="si">%s</span><span class="s"> googled for </span><span class="si">%s</span><span class="s">... and here you go: &#39;</span>
+                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">],</span> <span class="n">args</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;Oops! nothing found&#39;</span>
+
+        <span class="k">return</span> <span class="n">message</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,sc&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.soundcloud"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.soundcloud">[docs]</a>    <span class="k">def</span> <span class="nf">soundcloud</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Fetch the top-most result from Google for site:soundcloud.com. &quot;&quot;&quot;</span>
+
+        <span class="n">query</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">urlencode</span><span class="p">({</span><span class="s">&#39;q&#39;</span><span class="p">:</span> <span class="s">&#39;site:soundcloud.com &#39;</span> <span class="o">+</span> <span class="n">args</span><span class="p">})</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">google</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s">&#39;</span><span class="si">%s</span><span class="s"> sound-clouded for </span><span class="si">%s</span><span class="s">... and here you go: &#39;</span>
+                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">],</span> <span class="n">args</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;Oops! nothing found&#39;</span>
+
+        <span class="k">return</span> <span class="n">message</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,see&#39;</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.see"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.see">[docs]</a>    <span class="k">def</span> <span class="nf">see</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Look at bot&#39;s public attributes.</span>
+
+<span class="sd">        You can pass a list of attributes separated by spaces.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">attributes</span> <span class="o">=</span> <span class="p">[</span>
+
+            <span class="s">&#39;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> is private&#39;</span> <span class="o">%</span> <span class="n">attr</span>
+
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">attributes</span><span class="p">)</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,see-friends&#39;</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.show_roster"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.show_roster">[docs]</a>    <span class="k">def</span> <span class="nf">show_roster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the roster of friends. &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">contact</span> <span class="k">for</span> <span class="n">contact</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roster</span><span class="o">.</span><span class="n">getItems</span><span class="p">()])</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,help&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.help"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.help">[docs]</a>    <span class="k">def</span> <span class="nf">help</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mess</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Show help for all the bot commands, or a given command. &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ChatRoomJabberBot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">help</span><span class="p">(</span><span class="n">mess</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+</div>
+    <span class="nd">@botcmd</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;,add&#39;</span><span class="p">)</span>
+    <span class="nd">@requires_subscription</span>
+<div class="viewcode-block" id="ChatRoomJabberBot.add"><a class="viewcode-back" href="../../plugins.html#park.chatroom.ChatRoomJabberBot.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Define a bot command on the fly!</span>
+
+<span class="sd">        This command lets you add bot commands, through the xmpp interface.</span>
+<span class="sd">        New commands can be added as shown below ::</span>
+
+<span class="sd">            ,add&lt;space&gt;</span>
+<span class="sd">            def main():</span>
+<span class="sd">                &#39;&#39;&#39; Clears the screen!</span>
+
+<span class="sd">                This command is intended to be used when you want to</span>
+<span class="sd">                divert attention of the users from the previous</span>
+<span class="sd">                discussion.</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+
+<span class="sd">                print &#39;\\n&#39; * 80</span>
+
+<span class="sd">        The commands can be added to a gist and the *raw* url can be passed</span>
+<span class="sd">        to this command, like so ::</span>
+
+<span class="sd">            ,add &lt;raw-gist-url&gt;</span>
+
+<span class="sd">        Commands added using gists are persisted between restarts.</span>
+
+<span class="sd">        For more information, look at</span>
+<span class="sd">        http://punchagan.github.com/childrens-park/#how-to-add-new-bot-commands</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&quot;Didn&#39;t get any arguments for the command!&quot;</span>
+
+        <span class="c"># Check if first word in args is a URL.</span>
+        <span class="n">gist_url</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">is_url</span><span class="p">(</span><span class="n">gist_url</span><span class="p">):</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="n">get_code_from_url</span><span class="p">(</span><span class="n">gist_url</span><span class="p">)</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">basename</span><span class="p">(</span><span class="n">gist_url</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="n">args</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">name</span><span class="p">,</span> <span class="n">code</span> <span class="o">=</span> <span class="n">make_function_main</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;could not compile your code.&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_command_from_code</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s"> registered command </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+
+        <span class="k">return</span>
+
+    <span class="c">#### Private interface ####################################################</span>
+</div>
+    <span class="k">def</span> <span class="nf">_add_command_from_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add the given string of code as a command. &quot;&quot;&quot;</span>
+
+        <span class="c"># fixme: the directory should be called something meaningful.</span>
+        <span class="n">gist_plugin_dir</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ROOT</span><span class="p">,</span> <span class="s">&#39;gist_plugins&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exists</span><span class="p">(</span><span class="n">gist_plugin_dir</span><span class="p">):</span>
+            <span class="n">makedirs</span><span class="p">(</span><span class="n">gist_plugin_dir</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;.py&#39;</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">+=</span> <span class="s">&#39;.py&#39;</span>
+
+        <span class="k">if</span> <span class="n">code</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">gist_plugin_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_command_from_path</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_add_command_from_gist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add the code at the given url as a command. &quot;&quot;&quot;</span>
+
+        <span class="n">code</span> <span class="o">=</span> <span class="n">get_code_from_url</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="c"># fixme: may need to fix name to valid module name</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">basename</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_command_from_code</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_add_command_from_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;  Add the plugin at the given path as a command. &quot;&quot;&quot;</span>
+
+        <span class="n">plugin</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_command_from_plugin</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>
+
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_add_command_from_plugin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plugin</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add the given plugin&#39;s main as a command. &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="s">&#39;main&#39;</span><span class="p">):</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="n">wrap_as_bot_command</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="n">plugin</span><span class="o">.</span><span class="n">main</span><span class="p">,</span> <span class="s">&#39;,</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">plugin</span><span class="o">.</span><span class="n">__name__</span>
+            <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="n">command</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="s">&#39;_jabberbot_command_name&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commands</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">command</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s">&#39;Ignoring plugin </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">plugin</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_add_gist_commands</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Adds persisted gists as commands (on startup). &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gist_urls</span><span class="p">[:]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_command_from_gist</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_attempt_reconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Attempt to reconnect. &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Restarting...&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Pulling changes from GitHub...&#39;</span><span class="p">)</span>
+        <span class="n">call</span><span class="p">(</span>
+            <span class="p">[</span><span class="s">&quot;git&quot;</span><span class="p">,</span> <span class="s">&quot;pull&quot;</span><span class="p">],</span>
+            <span class="n">stdout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">handlers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">stream</span><span class="p">,</span>
+            <span class="n">stderr</span><span class="o">=</span><span class="n">STDOUT</span>
+        <span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+        <span class="n">execl</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
+
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_callback_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conn</span><span class="p">,</span> <span class="n">mess</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Command handling + routing.</span>
+
+<span class="sd">        All messages sent to the bot will arrive here.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">jid</span> <span class="o">=</span> <span class="n">mess</span><span class="o">.</span><span class="n">getFrom</span><span class="p">()</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="n">mess</span><span class="o">.</span><span class="n">getProperties</span><span class="p">()</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">mess</span><span class="o">.</span><span class="n">getBody</span><span class="p">()</span>
+        <span class="n">username</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sender_username</span><span class="p">(</span><span class="n">mess</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">username</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">invited</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Ignored message </span><span class="si">%s</span><span class="s"> from </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">username</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;*** props = </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">props</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;*** jid = </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">jid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;*** username = </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">username</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;*** type = </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;*** text = </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">text</span><span class="p">)</span>
+
+        <span class="c"># Ignore messages from before we joined</span>
+        <span class="k">if</span> <span class="n">xmpp</span><span class="o">.</span><span class="n">NS_DELAY</span> <span class="ow">in</span> <span class="n">props</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># If message format is not supported (eg. encrypted), txt will be None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c"># fixme: how do we handle hooks that modify the text?</span>
+        <span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_message_processors</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_hook_in_thread</span><span class="p">(</span><span class="n">hook</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+
+        <span class="c"># Remember the last-talked-in thread for replies</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_JabberBot__threads</span><span class="p">[</span><span class="n">jid</span><span class="p">]</span> <span class="o">=</span> <span class="n">mess</span><span class="o">.</span><span class="n">getThread</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="s">&#39; &#39;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+            <span class="n">command</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+            <span class="n">command</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">command</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">text</span><span class="p">,</span> <span class="s">&#39;&#39;</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="n">command</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;*** cmd = </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">cmd</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">commands</span> <span class="ow">and</span> <span class="n">cmd</span> <span class="o">!=</span> <span class="s">&#39;help&#39;</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">reply</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">commands</span><span class="p">[</span><span class="n">cmd</span><span class="p">](</span><span class="n">mess</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">reply</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                    <span class="s">&quot;An error happened while processing a message &quot;</span>
+                    <span class="s">&quot;(&#39;</span><span class="si">%s</span><span class="s">&#39;) from </span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">jid</span><span class="p">,</span> <span class="n">reply</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unknown_command</span><span class="p">(</span><span class="n">mess</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">reply</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">send_simple_reply</span><span class="p">(</span><span class="n">mess</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">reply</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_load_plugins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Load all the plugins from the plugin directory. &quot;&quot;&quot;</span>
+
+        <span class="n">plugin_dir</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ROOT</span><span class="p">,</span> <span class="s">&#39;plugins&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">plugin_dir</span><span class="p">,</span> <span class="s">&#39;*.py&#39;</span><span class="p">)):</span>
+            <span class="n">plugin</span> <span class="o">=</span> <span class="n">load_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="s">&#39;main&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_add_command_from_plugin</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="s">&#39;idle_hook&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_idle_hooks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">idle_hook</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">plugin</span><span class="p">,</span> <span class="s">&#39;message_processor&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_message_processors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plugin</span><span class="o">.</span><span class="n">message_processor</span><span class="p">)</span>
+
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_run_hook_in_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hook</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Run the given hook in a new thread. &quot;&quot;&quot;</span>
+
+        <span class="n">thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">hook</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="k">return</span>
+
+    <span class="nd">@requires_subscription</span>
+    <span class="k">def</span> <span class="nf">_unknown_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Handle everything that is not a known command.</span>
+
+<span class="sd">        Currently, just sends it to all the other users as a message.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cmd</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">):</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;[</span><span class="si">%s</span><span class="s">]: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">],</span> <span class="n">text</span><span class="p">))</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;unknown command: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">cmd</span>
+
+        <span class="k">return</span> <span class="n">message</span>
+
+</div>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">park.settings</span> <span class="kn">import</span> <span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">,</span> <span class="n">RES</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;Please copy sample-settings.py to settings.py and edit it!&#39;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">install_log_handler</span><span class="p">(</span><span class="n">LOG_FILE_NAME</span><span class="p">)</span>
+
+    <span class="n">bc</span> <span class="o">=</span> <span class="n">ChatRoomJabberBot</span><span class="p">(</span><span class="n">USERNAME</span><span class="p">,</span> <span class="n">PASSWORD</span><span class="p">,</span> <span class="n">RES</span><span class="p">)</span>
+
+    <span class="n">th</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">bc</span><span class="o">.</span><span class="n">thread_proc</span><span class="p">)</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">(</span><span class="n">connect_callback</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">th</span><span class="o">.</span><span class="n">start</span><span class="p">())</span>
+    <span class="n">bc</span><span class="o">.</span><span class="n">thread_killed</span> <span class="o">=</span> <span class="bp">True</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+
+<span class="c">#### EOF ######################################################################</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          <h3>Table Of Contents</h3>
+          
+          <h3 style="margin-top: 1.5em;">Search</h3>
+          <form class="search" action="../../search.html" method="get">
+            <input type="text" name="q" />
+            <input type="submit" value="Go" />
+            <input type="hidden" name="check_keywords" value="yes" />
+            <input type="hidden" name="area" value="default" />
+          </form>
+          <p class="searchtip" style="font-size: 90%">
+            Enter search terms or a module, class or function name.
+          </p>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <a href="../../genindex.html" title="General Index"
+             >index</a>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer">
+        &copy; Copyright 2012, Puneeth Chaganti.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>
