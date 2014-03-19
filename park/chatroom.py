@@ -58,7 +58,6 @@ import xmpp
 # Project library
 from park import serialize
 from park.plugin import load_file, wrap_as_bot_command
-from park.plugins.urls import dump_message_with_url
 from park.text_processing import chunk_text, highlight_word
 from park.util import (
     get_code_from_url, google, install_log_handler, is_url, make_function_main,
@@ -83,6 +82,7 @@ class ChatRoomJabberBot(JabberBot):
 
         self.debug = debug
         self.username = username
+        self.lock = threading.RLock()
 
         self._state = self.read_state()
 
@@ -99,6 +99,7 @@ class ChatRoomJabberBot(JabberBot):
         # Plugins
         self._command_plugins = []
         self._idle_hooks = []
+        self._message_processors = []
 
         # Fetch all code from the gist urls and make commands
         self._add_gist_commands()
@@ -208,7 +209,11 @@ class ChatRoomJabberBot(JabberBot):
     def read_state(self):
         """ Reads the persisted state. """
 
-        return serialize.read_state(self.db)
+        self.lock.acquire()
+        data = serialize.read_state(self.db)
+        self.lock.release()
+
+        return data
 
     def thread_proc(self):
         while not self.thread_killed:
@@ -229,6 +234,7 @@ class ChatRoomJabberBot(JabberBot):
     def save_state(self, extra_state=None):
         """ Persists the state of the bot. """
 
+        self.lock.acquire()
         old_state = self.read_state()
         new_state = dict(
             users=self.users,
@@ -242,6 +248,8 @@ class ChatRoomJabberBot(JabberBot):
             old_state.update(extra_state)
 
         serialize.save_state(self.db, old_state)
+
+        self.lock.release()
 
         return
 
@@ -685,6 +693,10 @@ class ChatRoomJabberBot(JabberBot):
         if not text:
             return
 
+        # fixme: how do we handle hooks that modify the text?
+        for hook in self._message_processors:
+            self._run_hook_in_thread(hook, self, username, text)
+
         # Remember the last-talked-in thread for replies
         self._JabberBot__threads[jid] = mess.getThread()
 
@@ -726,6 +738,9 @@ class ChatRoomJabberBot(JabberBot):
             if getattr(plugin, 'idle_hook', None) is not None:
                 self._idle_hooks.append(plugin.idle_hook)
 
+            if getattr(plugin, 'message_processor', None) is not None:
+                self._message_processors.append(plugin.message_processor)
+
         return
 
     def _run_hook_in_thread(self, hook, *args, **kwargs):
@@ -747,7 +762,6 @@ class ChatRoomJabberBot(JabberBot):
 
         if not cmd.startswith(','):
             text = '%s %s' % (cmd, args)
-            dump_message_with_url(user, text, self.ROOT)
             self.message_queue.append('[%s]: %s' % (self.users[user], text))
             message = ''
 

@@ -16,10 +16,8 @@ HERE = dirname(abspath(__file__))
 DB_NAME = 'newsletter.json'
 
 
-# fixme: this should be contributed via a hook, too.
-# currently, we don't have a hook for processing all messages before sending...
-def dump_message_with_url(user, text, target_dir):
-    """ Dump a message to the db in the target dir, if it has a url. """
+def message_processor(bot, user, text):
+    """ Dump a message to the db in the bot's ROOT, if it has a url. """
 
     tokens = text.split()
     urls = [token for token in tokens if is_url(token)]
@@ -27,10 +25,11 @@ def dump_message_with_url(user, text, target_dir):
     if len(urls) == 0:
         return
 
-    path = join(target_dir, DB_NAME)
+    path = join(bot.ROOT, DB_NAME)
 
+    bot.lock.acquire()
+    data = read_state(path)
     for url in urls:
-        data = read_state(path)
         if not data:
             data = []
         entry = {
@@ -40,6 +39,7 @@ def dump_message_with_url(user, text, target_dir):
         }
         data.append(entry)
         save_state(path, data)
+    bot.lock.release()
 
     return
 
@@ -59,7 +59,9 @@ def idle_hook(bot):
         _save_timestamp(bot)
 
     elif _time_since(last_newsletter).days >= 7:
+        bot.lock.acquire()
         urls = serialize.read_state(db)
+        bot.lock.release()
         if len(urls) > 0:
             _send_newsletter(bot, urls, last_newsletter)
             _clear_urls(db)
@@ -72,7 +74,11 @@ def main(bot, user, args):
     """ Show URLs posted by buddies. The ones since I last checked """
 
     path = join(bot.ROOT, DB_NAME)
+
+    bot.lock.acquire()
     data = serialize.read_state(path)
+    bot.lock.release()
+
     urls = {}
 
     for entry in data:
