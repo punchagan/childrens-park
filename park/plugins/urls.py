@@ -4,6 +4,7 @@ import hashlib
 from lxml import html
 import os
 from os.path import abspath, dirname, join
+import shutil
 from urllib import urlopen
 
 # 3rd party library
@@ -99,8 +100,11 @@ _TIMESTAMP_FMT = '%Y-%m-%dT%H:%M:%S.%f'
 
 
 def _clear_urls(path):
-    """ Remove the db file where urls are saved. """
+    """ Move the db file to a name with the time stamp. """
 
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    new_path = join(dirname(path), 'newsletter-%s.json' % timestamp)
+    shutil.copy(path, new_path)
     os.unlink(path)
 
     return
