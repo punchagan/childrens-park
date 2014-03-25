@@ -165,7 +165,7 @@ def _send_newsletter(bot, urls, last_sent):
     subject = 'Parkly Newsletter for %s to %s' % (last_sent, now)
     body = _get_email(bot, urls, subject)
     fro = bot.username
-    to = ', '.join(bot.users.keys() + bot.invited.keys())
+    to = bot.users.keys() + bot.invited.keys()
 
     send_email(fro, to, subject, body, typ_='html', debug=bot.debug)
 

@@ -194,7 +194,7 @@ def send_email(fro, to, subject, body, typ_='text', debug=False):
         msg.attach(MIMEText(strip_tags(body), 'plain'))
         msg.attach(MIMEText(body, 'html'))
 
-    msg['To'] = to
+    msg['To'] = ', '.join(to) if isinstance(to, list) else to
     msg['From'] = fro
     msg['Subject'] = subject
 
