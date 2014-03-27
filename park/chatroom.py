@@ -155,7 +155,11 @@ class ChatRoomJabberBot(JabberBot):
             for contact in self.roster.getItems():
                 self.log.info('  %s' % contact)
             self.log.info('*** roster ***')
-            self.conn.RegisterHandler('message', self._callback_message)
+
+            for (handler, callback) in self.handlers:
+                self.conn.RegisterHandler(handler, callback)
+                self.log.debug('Registered handler: %s' % handler)
+
             self.conn.RegisterDisconnectHandler(self._attempt_reconnect)
             self.conn.UnregisterDisconnectHandler(conn.DisconnectHandler)
             self._JabberBot__set_status(self.topic)
