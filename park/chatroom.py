@@ -785,9 +785,10 @@ def main():
         print('Please copy sample-settings.py to settings.py and edit it!')
         sys.exit(1)
 
-    install_log_handler(LOG_FILE_NAME)
+    debug = True if '--debug' in sys.argv else False
+    install_log_handler(LOG_FILE_NAME, debug=debug)
 
-    bc = ChatRoomJabberBot(USERNAME, PASSWORD, RES)
+    bc = ChatRoomJabberBot(USERNAME, PASSWORD, RES, debug=debug)
 
     th = threading.Thread(target=bc.thread_proc)
     bc.serve_forever(connect_callback=lambda: th.start())

@@ -56,10 +56,14 @@ class captured_stdout(object):
         return output
 
 
-def install_log_handler(filename):
+def install_log_handler(filename, debug=False):
     """ Install a log handler. """
 
-    handler = TimedRotatingFileHandler(filename, when='W0')
+    if debug:
+        handler = logging.StreamHandler()
+
+    else:
+        handler = TimedRotatingFileHandler(filename, when='W0')
 
     # create formatter
     fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
