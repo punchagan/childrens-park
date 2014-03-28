@@ -382,7 +382,7 @@ class TestChatRoom(unittest.TestCase):
         message = xmpp.Message(frm=bar, typ='chat', body='foo')
 
         # When
-        result = bot._callback_message(None, message)
+        result = bot.callback_message(None, message)
 
         # Then
         self.assertIsNone(result)
@@ -402,7 +402,7 @@ class TestChatRoom(unittest.TestCase):
         bot.send_simple_reply = reply
 
         # When
-        bot._callback_message(None, message)
+        bot.callback_message(None, message)
 
         # Then
         self.assertIn('unknown command', self.result)
@@ -508,7 +508,7 @@ class TestChatRoom(unittest.TestCase):
         url = 'http://muse-amuse.in'
         text = 'this is %s' % url
         db_path = join(bot.ROOT, DB_NAME)
-        bot._callback_message(
+        bot.callback_message(
             None,  xmpp.Message(frm=bar, typ='chat', body=text)
         )
         self._wait_while(lambda: not exists(db_path))
@@ -532,7 +532,7 @@ class TestChatRoom(unittest.TestCase):
         url = 'http://muse-amuse.in'
         text = 'this is %s' % url
         db_path = join(bot.ROOT, DB_NAME)
-        bot._callback_message(
+        bot.callback_message(
             None,  xmpp.Message(frm=bar, typ='chat', body=text)
         )
         self._wait_while(lambda: not exists(db_path))
