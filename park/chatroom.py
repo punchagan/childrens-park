@@ -119,6 +119,71 @@ class ChatRoomJabberBot(JabberBot):
 
     #### JabberBot interface ##################################################
 
+    def callback_message(self, conn, mess):
+        """ Command handling + routing.
+
+        All messages sent to the bot will arrive here.
+
+        """
+
+        jid = mess.getFrom()
+        props = mess.getProperties()
+        text = mess.getBody()
+        username = self.get_sender_username(mess)
+
+        if username not in self.users.keys() + self.invited.keys():
+            self.log.info('Ignored message %s from %s', text, username)
+            return
+
+        self.log.debug("*** props = %s" % props)
+        self.log.debug("*** jid = %s" % jid)
+        self.log.debug("*** username = %s" % username)
+        self.log.debug("*** type = %s" % type)
+        self.log.debug("*** text = %s" % text)
+
+        # Ignore messages from before we joined
+        if xmpp.NS_DELAY in props:
+            return
+
+        # Ignore messages from myself
+        if self.jid.bareMatch(jid):
+            return
+
+        # If message format is not supported (eg. encrypted), txt will be None
+        if not text:
+            return
+
+        # fixme: how do we handle hooks that modify the text?
+        for hook in self._message_processors:
+            self._run_hook_in_thread(hook, self, username, text)
+
+        # Remember the last-talked-in thread for replies
+        self._JabberBot__threads[jid] = mess.getThread()
+
+        if ' ' in text:
+            command, args = text.split(' ', 1)
+        elif '\n' in text:
+            command, args = text.split('\n', 1)
+        else:
+            command, args = text, ''
+        cmd = command
+        self.log.debug("*** cmd = %s" % cmd)
+
+        if cmd in self.commands and cmd != 'help':
+            try:
+                reply = self.commands[cmd](mess, args)
+            except Exception as e:
+                reply = traceback.format_exc(e)
+                self.log.exception(
+                    "An error happened while processing a message "
+                    "('%s') from %s: %s", text, jid, reply
+                )
+        else:
+            reply = self._unknown_command(mess, cmd, args)
+
+        if reply:
+            self.send_simple_reply(mess, unicode(reply))
+
     def connect(self):
         if not self.conn:
             conn = xmpp.Client(self.jid.getDomain(), debug=[])
@@ -155,7 +220,11 @@ class ChatRoomJabberBot(JabberBot):
             for contact in self.roster.getItems():
                 self.log.info('  %s' % contact)
             self.log.info('*** roster ***')
-            self.conn.RegisterHandler('message', self._callback_message)
+
+            for (handler, callback) in self.handlers:
+                self.conn.RegisterHandler(handler, callback)
+                self.log.debug('Registered handler: %s' % handler)
+
             self.conn.RegisterDisconnectHandler(self._attempt_reconnect)
             self.conn.UnregisterDisconnectHandler(conn.DisconnectHandler)
             self._JabberBot__set_status(self.topic)
@@ -665,67 +734,6 @@ class ChatRoomJabberBot(JabberBot):
         execl(sys.executable, sys.executable, abspath(__file__))
 
         return
-
-    def _callback_message(self, conn, mess):
-        """ Command handling + routing.
-
-        All messages sent to the bot will arrive here.
-
-        """
-
-        jid = mess.getFrom()
-        props = mess.getProperties()
-        text = mess.getBody()
-        username = self.get_sender_username(mess)
-
-        if username not in self.users.keys() + self.invited.keys():
-            self.log.info('Ignored message %s from %s', text, username)
-            return
-
-        self.log.debug("*** props = %s" % props)
-        self.log.debug("*** jid = %s" % jid)
-        self.log.debug("*** username = %s" % username)
-        self.log.debug("*** type = %s" % type)
-        self.log.debug("*** text = %s" % text)
-
-        # Ignore messages from before we joined
-        if xmpp.NS_DELAY in props:
-            return
-
-        # If message format is not supported (eg. encrypted), txt will be None
-        if not text:
-            return
-
-        # fixme: how do we handle hooks that modify the text?
-        for hook in self._message_processors:
-            self._run_hook_in_thread(hook, self, username, text)
-
-        # Remember the last-talked-in thread for replies
-        self._JabberBot__threads[jid] = mess.getThread()
-
-        if ' ' in text:
-            command, args = text.split(' ', 1)
-        elif '\n' in text:
-            command, args = text.split('\n', 1)
-        else:
-            command, args = text, ''
-        cmd = command
-        self.log.debug("*** cmd = %s" % cmd)
-
-        if cmd in self.commands and cmd != 'help':
-            try:
-                reply = self.commands[cmd](mess, args)
-            except Exception as e:
-                reply = traceback.format_exc(e)
-                self.log.exception(
-                    "An error happened while processing a message "
-                    "('%s') from %s: %s", text, jid, reply
-                )
-        else:
-            reply = self._unknown_command(mess, cmd, args)
-
-        if reply:
-            self.send_simple_reply(mess, unicode(reply))
 
     def _load_plugins(self):
         """ Load all the plugins from the plugin directory. """
