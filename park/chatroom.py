@@ -599,12 +599,13 @@ class ChatRoomJabberBot(JabberBot):
     @botcmd(name=',add')
     @requires_subscription
     def add(self, user, args):
-        """ Define a bot command on the fly!
+        """ Define a bot command, or other hooks from chat.
 
-        This command lets you add bot commands, through the xmpp interface.
-        New commands can be added as shown below ::
+        This command lets extend the bot, by adding bot commands, or other
+        hooks through the chat interface. New commands can be added as shown
+        below ::
 
-            ,add<space>
+            ,add command_name
             def main():
                 ''' Clears the screen!
 
@@ -620,8 +621,6 @@ class ChatRoomJabberBot(JabberBot):
 
             ,add <raw-gist-url>
 
-        Commands added using gists are persisted between restarts.
-
         For more information, look at
         http://punchagan.github.io/childrens-park/plugins.html#plugins
 
@@ -631,66 +630,26 @@ class ChatRoomJabberBot(JabberBot):
             return "Didn't get any arguments for the command!"
 
         # Check if first word in args is a URL.
-        gist_url = args.split()[0]
+        first_arg = args.split()[0]
 
-        if is_url(gist_url):
-            code = get_code_from_url(gist_url)
-            name = basename(gist_url)
+        if is_url(first_arg):
+            url = first_arg
+            code = get_code_from_url(url)
+            name = basename(url)
 
         else:
-            code = args
-            try:
-                name, code = make_function_main(code)
+            name = first_arg
+            code = args[len(name):].strip()
 
-            except:
-                name = None
-
-        if name is None:
-            return 'could not compile your code.'
-
-        self._add_command_from_code(name, code)
+        path = self._save_code_to_plugin(name, code)
+        if path is not None:
+            self._load_plugin_from_path(path)
+        print name, code, path
         self.message_queue.append('%s registered command %s' % (user, name))
 
         return
 
     #### Private interface ####################################################
-
-    def _add_command_from_code(self, name, code):
-        """ Add the given string of code as a command. """
-
-        # fixme: the directory should be called something meaningful.
-        gist_plugin_dir = join(self.ROOT, 'gist_plugins')
-        if not exists(gist_plugin_dir):
-            makedirs(gist_plugin_dir)
-
-        if not name.endswith('.py'):
-            name += '.py'
-
-        if code:
-            with open(join(gist_plugin_dir, name), 'w') as f:
-                f.write(code)
-
-            self._add_command_from_path(f.name)
-
-        return
-
-    def _add_command_from_gist(self, url):
-        """ Add the code at the given url as a command. """
-
-        code = get_code_from_url(url)
-        # fixme: may need to fix name to valid module name
-        name = basename(url)
-        self._add_command_from_code(name, code)
-
-        return
-
-    def _add_command_from_path(self, path):
-        """  Add the plugin at the given path as a command. """
-
-        plugin = load_file(path)
-        self._add_command_from_plugin(plugin)
-
-        return
 
     def _add_command_from_plugin(self, plugin):
         """ Add the given plugin's main as a command. """
@@ -716,7 +675,11 @@ class ChatRoomJabberBot(JabberBot):
         """ Adds persisted gists as commands (on startup). """
 
         for url in self.gist_urls[:]:
-            self._add_command_from_gist(url)
+            code = get_code_from_url(url)
+            name = basename(url)
+            path = self._save_code_to_plugin(name, code)
+            if path is not None:
+                self._load_plugin_from_path(path)
 
         return
 
@@ -735,22 +698,30 @@ class ChatRoomJabberBot(JabberBot):
 
         return
 
+    def _load_plugin_from_path(self, path):
+        """ Load the plugin at the given path. """
+
+
+        plugin = load_file(path)
+
+        if getattr(plugin, 'main', None) is not None:
+            self._add_command_from_plugin(plugin)
+
+        if getattr(plugin, 'idle_hook', None) is not None:
+            self._idle_hooks.append(plugin.idle_hook)
+
+        if getattr(plugin, 'message_processor', None) is not None:
+            self._message_processors.append(plugin.message_processor)
+
+        return
+
     def _load_plugins(self):
         """ Load all the plugins from the plugin directory. """
 
         plugin_dir = join(self.ROOT, 'plugins')
 
         for path in glob.glob(join(plugin_dir, '*.py')):
-            plugin = load_file(path)
-
-            if getattr(plugin, 'main', None) is not None:
-                self._add_command_from_plugin(plugin)
-
-            if getattr(plugin, 'idle_hook', None) is not None:
-                self._idle_hooks.append(plugin.idle_hook)
-
-            if getattr(plugin, 'message_processor', None) is not None:
-                self._message_processors.append(plugin.message_processor)
+            self._load_plugin_from_path(path)
 
         return
 
@@ -762,6 +733,27 @@ class ChatRoomJabberBot(JabberBot):
         thread.start()
 
         return
+
+    def _save_code_to_plugin(self, name, code):
+        """ Save the given code as a plugin file. """
+
+        # fixme: the directory should be called something meaningful.
+        gist_plugin_dir = join(self.ROOT, 'gist_plugins')
+        if not exists(gist_plugin_dir):
+            makedirs(gist_plugin_dir)
+
+        if not name.endswith('.py'):
+            name += '.py'
+
+        if code:
+            path = join(gist_plugin_dir, name)
+            with open(path, 'w') as f:
+                f.write(code)
+
+        else:
+            path = None
+
+        return path
 
     @requires_subscription
     def _unknown_command(self, user, cmd, args):

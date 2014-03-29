@@ -28,10 +28,6 @@ The plugins can either be added by creating a new python module in the
 plugins directory of ``park``'s code, or adding the url to a page with
 the new source, using the ``,add`` command via chat!
 
-NOTE: Currently, only bot commands present in the code added via chat
-are used for extending the bot.  Other code is ignored!  This should
-soon be fixed, though.
-
 .. _howto-add-cmd:
 
 Adding new commands
