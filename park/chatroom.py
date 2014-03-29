@@ -58,8 +58,8 @@ from park import serialize
 from park.plugin import load_file, wrap_as_bot_command
 from park.text_processing import chunk_text, highlight_word
 from park.util import (
-    get_code_from_url, google, install_log_handler, is_url, make_function_main,
-    requires_invite, requires_subscription
+    get_code_from_url, google, install_log_handler, is_url, requires_invite,
+    requires_subscription
 )
 
 LOG_FILE_NAME = 'park.log'

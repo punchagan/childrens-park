@@ -121,20 +121,6 @@ def google(query):
     return result
 
 
-def make_function_main(code):
-    """ Rename first function as main, and return (original name, code). """
-
-    functions = [
-        element for element in ast.parse(code.strip(), 'string').body
-        if isinstance(element, ast.FunctionDef)
-    ]
-
-    name = functions[0].name
-    code = code.replace('def %s' % name, 'def main')
-
-    return name, code
-
-
 def render_template(path, context):
     """  Render the given template using the given context. """
 
