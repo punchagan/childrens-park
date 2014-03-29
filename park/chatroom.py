@@ -698,11 +698,24 @@ class ChatRoomJabberBot(JabberBot):
 
         return
 
+    def _install(self, requirement):
+        """ Pip install the given requirement. """
+
+        import pip
+
+        if pip.main(['install', requirement]) == 0:
+            self.log.debug('Successfully installed %s' % requirement)
+
+        else:
+            self.log.debug('Failed to "pip install %s"' % requirement)
+
     def _load_plugin_from_path(self, path):
         """ Load the plugin at the given path. """
 
-
         plugin = load_file(path)
+
+        for requirement in getattr(plugin, 'REQUIREMENTS', []):
+            self._install(requirement)
 
         if getattr(plugin, 'main', None) is not None:
             self._add_command_from_plugin(plugin)
