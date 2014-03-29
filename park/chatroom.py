@@ -703,6 +703,8 @@ class ChatRoomJabberBot(JabberBot):
 
         import pip
 
+        self.log.debug('Installing %s' % requirement)
+
         if pip.main(['install', requirement]) == 0:
             self.log.debug('Successfully installed %s' % requirement)
 
