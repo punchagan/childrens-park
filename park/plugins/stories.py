@@ -1,8 +1,13 @@
 REQUIREMENTS = ['python-twitter']
 
-from park.settings import (
-    CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET
-)
+# fixme: should we have a way to add stuff into settings.py?
+try:
+    from park.settings import (
+        CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN_KEY, ACCESS_TOKEN_SECRET
+    )
+except ImportError:
+    CONSUMER_KEY = CONSUMER_SECRET = ''
+    ACCESS_TOKEN_KEY = ACCESS_TOKEN_SECRET = ''
 
 
 def message_processor(bot, user, text):
