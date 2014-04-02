@@ -5,7 +5,7 @@ def message_processor(bot, user, text):
     """ Tweet the story, if message starts with >>>"""
 
     if text.startswith('>>>') and not text.startswith('>>>>'):
-        _tweet_story(bot, text[3:], user)
+        _tweet_story(bot, text[3:].strip(), user)
 
     return
 
@@ -21,7 +21,6 @@ def main(bot, user, text):
 
         return message
 
-    # fixme: Use OAuth or something more secure to register!
     text = text.strip().split()
     if len(text) > 2:
         message = 'Only accepts twitter-handle or "email twitter-handle"'
@@ -82,13 +81,10 @@ def _tweet_story(bot, story, user):
         bot.message_queue.append(message)
         return
 
-    if user in bot.storytellers:
-        tweetstory = story + ' - @' + bot.storytellers[user]
+    if not story.split()[-1].startswith('@') and user in bot.storytellers:
+        story += ' - @' + bot.storytellers[user]
 
-    else:
-        tweetstory = story
-
-    message = _post_tweet(tweetstory)
+    message = _post_tweet(story)
     if message is None:
         message = 'wOOt! You just got published %s' % bot.users[user]
 
