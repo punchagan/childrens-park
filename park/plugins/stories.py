@@ -10,15 +10,38 @@ def message_processor(bot, user, text):
     return
 
 
-# fixme: modify this to allow storytellers to be registered.
-def main():
+def main(bot, user, text):
     """ Get link to the story archive! """
 
-    message = (
-        'Mr. Gu10berg archives all the shor10sweet stories here:'
-        'https://twitter.com/tenwordsworth. Mr. Park10 suggests, follow!'
-    )
-    return message
+    if len(text.strip()) == 0:
+        message = (
+            'Mr. Gu10berg archives all the shor10sweet stories here:'
+            'https://twitter.com/tenwordsworth. Mr. Park10 suggests, follow!'
+        )
+
+        return message
+
+    # fixme: Use OAuth or something more secure to register!
+    text = text.strip().split()
+    if len(text) > 2:
+        message = 'Only accepts twitter-handle or "email twitter-handle"'
+
+    elif len(text) == 2:
+        email, handle = text
+
+        if email in bot.users:
+            bot.storytellers[email] = handle
+            message = '%s registered %s as %s' % (user, email, handle)
+
+        else:
+            message = 'Unknown or unsubscribed user'
+
+    else:
+        handle = text[0]
+        bot.storytellers[user] = handle
+        message = '%s registered as %s' % (user, handle)
+
+    print message
 
 
 def _post_tweet(text):
