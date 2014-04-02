@@ -74,10 +74,12 @@ def _tweet_story(bot, story, user):
     """ Tweets the story if it is within 10 words and 140 chars."""
 
     if len(story.split()) > 10:
-        print (
+        message = (
             'That story was longer than 10 words. It goes un-tweeted. '
             '(And, this is how you tell a story within 10 words.)'
         )
+        # fixme: prints inside hooks are not captured, only commands!
+        bot.message_queue.append(message)
         return
 
     if user in bot.storytellers:
@@ -90,6 +92,6 @@ def _tweet_story(bot, story, user):
     if message is None:
         message = 'wOOt! You just got published %s' % bot.users[user]
 
-    print message
+    bot.message_queue.append(message)
 
 #### EOF ######################################################################
