@@ -90,6 +90,7 @@ class ChatRoomJabberBot(JabberBot):
 
         self.users = self._state.get('users', dict())
         self.invited = self._state.get('invited', dict())
+		self.storytellers = self._state.get('storytellers',dict())
         self.ideas = self._state.get('ideas', [])
         self.topic = self._state.get('topic', '')
         self.gist_urls = self._state.get('gist_urls', [])
@@ -310,6 +311,7 @@ class ChatRoomJabberBot(JabberBot):
         new_state = dict(
             users=self.users,
             invited=self.invited,
+			storytellers=self.storytellers,
             topic=self.topic,
             ideas=self.ideas,
             gist_urls=self.gist_urls
