@@ -698,6 +698,22 @@ class ChatRoomJabberBot(JabberBot):
 
         return
 
+    def _get_requirements(self, path):
+        """ Read requirements from the file. """
+
+        with open(path) as f:
+            for line in f:
+                if line.startswith('REQUIREMENTS'):
+                    ns = {}
+                    exec line in ns
+                    # eval(line, ns)
+                    requirements = ns['REQUIREMENTS']
+                    break
+            else:
+                requirements = []
+
+        return requirements
+
     def _install(self, requirement):
         """ Pip install the given requirement. """
 
@@ -714,10 +730,10 @@ class ChatRoomJabberBot(JabberBot):
     def _load_plugin_from_path(self, path):
         """ Load the plugin at the given path. """
 
-        plugin = load_file(path)
-
-        for requirement in getattr(plugin, 'REQUIREMENTS', []):
+        for requirement in self._get_requirements(path):
             self._install(requirement)
+
+        plugin = load_file(path)
 
         if getattr(plugin, 'main', None) is not None:
             self._add_command_from_plugin(plugin)
