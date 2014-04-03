@@ -128,12 +128,11 @@ def _tweet_story(bot, story, user):
             'That story was longer than 10 words. It goes un-tweeted. '
             '(And, this is how you tell a story within 10 words.)'
         )
-        # fixme: prints inside hooks are not captured, only commands!
-        bot.message_queue.append(message)
+        print message
         return
 
     elif story.split()[-1].startswith('@'):
-        bot.message_queue.append('You cannot tweet stories by others!')
+        print 'You cannot tweet stories by others!'
         return
 
     if user in bot.storytellers:
@@ -143,6 +142,6 @@ def _tweet_story(bot, story, user):
     if message is None:
         message = 'wOOt! You just got published %s' % bot.users[user]
 
-    bot.message_queue.append(message)
+    print message
 
 #### EOF ######################################################################
