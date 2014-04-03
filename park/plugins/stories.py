@@ -1,5 +1,11 @@
 REQUIREMENTS = ['python-twitter']
 
+
+# 3rd-party library
+from requests_oauthlib import OAuth1Session
+import twitter
+
+# Project library
 # fixme: should we have a way to add stuff into settings.py?
 try:
     from park.settings import (
@@ -8,6 +14,10 @@ try:
 except ImportError:
     CONSUMER_KEY = CONSUMER_SECRET = ''
     ACCESS_TOKEN_KEY = ACCESS_TOKEN_SECRET = ''
+
+ACCESS_TOKEN_URL = 'https://api.twitter.com/oauth/access_token'
+AUTHORIZATION_URL = 'https://api.twitter.com/oauth/authorize'
+REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
 
 
 def message_processor(bot, user, text):
@@ -65,12 +75,7 @@ def main(bot, user, text):
 
 
 def _get_authorization_url():
-    """ Return a twitter authorization URL (and the oauth_token and secret?) """
-
-    from requests_oauthlib import OAuth1Session
-
-    REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
-    AUTHORIZATION_URL = 'https://api.twitter.com/oauth/authorize'
+    """ Return a twitter authorization URL, the oauth token and secret. """
 
     oauth = OAuth1Session(CONSUMER_KEY, CONSUMER_SECRET)
     response = oauth.fetch_request_token(REQUEST_TOKEN_URL)
@@ -82,9 +87,6 @@ def _get_authorization_url():
 
 
 def _get_twitter_handle(token, secret, pin):
-    from requests_oauthlib import OAuth1Session
-
-    ACCESS_TOKEN_URL = 'https://api.twitter.com/oauth/access_token'
 
     client = OAuth1Session(
         CONSUMER_KEY,
@@ -100,8 +102,6 @@ def _get_twitter_handle(token, secret, pin):
 
 def _post_tweet(text):
     """ Post the given text, using credentials from our settings. """
-
-    import twitter
 
     api = twitter.Api(
         consumer_key=CONSUMER_KEY,
