@@ -669,7 +669,7 @@ class ChatRoomJabberBot(JabberBot):
             self.commands[name] = command
 
         else:
-            self.log('Ignoring plugin %s' % plugin.__name__)
+            self.log.info('Ignoring plugin %s' % plugin.__name__)
 
         return
 

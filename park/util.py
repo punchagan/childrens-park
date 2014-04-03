@@ -131,7 +131,7 @@ def render_template(path, context):
 
 
 def requires_invite(f):
-    """ Decorator to ensure that a user is atleast invited
+    """ Decorator to ensure that a user is at least invited
 
     Can be subscribed, obviously!
 
@@ -141,6 +141,11 @@ def requires_invite(f):
     def wrapper(self, *args, **kwargs):
         message = args[0]
         user = self.get_sender_username(message)
+
+        name = getattr(f, '_jabberbot_command_name', None)
+        if name is not None:
+            self.log.info('%s called %s with %s' % (user, name, args[1:]))
+
         if user not in self.users and user not in self.invited:
             message = 'You atleast need to be invited!'
 
@@ -159,6 +164,11 @@ def requires_subscription(f):
     def wrapper(self, *args, **kwargs):
         message = args[0]
         user = self.get_sender_username(message)
+
+        name = getattr(f, '_jabberbot_command_name', None)
+        if name is not None:
+            self.log.info('%s called %s with %s' % (user, name, args[1:]))
+
         if user not in self.users:
             message = (
                 'You are not subscribed! Use %s to subscribe' %
