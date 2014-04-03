@@ -1,6 +1,5 @@
 REQUIREMENTS = ['python-twitter']
 
-
 # 3rd-party library
 from requests_oauthlib import OAuth1Session
 import twitter
@@ -16,6 +15,7 @@ except ImportError:
     ACCESS_TOKEN_KEY = ACCESS_TOKEN_SECRET = ''
 
 ACCESS_TOKEN_URL = 'https://api.twitter.com/oauth/access_token'
+APP_URL = 'https://twitter.com/settings/applications'
 AUTHORIZATION_URL = 'https://api.twitter.com/oauth/authorize'
 REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
 
@@ -57,7 +57,14 @@ def main(bot, user, text):
         else:
             bot.stories_tokens = {user: (token, secret)}
 
-        message = 'Please authorize here: %s' % url
+        message = 'Please authorize here: %s\n' % url
+
+        message += (
+            'Note: Though our application has write access, we are currently '
+            'not going to make any tweets from your account. We ask you to '
+            'register only to ascertain your twitter handle. You can revoke '
+            'access once you register (this is recommended!) from: %s'
+        ) % APP_URL
 
     else:
         stories_tokens = getattr(bot, 'stories_tokens', {})
@@ -66,10 +73,13 @@ def main(bot, user, text):
 
         else:
             pin = text.strip()
-            token, secret = stories_tokens.get(user)
+            token, secret = stories_tokens.pop(user)
             handle = _get_twitter_handle(token, secret, pin)
             bot.storytellers[user] = handle
-            message = 'Registered as story teller - %s.' % handle
+            message = 'Registered as story teller - %s. ' % handle
+            message += (
+                'You are encouraged to revoke access from: %s' % APP_URL
+            )
 
     return message
 
