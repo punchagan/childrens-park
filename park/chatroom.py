@@ -58,8 +58,8 @@ from park import serialize
 from park.plugin import load_file, wrap_as_bot_command
 from park.text_processing import chunk_text, highlight_word
 from park.util import (
-    get_code_from_url, google, install_log_handler, is_url, requires_invite,
-    requires_subscription
+    captured_stdout, get_code_from_url, google, install_log_handler, is_url,
+    requires_invite, requires_subscription
 )
 
 LOG_FILE_NAME = 'park.log'
@@ -154,9 +154,7 @@ class ChatRoomJabberBot(JabberBot):
         if not text:
             return
 
-        # fixme: how do we handle hooks that modify the text?
-        for hook in self._message_processors:
-            self._run_hook_in_thread(hook, self, username, text)
+        self._process_message_via_hooks(username, text)
 
         # Remember the last-talked-in thread for replies
         self._JabberBot__threads[jid] = mess.getThread()
@@ -293,6 +291,8 @@ class ChatRoomJabberBot(JabberBot):
             # fixme: do we need this?
             self.message_queue.append('')
 
+            # fixme: prints in idle hooks are not captured as messages.
+            # this may be good?
             for hook in self._idle_hooks:
                 self._run_hook_in_thread(hook, self)
 
@@ -758,6 +758,24 @@ class ChatRoomJabberBot(JabberBot):
 
         return
 
+    def _process_message_via_hooks(self, username, text):
+        """ Call the message processors on the text. """
+        # fixme: how do we handle hooks that modify the text?
+        def capture_output_from_hooks():
+            with captured_stdout() as captured:
+                threads = [
+                    self._run_hook_in_thread(hook, self, username, text)
+
+                    for hook in self._message_processors
+                ]
+                [thread.join() for thread in threads]
+
+            self.message_queue.extend(captured.output.splitlines())
+
+        thread = threading.Thread(target=capture_output_from_hooks)
+        thread.daemon = True
+        thread.start()
+
     def _run_hook_in_thread(self, hook, *args, **kwargs):
         """ Run the given hook in a new thread. """
 
@@ -765,7 +783,7 @@ class ChatRoomJabberBot(JabberBot):
         thread.daemon = True
         thread.start()
 
-        return
+        return thread
 
     def _save_code_to_plugin(self, name, code):
         """ Save the given code as a plugin file. """
