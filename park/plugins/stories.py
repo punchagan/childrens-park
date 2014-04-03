@@ -46,7 +46,7 @@ def main(bot, user, text):
         return message
 
     if len(text.strip().split()) > 1:
-        message = 'Only accepts "register" or PIN'
+        message = 'Only accepts "register", "unregister" or PIN'
 
     elif text == 'register':
         url, token, secret = _get_authorization_url()
@@ -65,6 +65,15 @@ def main(bot, user, text):
             'register only to ascertain your twitter handle. You can revoke '
             'access once you register (this is recommended!) from: %s'
         ) % APP_URL
+
+    elif text == 'unregister':
+        story_teller = bot.storytellers.pop(user, None)
+        story_token = bot.stories_tokens.pop(user, None)
+        if story_teller is not None or story_token is not None:
+            message = 'You have successfully unregistered'
+
+        else:
+            message = 'You were not registered!'
 
     else:
         stories_tokens = getattr(bot, 'stories_tokens', {})
