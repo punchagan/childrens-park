@@ -39,8 +39,16 @@ def main(bot, user, text):
 
     if len(text.strip()) == 0:
         message = (
-            'Mr. Gu10berg archives all the shor10sweet stories here:'
-            'https://twitter.com/tenwordsworth. Mr. Park10 suggests, follow!'
+            'All stories are archived at https://twitter.com/tenwordsworth'
+        )
+
+        message += 'Currently registered story tellers:\n'
+
+        message += '\n'.join(
+            [
+                '%s - @%s' % (bot.users[key], value)
+                for key, value in bot.storytellers.iteritems()
+            ]
         )
 
         return message
