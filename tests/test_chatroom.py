@@ -552,6 +552,25 @@ class TestChatRoom(unittest.TestCase):
 
         return
 
+    def test_should_capture_prints_in_hooks(self):
+        # Given
+        shutil.copy(join(HERE, 'data', 'my_hook.py'), self.plugin_dir)
+        bot = ChatRoomJabberBot(self.jid, self.password)
+        foo = 'foo@foo.com'
+        bot.users = {foo: 'foo'}
+        text = 'this is my message'
+        message = xmpp.Message(frm=foo, typ='chat', body=text)
+        expected = 'New message!'
+
+        # When
+        bot.callback_message(None, message)
+        self._wait_while(lambda: expected not in bot.message_queue, 2)
+
+        # Then
+        self.assertIn(expected, bot.message_queue)
+
+        return
+
     #### Private protocol #####################################################
 
     def _run_bot(self, bot, condition, timeout=5):
