@@ -39,7 +39,7 @@ def main(bot, user, text):
 
     if len(text.strip()) == 0:
         message = (
-            'All stories are archived at https://twitter.com/tenwordsworth'
+            'All stories are archived at https://twitter.com/tenwordsworth\n'
         )
 
         message += 'Currently registered story tellers:\n'
