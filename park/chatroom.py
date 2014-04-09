@@ -650,7 +650,7 @@ class ChatRoomJabberBot(JabberBot):
         path = self._save_code_to_plugin(name, code)
         if path is not None:
             self._load_plugin_from_path(path)
-        print name, code, path
+
         self.message_queue.append('%s registered command %s' % (user, name))
 
         return
