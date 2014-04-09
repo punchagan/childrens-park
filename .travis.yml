@@ -5,3 +5,5 @@ python:
 install: "pip install -r requirements-test.txt"
 # command to run tests
 script: py.test --cov park --cov-report term-missing park/tests/
+after_success:
+  - coveralls
