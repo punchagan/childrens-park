@@ -33,10 +33,10 @@ class TestChatRoom(unittest.TestCase):
         self.password = '********'
         self.tempdir = tempfile.mkdtemp()
         self.plugin_dir = join(self.tempdir, 'plugins')
-        shutil.copytree(join(HERE, '..', 'park', 'plugins'), self.plugin_dir)
+        shutil.copytree(join(HERE, '..', 'plugins'), self.plugin_dir)
         shutil.copy(
-            join(HERE, '..', 'sample-settings.py'),
-            join(HERE, '..', 'park', 'sample-settings.py')
+            join(HERE, '..', '..', 'sample-settings.py'),
+            join(HERE, '..', 'sample-settings.py')
         )
 
     def tearDown(self):
