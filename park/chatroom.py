@@ -772,9 +772,17 @@ class ChatRoomJabberBot(JabberBot):
 
             self.message_queue.extend(captured.output.splitlines())
 
-        thread = threading.Thread(target=capture_output_from_hooks)
-        thread.daemon = True
-        thread.start()
+        # fixme: probably should be self.no_threading?
+        # or may be capturing stdout isn't the best thing to do?
+        # or in console mode, captured_stdout does different things?
+        # the problem is captured_stdout, really! not threading.
+        if self.debug:
+            capture_output_from_hooks()
+
+        else:
+            thread = threading.Thread(target=capture_output_from_hooks)
+            thread.daemon = True
+            thread.start()
 
     def _run_hook_in_thread(self, hook, *args, **kwargs):
         """ Run the given hook in a new thread. """
