@@ -137,7 +137,10 @@ class ChatRoomJabberBot(JabberBot):
         username = self.get_sender_username(mess)
 
         if username not in self.users.keys() + self.invited.keys():
-            self.log.info('Ignored message %s from %s', text, username)
+            self.log.info(
+                'Ignored %s type message - %s - from %s',
+                mess.getType(), text, username
+            )
             return
 
         self.log.debug("*** props = %s" % props)
