@@ -559,7 +559,9 @@ class TestChatRoom(unittest.TestCase):
     def test_should_capture_prints_in_hooks(self):
         # Given
         shutil.copy(join(HERE, 'data', 'my_hook.py'), self.plugin_dir)
-        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
+        bot = ChatRoomJabberBot(
+            self.jid, self.password, debug=True, root=self.tempdir
+        )
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         text = 'this is my message'
@@ -568,7 +570,6 @@ class TestChatRoom(unittest.TestCase):
 
         # When
         bot.callback_message(None, message)
-        self._wait_while(lambda: expected not in bot.message_queue, 2)
 
         # Then
         self.assertIn(expected, bot.message_queue)
