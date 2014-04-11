@@ -1,5 +1,8 @@
-.. image:: https://travis-ci.org/punchagan/childrens-park.svg?branch=master   :target: https://travis-ci.org/punchagan/childrens-park
-.. image:: https://coveralls.io/repos/punchagan/childrens-park/badge.png?branch=master :target: https://coveralls.io/r/punchagan/childrens-park?branch=master
+.. image:: https://travis-ci.org/punchagan/childrens-park.svg?branch=master
+     :target: https://travis-ci.org/punchagan/childrens-park
+
+.. image:: https://coveralls.io/repos/punchagan/childrens-park/badge.png?branch=master
+     :target: https://coveralls.io/r/punchagan/childrens-park?branch=master
 
 Description
 ============
