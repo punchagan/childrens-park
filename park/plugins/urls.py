@@ -5,7 +5,7 @@ from lxml import html
 import os
 from os.path import abspath, dirname, join
 import shutil
-from urllib import urlopen
+from urllib2 import Request, urlopen
 
 # 3rd party library
 from premailer import transform
@@ -143,7 +143,10 @@ def _get_email(bot, db, title):
 def _get_title(url):
     """ Get the title of the page for a given url. """
 
-    return html.parse(urlopen(url)).find('.//title').text or url
+    request = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    title = html.parse(urlopen(request)).find('.//title').text or url
+
+    return title.encode('utf8')
 
 
 def _save_entries(path, entries):
