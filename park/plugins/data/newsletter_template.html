@@ -16,10 +16,6 @@
 	line-height: 1.6;
 }
 
-img {
-	max-width: 100%;
-}
-
 body {
 	-webkit-font-smoothing: antialiased;
 	-webkit-text-size-adjust: none;
@@ -90,6 +86,11 @@ table.body-wrap .container {
 	border: 1px solid #f0f0f0;
 }
 
+.entry {
+    margin: 20px auto;
+    display: block;
+    background: #F5F5F5;
+}
 
 /* -------------------------------------
 		FOOTER
@@ -187,23 +188,49 @@ ul li, ol li {
 
 			<!-- content -->
 			<div class="content">
-                {% for entry in entries %}
-                {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['timestamp'] %}
+                <h1>Shared Links</h1>
+                {% for entry in shared_links %}
+                {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['human_timestamp'] %}
+                <div class="entry">
+                    <table>
+                        <tr>
+                            <td>
+                                <img src="http://www.gravatar.com/avatar/{{hash}}?s=25" alt="{{email}}"/>
+                            </td>
+                            <td>
+                                <span>{{name}}</span> posted <a href="{{url}}">{{title}}</a> {{timestamp}}
+                            </td>
+                        </tr>
+                    </table>
+                    <table>
+                        <tr>
+                            <td>
+                                {{ entry['description'] }}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                {% endfor %}
+			</div>
+			<!-- /content -->
+
+			<!-- code-updates -->
+			<div class="content code-updates">
+                <h1>Code Updates</h1>
+                {% for entry in code_updates %}
+                {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['human_timestamp'] %}
                 <p>
                 <table>
                 <tr>
                     <td>
-                        <img src="http://www.gravatar.com/avatar/{{hash}}?s=50" alt="{{email}}"/>
-                    </td>
-                    <td>
-                        <span>{{name}}</span> posted <a href="{{url}}">{{title}}</a> at {{timestamp}}
+                        <a href="{{url}}">{{title}}</a> <small>({{timestamp}})</small>
                     </td>
                 </tr>
                 </table>
                 </p>
                 {% endfor %}
 			</div>
-			<!-- /content -->
+			<!-- /code-updates -->
 
 		</td>
 		<td></td>
