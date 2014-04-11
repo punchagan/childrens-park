@@ -190,7 +190,7 @@ ul li, ol li {
 			<div class="content">
                 <h1>Shared Links</h1>
                 {% for entry in shared_links %}
-                {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['timestamp'] %}
+                {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['human_timestamp'] %}
                 <div class="entry">
                     <table>
                         <tr>
@@ -218,7 +218,7 @@ ul li, ol li {
 			<div class="content code-updates">
                 <h1>Code Updates</h1>
                 {% for entry in code_updates %}
-                {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['timestamp'] %}
+                {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['human_timestamp'] %}
                 <p>
                 <table>
                 <tr>

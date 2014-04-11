@@ -153,7 +153,7 @@ def _get_email_content(bot, urls):
         if 'title' not in entry or len(entry['title'].strip()) == 0:
             entry['title'] = entry['url']
 
-        entry['timestamp'] = human(
+        entry['human_timestamp'] = human(
             datetime.datetime.strptime(entry['timestamp'], _TIMESTAMP_FMT)
         )
 
