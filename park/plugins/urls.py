@@ -1,3 +1,5 @@
+REQUIREMENTS = ['ago']
+
 # Standard library
 import datetime
 import hashlib
@@ -9,6 +11,7 @@ from urllib2 import Request, urlopen
 
 # 3rd party library
 from premailer import transform
+from ago import human
 
 # Project library
 from park import serialize
@@ -108,12 +111,18 @@ def _clear_urls(path):
 def _get_email_content(bot, urls):
     """" Return the content section of the email. """
 
+    # fixme: we could do a better job with repeated items, order of urls
+
     for entry in urls:
         email = entry['user']
         entry['name'] = bot.users.get(email) or bot.invited.get(email, email)
         entry['hash'] = hashlib.md5(email).hexdigest()
         if 'title' not in entry:
             entry['title'] = entry['url']
+
+        entry['timestamp'] = human(
+            datetime.datetime.strptime(entry['timestamp'], _TIMESTAMP_FMT)
+        )
 
     return urls
 

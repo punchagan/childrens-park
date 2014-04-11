@@ -193,7 +193,7 @@ ul li, ol li {
                         <img src="http://www.gravatar.com/avatar/{{hash}}?s=50" alt="{{email}}"/>
                     </td>
                     <td>
-                        <span>{{name}}</span> posted <a href="{{url}}">{{title}}</a> at {{timestamp}}
+                        <span>{{name}}</span> posted <a href="{{url}}">{{title}}</a> {{timestamp}}
                     </td>
                 </tr>
                 </table>
@@ -211,10 +211,7 @@ ul li, ol li {
                 <table>
                 <tr>
                     <td>
-                        <img src="http://www.gravatar.com/avatar/{{hash}}?s=50" alt="{{email}}"/>
-                    </td>
-                    <td>
-                        <span>{{name}}</span> posted <a href="{{url}}">{{title}}</a> at {{timestamp}}
+                        <a href="{{url}}">{{title}}</a> <small>({{timestamp}})</small>
                     </td>
                 </tr>
                 </table>
