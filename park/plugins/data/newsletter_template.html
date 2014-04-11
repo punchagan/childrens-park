@@ -16,10 +16,6 @@
 	line-height: 1.6;
 }
 
-img {
-	max-width: 100%;
-}
-
 body {
 	-webkit-font-smoothing: antialiased;
 	-webkit-text-size-adjust: none;
@@ -187,7 +183,8 @@ ul li, ol li {
 
 			<!-- content -->
 			<div class="content">
-                {% for entry in entries %}
+                <h1>Shared Links</h1>
+                {% for entry in shared_links %}
                 {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['timestamp'] %}
                 <p>
                 <table>
@@ -204,6 +201,27 @@ ul li, ol li {
                 {% endfor %}
 			</div>
 			<!-- /content -->
+
+			<!-- code-updates -->
+			<div class="content code-updates">
+                <h1>Code Updates</h1>
+                {% for entry in code_updates %}
+                {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['timestamp'] %}
+                <p>
+                <table>
+                <tr>
+                    <td>
+                        <img src="http://www.gravatar.com/avatar/{{hash}}?s=50" alt="{{email}}"/>
+                    </td>
+                    <td>
+                        <span>{{name}}</span> posted <a href="{{url}}">{{title}}</a> at {{timestamp}}
+                    </td>
+                </tr>
+                </table>
+                </p>
+                {% endfor %}
+			</div>
+			<!-- /code-updates -->
 
 		</td>
 		<td></td>

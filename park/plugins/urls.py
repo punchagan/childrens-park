@@ -46,7 +46,6 @@ def message_processor(bot, user, text):
     return
 
 
-# fixme: possibly could live in it's own plugin, once we do more than urls
 def idle_hook(bot):
     """ Check if it is time to send the newsletter, and send it. """
 
@@ -61,13 +60,9 @@ def idle_hook(bot):
         _save_timestamp(bot)
 
     elif _time_since(last_newsletter).days >= 7:
-        bot.lock.acquire()
-        urls = serialize.read_state(db)
-        bot.lock.release()
-        if len(urls) > 0:
-            _send_newsletter(bot, urls, last_newsletter)
-            _clear_urls(db)
-            _save_timestamp(bot)
+        _send_newsletter(bot, db, last_newsletter)
+        _clear_urls(db)
+        _save_timestamp(bot)
 
     return
 
@@ -87,7 +82,7 @@ def main(bot, user, args):
     else:
         fro = bot.username
         subject = 'Park updates since last newsletter'
-        body = _get_email(bot, data, subject)
+        body = _get_email(bot, path, subject)
         send_email(fro, user, subject, body, typ_='html', debug=bot.debug)
         message = 'Sent email to %s' % user
 
@@ -123,12 +118,23 @@ def _get_email_content(bot, urls):
     return urls
 
 
-def _get_email(bot, urls, subject):
+def _get_email(bot, db, title):
     """ Return the content to be used for the newsletter. """
 
-    context = {
-        'entries': _get_email_content(bot, urls[:]), 'title': subject
-    }
+    # Get urls from the db
+    bot.lock.acquire()
+    urls = serialize.read_state(db)
+    bot.lock.release()
+
+    entries = _get_email_content(bot, urls[:])
+    context = {'title': title}
+
+    for entry in entries:
+        if 'github.com/punchagan/childrens-park' in entry['url']:
+            context.setdefault('code_updates', []).append(entry)
+
+        else:
+            context.setdefault('shared_links', []).append(entry)
 
     template = join(HERE, 'data', 'newsletter_template.html')
     return transform(render_template(template, context))
@@ -161,13 +167,13 @@ def _save_timestamp(bot):
     return
 
 
-def _send_newsletter(bot, urls, last_sent):
+def _send_newsletter(bot, db, last_sent):
     """ Send the newsletter and save the timestamp to the state. """
 
     last_sent = last_sent.strftime('%b %d')
     now = datetime.datetime.now().strftime('%b %d')
     subject = 'Parkly Newsletter for %s to %s' % (last_sent, now)
-    body = _get_email(bot, urls, subject)
+    body = _get_email(bot, db, subject)
     fro = bot.username
     to = bot.users.keys() + bot.invited.keys()
 
