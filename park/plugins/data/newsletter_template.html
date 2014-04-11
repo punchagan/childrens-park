@@ -86,6 +86,11 @@ table.body-wrap .container {
 	border: 1px solid #f0f0f0;
 }
 
+.entry {
+    margin: 20px auto;
+    display: block;
+    background: #F5F5F5;
+}
 
 /* -------------------------------------
 		FOOTER
@@ -186,18 +191,25 @@ ul li, ol li {
                 <h1>Shared Links</h1>
                 {% for entry in shared_links %}
                 {% set url, title, email, name, hash, timestamp = entry['url'], entry['title'], entry['user'], entry['name'], entry['hash'], entry['timestamp'] %}
-                <p>
-                <table>
-                <tr>
-                    <td>
-                        <img src="http://www.gravatar.com/avatar/{{hash}}?s=50" alt="{{email}}"/>
-                    </td>
-                    <td>
-                        <span>{{name}}</span> posted <a href="{{url}}">{{title}}</a> {{timestamp}}
-                    </td>
-                </tr>
-                </table>
-                </p>
+                <div class="entry">
+                    <table>
+                        <tr>
+                            <td>
+                                <img src="http://www.gravatar.com/avatar/{{hash}}?s=25" alt="{{email}}"/>
+                            </td>
+                            <td>
+                                <span>{{name}}</span> posted <a href="{{url}}">{{title}}</a> {{timestamp}}
+                            </td>
+                        </tr>
+                    </table>
+                    <table>
+                        <tr>
+                            <td>
+                                {{ entry['description'] }}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
                 {% endfor %}
 			</div>
 			<!-- /content -->

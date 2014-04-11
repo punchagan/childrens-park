@@ -3,11 +3,13 @@ REQUIREMENTS = ['ago']
 # Standard library
 import datetime
 import hashlib
-from lxml import html
 import os
 from os.path import abspath, dirname, join
 import shutil
 from urllib2 import Request, urlopen
+
+from lxml import html
+
 
 # 3rd party library
 from premailer import transform
@@ -32,9 +34,11 @@ def message_processor(bot, user, text):
     entries = []
 
     for url in urls:
+        content = _get_parsed_content(url)
         entry = {
             'url': url,
-            'title': _get_title(url),
+            'title': _get_title(content) or url,
+            'description': _get_description(content),
             'user': user,
             'timestamp': datetime.datetime.now().isoformat()
         }
@@ -107,6 +111,34 @@ def _clear_urls(path):
     return
 
 
+def _get_description(content):
+    """ Get the description of a given the parsed content. """
+
+    # Get description like Google+ snippets does
+    elements = [
+        content.find("//*[@itemprop='description']"),
+        content.find("//*[@property='og:description']"),
+        content.find("//meta[@name='description']")
+    ]
+
+    descriptions = [
+        element.text_content() or element.get('content') or ''
+
+        for element in elements if element is not None
+    ]
+
+    if len(descriptions) == 0:
+        description = ''
+
+    elif len(descriptions) == 1:
+        description = descriptions[0]
+
+    else:
+        description = max(descriptions, key=len)
+
+    return description.strip().encode('utf8')
+
+
 def _get_email_content(bot, urls):
     """" Return the content section of the email. """
 
@@ -118,7 +150,7 @@ def _get_email_content(bot, urls):
         email = entry['user']
         entry['name'] = bot.users.get(email) or bot.invited.get(email, email)
         entry['hash'] = hashlib.md5(email).hexdigest()
-        if 'title' not in entry:
+        if 'title' not in entry or len(entry['title'].strip()) == 0:
             entry['title'] = entry['url']
 
         entry['timestamp'] = human(
@@ -136,7 +168,11 @@ def _get_email(bot, db, title):
     urls = serialize.read_state(db)
     bot.lock.release()
 
-    entries = _get_email_content(bot, urls[:])
+    entries = [
+        entry for entry in _get_email_content(bot, urls[:])
+
+        if len(entry['url']) != 0
+    ]
     context = {'title': title}
 
     for entry in entries:
@@ -150,13 +186,27 @@ def _get_email(bot, db, title):
     return transform(render_template(template, context))
 
 
-def _get_title(url):
-    """ Get the title of the page for a given url. """
+def _get_parsed_content(url):
+    """ Return the parsed html of a given page. """
 
-    request = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    title = html.parse(urlopen(request)).find('.//title').text or url
+    try:
+        request = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        response = urlopen(request)
 
-    return title.encode('utf8')
+    except Exception:
+        from StringIO import StringIO
+        response = StringIO('<html></html>')
+
+    return html.parse(response)
+
+
+def _get_title(content):
+    """ Get the title of the page given parsed content. """
+
+    element = content.find('.//title')
+    title = element.text or '' if element is not None else ''
+
+    return title.strip().encode('utf8')
 
 
 def _save_entries(path, entries):
