@@ -63,6 +63,7 @@ from park.util import (
 )
 
 LOG_FILE_NAME = 'park.log'
+HERE = dirname(abspath(__file__))
 
 
 class ChatRoomJabberBot(JabberBot):
@@ -75,12 +76,15 @@ class ChatRoomJabberBot(JabberBot):
     #: Maximum allowed length of nick
     NICK_LEN = 24
 
-    ROOT = dirname(abspath(__file__))
-
-    def __init__(self, username, password, res=None, debug=False):
+    def __init__(self, username, password, res=None, debug=False, root=None):
         super(ChatRoomJabberBot, self).__init__(
             username, password, res, debug=debug
         )
+
+        # Root directory
+        if root is None:
+            root = HERE
+        self.root = root
 
         self.debug = debug
         self.username = username
@@ -116,7 +120,7 @@ class ChatRoomJabberBot(JabberBot):
     def db(self):
         """ Returns the path to the persistence file. """
 
-        return join(self.ROOT, 'state.json')
+        return join(self.root, 'state.json')
 
     #### JabberBot interface ##################################################
 
@@ -751,7 +755,7 @@ class ChatRoomJabberBot(JabberBot):
     def _load_plugins(self):
         """ Load all the plugins from the plugin directory. """
 
-        plugin_dir = join(self.ROOT, 'plugins')
+        plugin_dir = join(self.root, 'plugins')
 
         for path in glob.glob(join(plugin_dir, '*.py')):
             self._load_plugin_from_path(path)
@@ -772,9 +776,17 @@ class ChatRoomJabberBot(JabberBot):
 
             self.message_queue.extend(captured.output.splitlines())
 
-        thread = threading.Thread(target=capture_output_from_hooks)
-        thread.daemon = True
-        thread.start()
+        # fixme: probably should be self.no_threading?
+        # or may be capturing stdout isn't the best thing to do?
+        # or in console mode, captured_stdout does different things?
+        # the problem is captured_stdout, really! not threading.
+        if self.debug:
+            capture_output_from_hooks()
+
+        else:
+            thread = threading.Thread(target=capture_output_from_hooks)
+            thread.daemon = True
+            thread.start()
 
     def _run_hook_in_thread(self, hook, *args, **kwargs):
         """ Run the given hook in a new thread. """
@@ -789,7 +801,7 @@ class ChatRoomJabberBot(JabberBot):
         """ Save the given code as a plugin file. """
 
         # fixme: the directory should be called something meaningful.
-        gist_plugin_dir = join(self.ROOT, 'gist_plugins')
+        gist_plugin_dir = join(self.root, 'gist_plugins')
         if not exists(gist_plugin_dir):
             makedirs(gist_plugin_dir)
 

@@ -20,7 +20,7 @@ DB_NAME = 'newsletter.json'
 
 
 def message_processor(bot, user, text):
-    """ Dump a message to the db in the bot's ROOT, if it has a url. """
+    """ Dump a message to the db in the bot's root, if it has a url. """
 
     urls = [token for token in text.split() if is_url(token)]
 
@@ -38,7 +38,7 @@ def message_processor(bot, user, text):
         }
         entries.append(entry)
 
-    path = join(bot.ROOT, DB_NAME)
+    path = join(bot.root, DB_NAME)
     bot.lock.acquire()
     _save_entries(path, entries)
     bot.lock.release()
@@ -50,7 +50,7 @@ def message_processor(bot, user, text):
 def idle_hook(bot):
     """ Check if it is time to send the newsletter, and send it. """
 
-    db = join(bot.ROOT, DB_NAME)
+    db = join(bot.root, DB_NAME)
     data = bot.read_state()
     last_newsletter = (
         datetime.datetime.strptime(data['last_newsletter'], _TIMESTAMP_FMT)
@@ -75,7 +75,7 @@ def idle_hook(bot):
 def main(bot, user, args):
     """ Show URLs posted by buddies. The ones since I last checked """
 
-    path = join(bot.ROOT, DB_NAME)
+    path = join(bot.root, DB_NAME)
 
     bot.lock.acquire()
     data = serialize.read_state(path)

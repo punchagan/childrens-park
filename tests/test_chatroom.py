@@ -31,7 +31,7 @@ class TestChatRoom(unittest.TestCase):
     def setUp(self):
         self.jid = 'test@example.com'
         self.password = '********'
-        self.tempdir = ChatRoomJabberBot.ROOT = tempfile.mkdtemp()
+        self.tempdir = tempfile.mkdtemp()
         self.plugin_dir = join(self.tempdir, 'plugins')
         shutil.copytree(join(HERE, '..', 'park', 'plugins'), self.plugin_dir)
         shutil.copy(
@@ -44,7 +44,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_read_state_file(self):
         # Given
-        _bot = ChatRoomJabberBot(self.jid, self.password)
+        _bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         state = {
             'users': {
                 'foo': 'foo@example.com',
@@ -54,7 +54,7 @@ class TestChatRoom(unittest.TestCase):
         serialize.save_state(_bot.db, state)
 
         # When
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
 
         # Then
         self.assertDictEqual(bot.users, state['users'])
@@ -63,7 +63,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_save_state_on_shutdown(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bot.users = {
             'foo': 'foo@foo.com'
         }
@@ -81,7 +81,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_not_send_message_from_unsubscribed_user(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         message = xmpp.Message(frm='foo@foo.com', typ='chat')
         text = 'this is my message'
 
@@ -95,7 +95,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_send_message_in_third_person(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         message = xmpp.Message(frm=foo, typ='chat')
@@ -111,7 +111,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_not_unsubscribe_unknown_user(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         # bot.users = {foo: 'foo'}
         message = xmpp.Message(frm=foo, typ='chat')
@@ -126,7 +126,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_unsubscribe_user(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         message = xmpp.Message(frm=foo, typ='chat')
@@ -142,7 +142,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_not_allow_duplicate_alias(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bar = 'bar@bar.com'
         users = {foo: 'foo', bar: 'bar'}
@@ -159,7 +159,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_change_alias(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         message = xmpp.Message(frm=foo, typ='chat')
@@ -175,7 +175,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_not_allow_empty_nick(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         message = xmpp.Message(frm=foo, typ='chat')
@@ -190,7 +190,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_show_help_to_unknown_user(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         message = xmpp.Message(frm='', typ='chat')
 
         # When
@@ -204,7 +204,7 @@ class TestChatRoom(unittest.TestCase):
     def test_should_show_attributes(self):
         # Given
         attributes = 'users topic'
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         bot.topic = 'bazooka'
@@ -222,7 +222,7 @@ class TestChatRoom(unittest.TestCase):
     def test_should_not_show_private_attributes(self):
         # Given
         attributes = '_state'
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         bot.topic = 'bazooka'
@@ -238,7 +238,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_google(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         message = xmpp.Message(frm=foo, typ='chat')
@@ -254,7 +254,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_find_subscribed_user(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         message = xmpp.Message(frm=foo, typ='chat')
@@ -269,7 +269,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_not_find_unknown_user(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         message = xmpp.Message(frm=foo, typ='chat')
@@ -284,7 +284,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_list_users(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bar = 'bar@bar.com'
         bot.users = {foo: 'foo'}
@@ -302,7 +302,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_not_subscribe_uninvited_user(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         message = xmpp.Message(frm=bar, typ='chat')
 
@@ -316,7 +316,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_not_subscribe_already_subscribed_user(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         message = xmpp.Message(frm=bar, typ='chat')
@@ -331,7 +331,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_subscribe_invited_user(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.invited = {bar: 'bar'}
         message = xmpp.Message(frm=bar, typ='chat')
@@ -346,7 +346,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_disable_dnd(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.invited = {bar: 'bar'}
         message = xmpp.Message(frm=bar, typ='chat')
@@ -361,7 +361,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_enable_dnd(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         message = xmpp.Message(frm=bar, typ='chat')
@@ -376,7 +376,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_broadcast_non_cmd_messages(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         message = xmpp.Message(frm=bar, typ='chat', body='foo')
@@ -392,7 +392,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_not_broadcast_unknown_cmd(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         message = xmpp.Message(frm=bar, typ='chat', body=',foo bar')
@@ -413,7 +413,7 @@ class TestChatRoom(unittest.TestCase):
     def test_should_add_hello_world_as_bot_command(self):
         # Given
         shutil.copy(join(HERE, 'data', 'hello_world.py'), self.plugin_dir)
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         message = xmpp.Message(frm=bar, typ='chat', body=',hello_world')
@@ -431,7 +431,7 @@ class TestChatRoom(unittest.TestCase):
     def test_should_add_hello_name_as_bot_command(self):
         # Given
         shutil.copy(join(HERE, 'data', 'hello_name.py'), self.plugin_dir)
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         message = xmpp.Message(frm=bar, typ='chat', body=',hello_name foo')
@@ -447,7 +447,7 @@ class TestChatRoom(unittest.TestCase):
     def test_should_add_hello_custom_as_bot_command(self):
         # Given
         shutil.copy(join(HERE, 'data', 'hello_custom.py'), self.plugin_dir)
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         message = xmpp.Message(
@@ -465,7 +465,7 @@ class TestChatRoom(unittest.TestCase):
     def test_should_add_hello_all_as_bot_command(self):
         # Given
         shutil.copy(join(HERE, 'data', 'hello_all.py'), self.plugin_dir)
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         message = xmpp.Message(frm=bar, typ='chat', body=',hello_all')
@@ -482,7 +482,7 @@ class TestChatRoom(unittest.TestCase):
     def test_should_update_hello_world_command(self):
         # Given
         shutil.copy(join(HERE, 'data', 'hello_world.py'), self.plugin_dir)
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         message = xmpp.Message(frm=bar, typ='chat', body=',hello_world')
@@ -503,12 +503,14 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_show_urls(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password, debug=True)
+        bot = ChatRoomJabberBot(
+            self.jid, self.password, debug=True, root=self.tempdir
+        )
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         url = 'http://muse-amuse.in'
         text = 'this is %s' % url
-        db_path = join(bot.ROOT, DB_NAME)
+        db_path = join(bot.root, DB_NAME)
         bot.callback_message(
             None,  xmpp.Message(frm=bar, typ='chat', body=text)
         )
@@ -527,12 +529,14 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_send_newsletter(self):
         # Given
-        bot = ChatRoomJabberBot(self.jid, self.password, debug=True)
+        bot = ChatRoomJabberBot(
+            self.jid, self.password, debug=True, root=self.tempdir
+        )
         bar = 'bar@bar.com'
         bot.users = {bar: 'bar'}
         url = 'http://muse-amuse.in'
         text = 'this is %s' % url
-        db_path = join(bot.ROOT, DB_NAME)
+        db_path = join(bot.root, DB_NAME)
         bot.callback_message(
             None,  xmpp.Message(frm=bar, typ='chat', body=text)
         )
@@ -555,7 +559,7 @@ class TestChatRoom(unittest.TestCase):
     def test_should_capture_prints_in_hooks(self):
         # Given
         shutil.copy(join(HERE, 'data', 'my_hook.py'), self.plugin_dir)
-        bot = ChatRoomJabberBot(self.jid, self.password)
+        bot = ChatRoomJabberBot(self.jid, self.password, root=self.tempdir)
         foo = 'foo@foo.com'
         bot.users = {foo: 'foo'}
         text = 'this is my message'
