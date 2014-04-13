@@ -10,10 +10,6 @@ but preference is given to messages of the user.
 # Standard library
 import re
 
-# 3rd party library
-
-# Project library
-
 HISTORY_LENGTH = 5  # keep only the last 5 messages in history.
 
 
