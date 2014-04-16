@@ -717,7 +717,6 @@ class ChatRoomJabberBot(JabberBot):
                 if line.startswith('REQUIREMENTS'):
                     ns = {}
                     exec line in ns
-                    # eval(line, ns)
                     requirements = ns['REQUIREMENTS']
                     break
             else:

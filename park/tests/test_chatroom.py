@@ -19,7 +19,6 @@ import xmpp
 # Project library
 from park import serialize
 from park.chatroom import ChatRoomJabberBot
-from park.plugins.urls import DB_NAME
 from park.util import captured_stdout
 
 HERE = dirname(abspath(__file__))
@@ -503,6 +502,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_show_urls(self):
         # Given
+        from park.plugins.urls import DB_NAME
         bot = ChatRoomJabberBot(
             self.jid, self.password, debug=True, root=self.tempdir
         )
@@ -529,6 +529,7 @@ class TestChatRoom(unittest.TestCase):
 
     def test_should_send_newsletter(self):
         # Given
+        from park.plugins.urls import DB_NAME
         bot = ChatRoomJabberBot(
             self.jid, self.password, debug=True, root=self.tempdir
         )
