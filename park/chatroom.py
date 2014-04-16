@@ -739,9 +739,6 @@ class ChatRoomJabberBot(JabberBot):
     def _load_plugin_from_path(self, path):
         """ Load the plugin at the given path. """
 
-        for requirement in self._get_requirements(path):
-            self._install(requirement)
-
         plugin = load_file(path)
 
         if getattr(plugin, 'main', None) is not None:
@@ -758,9 +755,13 @@ class ChatRoomJabberBot(JabberBot):
     def _load_plugins(self):
         """ Load all the plugins from the plugin directory. """
 
-        plugin_dir = join(self.root, 'plugins')
+        plugins = glob.glob(join(self.root, 'plugins', '*.py'))
 
-        for path in glob.glob(join(plugin_dir, '*.py')):
+        for path in plugins:
+            for requirement in self._get_requirements(path):
+                self._install(requirement)
+
+        for path in plugins:
             self._load_plugin_from_path(path)
 
         return
