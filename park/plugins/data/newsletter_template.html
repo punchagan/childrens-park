@@ -214,6 +214,24 @@ ul li, ol li {
 			</div>
 			<!-- /content -->
 
+            <!-- stories -->
+			<div class="content stories">
+                <h1>Stories</h1>
+                {% for story in stories %}
+                {% set base_url = 'https://twitter.com/' + story.user.screen_name %}
+                <p>
+                <table>
+                <tr>
+                    <td>
+                        {{story.text}} <small>(<a href="{{base_url}}/status/{{story.id}}">{{story.relative_created_at}}</a>)</small>
+                    </td>
+                </tr>
+                </table>
+                </p>
+                {% endfor %}
+			</div>
+            <!-- /stories -->
+
 			<!-- code-updates -->
 			<div class="content code-updates">
                 <h1>Code Updates</h1>

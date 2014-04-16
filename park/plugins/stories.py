@@ -101,6 +101,39 @@ def main(bot, user, text):
     return message
 
 
+def get_tweets_since(last_checked=None, since_id=None):
+    """ Return the list of tweets after a specified time or id.
+
+    If an id is not specified, either all tweets newer than the specified
+    timestamp or a maximum of 200 tweets are returned.
+
+    """
+
+    api = twitter.Api(
+        consumer_key=CONSUMER_KEY,
+        consumer_secret=CONSUMER_SECRET,
+        access_token_key=ACCESS_TOKEN_KEY,
+        access_token_secret=ACCESS_TOKEN_SECRET
+    )
+
+    # 200 limit is set by twitter? python-twitter doesn't let count > 200.
+    try:
+        tweets = api.GetUserTimeline(
+            count=200, since_id=since_id, include_rts=False
+        )
+
+    except Exception:
+        tweets = []
+
+    if last_checked is not None:
+        tweets = [
+            tweet for tweet in tweets
+            if tweet.created_at_in_seconds > _to_seconds(last_checked)
+        ]
+
+    return tweets
+
+
 def _get_authorization_url():
     """ Return a twitter authorization URL, the oauth token and secret. """
 
@@ -145,6 +178,12 @@ def _post_tweet(text):
         message = e.message[0]['message']
 
     return message
+
+
+def _to_seconds(timestamp):
+    """ Convert a datetime timestamp into seconds since epoch. """
+
+    return (timestamp - timestamp.utcfromtimestamp(0)).total_seconds()
 
 
 def _tweet_story(bot, story, user):

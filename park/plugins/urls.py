@@ -16,6 +16,7 @@ from premailer import transform
 
 # Project library
 from park import serialize
+from park.plugins.stories import get_tweets_since
 from park.serialize import read_state, save_state
 from park.util import is_url, render_template, send_email
 
@@ -55,7 +56,6 @@ def message_processor(bot, user, text):
 def idle_hook(bot):
     """ Check if it is time to send the newsletter, and send it. """
 
-    db = join(bot.root, DB_NAME)
     data = bot.read_state()
     last_newsletter = (
         datetime.datetime.strptime(data['last_newsletter'], _TIMESTAMP_FMT)
@@ -66,6 +66,7 @@ def idle_hook(bot):
         _save_timestamp(bot)
 
     elif _time_since(last_newsletter).days >= 7:
+        db = join(bot.root, DB_NAME)
         _send_newsletter(bot, db, last_newsletter)
         _clear_urls(db)
         _save_timestamp(bot)
@@ -182,6 +183,8 @@ def _get_email(bot, db, title):
         else:
             context.setdefault('shared_links', []).append(entry)
 
+    context['stories'] = _get_stories(bot)
+
     template = join(HERE, 'data', 'newsletter_template.html')
     return transform(render_template(template, context))
 
@@ -207,6 +210,23 @@ def _get_title(content):
     title = element.text or '' if element is not None else ''
 
     return title.strip().encode('utf8')
+
+
+def _get_stories(bot):
+    """ Get the stories posted since the last newsletter. """
+
+    data = bot.read_state()
+    last_newsletter = (
+        datetime.datetime.strptime(data['last_newsletter'], _TIMESTAMP_FMT)
+        if 'last_newsletter' in data else None
+    )
+    stories_max_id = data.get('stories_since_id', None)
+    tweets = get_tweets_since(last_newsletter, stories_max_id)
+
+    if len(tweets) > 0:
+        bot.save_state(extra_state={'stories_since_id': tweets[0].id})
+
+    return tweets
 
 
 def _save_entries(path, entries):
