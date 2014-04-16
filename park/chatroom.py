@@ -687,6 +687,8 @@ class ChatRoomJabberBot(JabberBot):
             code = get_code_from_url(url)
             name = basename(url)
             path = self._save_code_to_plugin(name, code)
+            for requirement in self._get_requirements(path):
+                self._install(requirement)
             if path is not None:
                 self._load_plugin_from_path(path)
 
