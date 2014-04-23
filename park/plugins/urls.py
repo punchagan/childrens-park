@@ -89,7 +89,8 @@ def main(bot, user, args):
     else:
         fro = bot.username
         subject = 'Park updates since last newsletter'
-        body = _get_email(bot, path, subject)
+        additional_content = {'stories': _get_stories(bot, save=False)}
+        body = _get_email(bot, path, subject, additional_content)
         send_email(fro, user, subject, body, typ_='html', debug=bot.debug)
         message = 'Sent email to %s' % user
 
@@ -161,7 +162,7 @@ def _get_email_content(bot, urls):
     return urls
 
 
-def _get_email(bot, db, title):
+def _get_email(bot, db, title, additional_content=None):
     """ Return the content to be used for the newsletter. """
 
     # Get urls from the db
@@ -183,7 +184,8 @@ def _get_email(bot, db, title):
         else:
             context.setdefault('shared_links', []).append(entry)
 
-    context['stories'] = _get_stories(bot)
+    if additional_content is not None:
+        context.update(additional_content)
 
     template = join(HERE, 'data', 'newsletter_template.html')
     return transform(render_template(template, context))
@@ -212,7 +214,7 @@ def _get_title(content):
     return title.strip().encode('utf8')
 
 
-def _get_stories(bot):
+def _get_stories(bot, save=True):
     """ Get the stories posted since the last newsletter. """
 
     data = bot.read_state()
@@ -223,7 +225,7 @@ def _get_stories(bot):
     stories_max_id = data.get('stories_since_id', None)
     tweets = get_tweets_since(last_newsletter, stories_max_id)
 
-    if len(tweets) > 0:
+    if len(tweets) > 0 and save:
         bot.save_state(extra_state={'stories_since_id': tweets[0].id})
 
     return tweets
@@ -256,7 +258,8 @@ def _send_newsletter(bot, db, last_sent):
     last_sent = last_sent.strftime('%b %d')
     now = datetime.datetime.now().strftime('%b %d')
     subject = 'Parkly Newsletter for %s to %s' % (last_sent, now)
-    body = _get_email(bot, db, subject)
+    additional_content = {'stories': _get_stories(bot)}
+    body = _get_email(bot, db, subject, additional_content)
     fro = bot.username
     to = bot.users.keys() + bot.invited.keys()
 
