@@ -6,6 +6,15 @@ def find_version():
     return park.__version__
 
 
+def get_requirements():
+    """ Get the requirements from requirements.txt file. """
+
+    with open('requirements.txt') as f:
+        requirements = f.readlines()
+
+    return requirements
+
+
 def init_settings():
     """ Initialize settings. """
 
@@ -58,11 +67,7 @@ setup(
 
     # List run-time dependencies here.  These will be installed by pip when
     # your project is installed.
-    install_requires=[
-        'jabberbot',
-        'xmpppy==0.5.0rc1',
-        'beautifulsoup',
-    ],
+    install_requires=get_requirements(),
 
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and
