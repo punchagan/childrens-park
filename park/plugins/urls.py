@@ -195,7 +195,13 @@ def _get_parsed_content(url):
     """ Return the parsed html of a given page. """
 
     try:
-        request = Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        request = Request(
+            url,
+            headers={
+                'User-Agent':
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko)'
+            }
+        )
         response = urlopen(request)
 
     except Exception:
