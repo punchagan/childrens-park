@@ -17,7 +17,7 @@ from StringIO import StringIO
 import smtplib
 import sys
 from urlparse import urlparse
-from urllib2 import urlopen, HTTPError
+from urllib2 import unquote, urlopen, HTTPError
 
 # 3rd party library
 from jinja2 import Template
@@ -113,7 +113,7 @@ def google(query):
     top = data.get('responseData', {}).get('results', [{}])[0]
 
     if 'title' in top and 'url' in top:
-        result = '%s -- %s' % (top['title'], top['url'])
+        result = '%s -- %s' % (top['title'], unquote(top['url']))
 
     else:
         result = None
