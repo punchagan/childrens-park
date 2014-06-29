@@ -240,6 +240,21 @@ class ChatRoomJabberBot(JabberBot):
 
         return self.conn
 
+    def get_email_from_nick(self, nick):
+        """ Return the email of the user with the given nick.
+
+        Returns None, if no such nick exists.
+
+        """
+
+        for email, alias in self.users.iteritems():
+            if nick == alias:
+                break
+        else:
+            email = None
+
+        return email
+
     def get_sender_nick(self, mess):
         """ Get the nick of the user from a message. """
 
