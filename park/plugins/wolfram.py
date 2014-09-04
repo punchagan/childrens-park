@@ -15,18 +15,15 @@ def main(bot, user, args):
     def query_wolfram(args):
         results = wolframalpha.Client(WOLFRAM_API_KEY).query(args)
 
-        try:
-            result = next(results.results).text
+        for pod in results.pods:
+            if pod.id == 'Result':
+                bot.message_queue.append(
+                    '%s wolframmed for %s... and here you go: '
+                    % (bot.users[user], args)
+                )
+                bot.message_queue.append(pod.text)
 
-        except StopIteration:
-            result = None
-
-        if result is not None:
-            bot.message_queue.append(
-                '%s wolframmed for %s... and here you go: '
-                % (bot.users[user], args)
-            )
-            bot.message_queue.append(result)
+                break
 
         else:
             bot.send(user, 'No results found!')
