@@ -29,7 +29,7 @@ def main(bot, user, args):
             bot.message_queue.append(result)
 
         else:
-            return 'No results found!'
+            bot.send(user, 'No results found!')
 
     thread = threading.Thread(target=query_wolfram, args=(args,))
     thread.start()
