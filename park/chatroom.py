@@ -62,8 +62,8 @@ from park.util import (
     requires_invite, requires_subscription
 )
 
-LOG_FILE_NAME = 'park.log'
 HERE = dirname(abspath(__file__))
+LOG_FILE_NAME = join(HERE, 'park.log')
 
 
 class ChatRoomJabberBot(JabberBot):
