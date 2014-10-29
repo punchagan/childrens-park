@@ -19,6 +19,13 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
+
+# Data
 /users.py
 *settings.py
 *state.py
+*park.log*
+*newsletter*json
+state.json
+gist_plugins
+.env
