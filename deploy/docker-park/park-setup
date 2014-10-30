@@ -1,0 +1,13 @@
+#!/bin/bash
+
+readonly PARK_DIR=/opt/park
+readonly PARK_VENV=/opt/park/.venv
+
+cd ${PARK_DIR}
+virtualenv ${PARK_VENV}
+git clone https://github.com/punchagan/childrens-park || (cd childrens-park && git pull)
+cd childrens-park
+${PARK_VENV}/bin/pip install -r requirements.txt
+${PARK_VENV}/bin/python setup.py develop 
+
+${PARK_VENV}/bin/park
