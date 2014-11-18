@@ -193,16 +193,11 @@ class ChatRoomJabberBot(JabberBot):
 
     def connect(self):
         if not self.conn:
-            conn = xmpp.Client(self.jid.getDomain(), debug=[])
-
-            if self.jid.getDomain() == 'gmail.com':
-                conres = conn.connect(server=('talk.google.com', 5222))
-            else:
-                conres = conn.connect()
+            conn = xmpp.Client(self.server, debug=[])
+            conres = conn.connect()
 
             if not conres:
-                server = self.jid.getDomain()
-                self.log.error('unable to connect to %s.' % server)
+                self.log.error('unable to connect to %s.' % self.server)
                 return None
             if conres != 'tls':
                 self.log.warning('TLS failed! - using unsecure connection')
@@ -216,7 +211,7 @@ class ChatRoomJabberBot(JabberBot):
                 self._attempt_reconnect()
 
             if authres != 'sasl':
-                self.log.warning("SASL failed on %s" % self.jid.getDomain())
+                self.log.warning("SASL failed on %s" % self.server)
                 self.log.warging("Old authentication method used!")
 
             conn.sendInitPresence()
