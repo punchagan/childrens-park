@@ -76,7 +76,7 @@ class ChatRoomJabberBot(JabberBot):
     #: Maximum allowed length of nick
     NICK_LEN = 24
 
-    def __init__(self, username, password, res=None, debug=False, root=None):
+    def __init__(self, username, password, server=None, res=None, debug=False, root=None):
         super(ChatRoomJabberBot, self).__init__(
             username, password, res, debug=debug
         )
@@ -88,6 +88,7 @@ class ChatRoomJabberBot(JabberBot):
 
         self.debug = debug
         self.username = username
+        self.server = server if server is not None else self.jid.getDomain()
         self.lock = threading.RLock()
 
         self._state = self.read_state()
@@ -859,7 +860,7 @@ class ChatRoomJabberBot(JabberBot):
 
 def main():
     try:
-        from park.settings import USERNAME, PASSWORD, RES
+        from park.settings import USERNAME, PASSWORD, RES, SERVER
     except ImportError:
         print('Please copy sample-settings.py to settings.py and edit it!')
         sys.exit(1)
@@ -867,7 +868,7 @@ def main():
     debug = True if '--debug' in sys.argv else False
     install_log_handler(LOG_FILE_NAME, debug=debug)
 
-    bc = ChatRoomJabberBot(USERNAME, PASSWORD, RES, debug=debug)
+    bc = ChatRoomJabberBot(USERNAME, PASSWORD, SERVER, RES, debug=debug)
 
     th = threading.Thread(target=bc.thread_proc)
     bc.serve_forever(connect_callback=lambda: th.start())
