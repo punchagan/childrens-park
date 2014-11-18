@@ -88,7 +88,7 @@ class ChatRoomJabberBot(JabberBot):
 
         self.debug = debug
         self.username = username
-        self.server = server if server is not None else self.jid.getDomain()
+        self.server = server
         self.lock = threading.RLock()
 
         self._state = self.read_state()
@@ -194,7 +194,10 @@ class ChatRoomJabberBot(JabberBot):
     def connect(self):
         if not self.conn:
             conn = xmpp.Client(self.jid.getDomain(), debug=[])
-            conres = conn.connect(self.server)
+            conres = (
+                conn.connect(self.server) if self.server is not None
+                else conn.connect()
+            )
 
             if not conres:
                 self.log.error('unable to connect to %s.' % self.server)
