@@ -5,6 +5,7 @@
 """ Tests for the miscellaneous utilities. """
 
 # Standard library
+import base64
 from os.path import abspath, dirname
 
 # Project library
@@ -24,7 +25,7 @@ def test_send_html_email():
 
     # Then
     assert to in msg.as_string()
-    assert body in msg.as_string()
+    assert base64.encodestring(body).strip('=\n') in msg.as_string()
 
     return
 
@@ -40,7 +41,7 @@ def test_send_plain_email():
 
     # Then
     assert to in msg.as_string()
-    assert body in msg.as_string()
+    assert base64.encodestring(body).strip('=\n') in msg.as_string()
 
     return
 

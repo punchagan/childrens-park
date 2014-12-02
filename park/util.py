@@ -23,7 +23,13 @@ from urllib2 import unquote, urlopen, HTTPError
 from jinja2 import Template
 
 # Project library
-from park.settings import EMAIL_DOMAIN, EMAIL_FROM, EMAIL_PASSWORD, EMAIL_USER
+try:
+    from park.settings import EMAIL_DOMAIN, EMAIL_FROM, EMAIL_PASSWORD, EMAIL_USER
+except ImportError as e:
+    logger = logging.getLogger(__name__)
+    logger.error('No email settings found. Cannot send email.')
+    EMAIL_DOMAIN, EMAIL_FROM, EMAIL_PASSWORD, EMAIL_USER = [''] * 4
+
 from park.text_processing import strip_tags
 
 

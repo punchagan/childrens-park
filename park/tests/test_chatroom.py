@@ -5,6 +5,7 @@
 """ Tests for the ChatRoom. """
 
 # Standard library
+import base64
 from datetime import datetime, timedelta
 from os.path import abspath, dirname, exists, join
 import shutil
@@ -552,8 +553,7 @@ class TestChatRoom(unittest.TestCase):
             self._run_bot(bot, lambda: captured.output)
 
         # Then
-        print captured.output
-        self.assertIn(url, captured.output)
+        self.assertIn(base64.encodestring(url).strip('=\n'), captured.output)
 
         return
 
