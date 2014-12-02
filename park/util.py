@@ -188,12 +188,12 @@ def send_email(to, subject, body, typ_='text', debug=False):
     """ Send an email. """
 
     if typ_ == 'text':
-        msg = MIMEText(body)
+        msg = MIMEText(body, _charset='utf-8')
 
     else:
         msg = MIMEMultipart('alternative')
-        msg.attach(MIMEText(strip_tags(body), 'plain'))
-        msg.attach(MIMEText(body, 'html'))
+        msg.attach(MIMEText(strip_tags(body), 'plain', _charset='utf-8'))
+        msg.attach(MIMEText(body, 'html', _charset='utf-8'))
 
     msg['To'] = ', '.join(to) if isinstance(to, list) else to
     msg['From'] = EMAIL_FROM
