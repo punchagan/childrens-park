@@ -19,18 +19,21 @@ def main(bot, user, args):
             if pod.id == 'Result':
                 break
         else:
+            pod = None
             pods = list(results.pods)
-            if len(pods) > 1:
-                pod = pods[1]
-            else:
-                pod = None
 
-        if pod is not None:
+        if pod is not None or pods is not None:
             bot.message_queue.append(
                 '%s wolframmed for %s... and here you go: '
                 % (bot.users[user], args)
             )
-            bot.message_queue.append(pod.text)
+
+            if pod is not None:
+                bot.message_queue.extend([pod.title, pod.text])
+
+            else:
+                for pod in pods:
+                    bot.message_queue.extend([pod.title, pod.text])
 
         else:
             bot.send(user, 'No results found!')
