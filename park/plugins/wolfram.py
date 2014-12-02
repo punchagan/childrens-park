@@ -20,7 +20,7 @@ def main(bot, user, args):
                 break
         else:
             pods = list(results.pods)
-            if list(pods) > 1:
+            if len(pods) > 1:
                 pod = pods[1]
             else:
                 pod = None
@@ -31,9 +31,9 @@ def main(bot, user, args):
                 % (bot.users[user], args)
             )
             bot.message_queue.append(pod.text)
-            return
 
-        bot.send(user, 'No results found!')
+        else:
+            bot.send(user, 'No results found!')
 
     thread = threading.Thread(target=query_wolfram, args=(args,))
     thread.start()
