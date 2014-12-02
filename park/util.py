@@ -6,10 +6,10 @@
 # fixme: move them to their proper homes!
 
 # Standard library
-import ast
-from functools import wraps
+import base64
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from functools import wraps
 import json
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -23,6 +23,7 @@ from urllib2 import unquote, urlopen, HTTPError
 from jinja2 import Template
 
 # Project library
+from park.settings import EMAIL_DOMAIN, EMAIL_FROM, EMAIL_PASSWORD, EMAIL_USER
 from park.text_processing import strip_tags
 
 
@@ -183,7 +184,7 @@ def requires_subscription(f):
     return wrapper
 
 
-def send_email(fro, to, subject, body, typ_='text', debug=False):
+def send_email(to, subject, body, typ_='text', debug=False):
     """ Send an email. """
 
     if typ_ == 'text':
@@ -195,13 +196,16 @@ def send_email(fro, to, subject, body, typ_='text', debug=False):
         msg.attach(MIMEText(body, 'html'))
 
     msg['To'] = ', '.join(to) if isinstance(to, list) else to
-    msg['From'] = fro
+    msg['From'] = EMAIL_FROM
     msg['Subject'] = subject
 
     if not debug:
         s = smtplib.SMTP()
-        s.connect()
-        s.sendmail(fro, to, msg.as_string())
+        s.connect(EMAIL_DOMAIN)
+        s.ehlo()
+        s.starttls()
+        s.login(EMAIL_USER, base64.decodestring(EMAIL_PASSWORD))
+        s.sendmail(EMAIL_FROM, to, msg.as_string())
         s.quit()
 
     else:

@@ -16,16 +16,14 @@ HERE = dirname(abspath(__file__))
 def test_send_html_email():
     # Given
     body = """<html><body> foo </body></html>"""
-    fro = 'foo@foo.com'
     to = 'bar@bar.com'
     subject = 'test email'
 
     # When
-    msg = send_email(fro, to, subject, body, typ_='html', debug=True)
+    msg = send_email(to, subject, body, typ_='html', debug=True)
 
     # Then
     assert to in msg.as_string()
-    assert fro in msg.as_string()
     assert body in msg.as_string()
 
     return
@@ -34,16 +32,14 @@ def test_send_html_email():
 def test_send_plain_email():
     # Given
     body = 'foo'
-    fro = 'foo@foo.com'
     to = 'bar@bar.com'
     subject = 'test email'
 
     # When
-    msg = send_email(fro, to, subject, body, debug=True)
+    msg = send_email(to, subject, body, debug=True)
 
     # Then
     assert to in msg.as_string()
-    assert fro in msg.as_string()
     assert body in msg.as_string()
 
     return

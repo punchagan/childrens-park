@@ -87,11 +87,10 @@ def main(bot, user, args):
         message = 'No new urls.'
 
     else:
-        fro = bot.username
         subject = 'Park updates since last newsletter'
         additional_content = {'stories': _get_stories(bot, save=False)}
         body = _get_email(bot, path, subject, additional_content)
-        send_email(fro, user, subject, body, typ_='html', debug=bot.debug)
+        send_email(user, subject, body, typ_='html', debug=bot.debug)
         message = 'Sent email to %s' % user
 
     return message
@@ -266,10 +265,9 @@ def _send_newsletter(bot, db, last_sent):
     subject = 'Parkly Newsletter for %s to %s' % (last_sent, now)
     additional_content = {'stories': _get_stories(bot)}
     body = _get_email(bot, db, subject, additional_content)
-    fro = bot.username
     to = bot.users.keys() + bot.invited.keys()
 
-    send_email(fro, to, subject, body, typ_='html', debug=bot.debug)
+    send_email(to, subject, body, typ_='html', debug=bot.debug)
 
     return
 
