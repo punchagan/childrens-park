@@ -67,8 +67,8 @@ def idle_hook(bot):
 
     elif _time_since(last_newsletter).days >= 7:
         db = join(bot.root, DB_NAME)
+        db = _archive_db(db)
         _send_newsletter(bot, db, last_newsletter)
-        _clear_urls(db)
         _save_timestamp(bot)
 
     return
@@ -101,7 +101,7 @@ def main(bot, user, args):
 _TIMESTAMP_FMT = '%Y-%m-%dT%H:%M:%S.%f'
 
 
-def _clear_urls(path):
+def _archive_db(path):
     """ Move the db file to a name with the time stamp. """
 
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
@@ -109,7 +109,7 @@ def _clear_urls(path):
     shutil.copy(path, new_path)
     os.unlink(path)
 
-    return
+    return new_path
 
 
 def _get_description(content):
