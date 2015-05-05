@@ -315,7 +315,11 @@ class ChatRoomJabberBot(JabberBot):
             # fixme: prints in idle hooks are not captured as messages.
             # this may be good?
             for hook in self._idle_hooks:
-                self._run_hook_in_thread(hook, self)
+                try:
+                    thread = self._run_hook_in_thread(hook, self)
+                    thread.join()
+                except Exception as e:
+                    self.message_queue.append(e)
 
             self.save_state()
 
